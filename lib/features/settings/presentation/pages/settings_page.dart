@@ -1,3 +1,4 @@
+import 'package:billing_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -145,6 +146,17 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Shop Details',
                   subtitle: 'Business info & digital receipts',
                   onTap: () => context.push('/shop'),
+                ),
+                _buildDivider(),
+                _buildListItem(
+                  icon: Icons.logout_rounded,
+                  iconColor: AppTheme.errorColor,
+                  title: 'Logout',
+                  subtitle: 'Sign out of your account',
+                  trailingIcon: null,
+                  onTap: () {
+                    context.read<AuthBloc>().add(const AuthLogoutRequested());
+                  },
                 ),
               ],
             ),

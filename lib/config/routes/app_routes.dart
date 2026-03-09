@@ -8,10 +8,45 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/billing/presentation/pages/scanner_page.dart';
 import '../../features/billing/presentation/pages/checkout_page.dart';
 import '../../features/product/domain/entities/product.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/signup_page.dart';
+import '../../core/service_locator.dart' as di;
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import 'go_router_refresh_stream.dart';
 
 final router = GoRouter(
   initialLocation: '/',
+  redirect: (context, state) {
+    final authState = di.sl<AuthBloc>().state;
+    final isLoggingIn = state.matchedLocation == '/login';
+    final isSigningUp = state.matchedLocation == '/signup';
+
+    // While Firebase is still resolving the session or an action is in flight,
+    // don't redirect — let the UI show its own loader.
+    if (authState.status == AuthStatus.initial ||
+        authState.status == AuthStatus.loading) {
+      return null;
+    }
+
+    if (authState.status == AuthStatus.unauthenticated ||
+        authState.status == AuthStatus.error) {
+      if (!isLoggingIn && !isSigningUp) return '/login';
+    } else if (authState.status == AuthStatus.authenticated) {
+      if (isLoggingIn || isSigningUp) return '/';
+    }
+
+    return null;
+  },
+  refreshListenable: GoRouterRefreshStream(di.sl<AuthBloc>().stream),
   routes: [
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: '/signup',
+      builder: (context, state) => const SignUpPage(),
+    ),
     GoRoute(
       path: '/',
       builder: (context, state) => const HomePage(),
