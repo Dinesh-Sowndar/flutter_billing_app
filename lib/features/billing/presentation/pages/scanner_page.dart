@@ -47,66 +47,67 @@ class _ScannerPageState extends State<ScannerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-         leading: IconButton(
-          icon: Icon(Icons.chevron_left,
-              size: 28, color: Theme.of(context).primaryColor),
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded, size: 32, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Scan Barcode',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+        title: const Text('Scan Product',
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.white)),
+        centerTitle: true,
+      ),
       body: Stack(
+        fit: StackFit.expand,
         children: [
           MobileScanner(
             controller: controller,
             onDetect: _onDetect,
-            // Removed overlay property
           ),
-          // Simple border overlay manually
+
+          // Dark Overlay with Cutout
           Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.transparent, width: 0),
+              color: Colors.black.withValues(alpha: 0.5),
             ),
             child: Center(
               child: Container(
                 width: 250,
                 height: 250,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.green, width: 2),
-                  // borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.5), width: 2),
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _corner(0),
-                          _corner(1),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _corner(3),
-                          _corner(2),
-                        ],
-                      ),
-                    ],
-                  ),
+                child: Stack(
+                  children: [
+                    _buildCorner(Alignment.topLeft),
+                    _buildCorner(Alignment.topRight),
+                    _buildCorner(Alignment.bottomLeft),
+                    _buildCorner(Alignment.bottomRight),
+                  ],
                 ),
               ),
             ),
           ),
+
           const Positioned(
-            bottom: 40,
+            bottom: 64,
             left: 0,
             right: 0,
             child: Text(
               'Align barcode within frame',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5),
             ),
           ),
         ],
@@ -114,13 +115,45 @@ class _ScannerPageState extends State<ScannerPage> {
     );
   }
 
-  Widget _corner(int index) {
-    return Container(
-      width: 15,
-      height: 15,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        border: Border.all(color: Colors.white, width: 2),
+  Widget _buildCorner(Alignment alignment) {
+    return Align(
+      alignment: alignment,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+            border: Border(
+              top: (alignment == Alignment.topLeft ||
+                      alignment == Alignment.topRight)
+                  ? const BorderSide(color: Color(0xFF10B981), width: 6)
+                  : BorderSide.none,
+              bottom: (alignment == Alignment.bottomLeft ||
+                      alignment == Alignment.bottomRight)
+                  ? const BorderSide(color: Color(0xFF10B981), width: 6)
+                  : BorderSide.none,
+              left: (alignment == Alignment.topLeft ||
+                      alignment == Alignment.bottomLeft)
+                  ? const BorderSide(color: Color(0xFF10B981), width: 6)
+                  : BorderSide.none,
+              right: (alignment == Alignment.topRight ||
+                      alignment == Alignment.bottomRight)
+                  ? const BorderSide(color: Color(0xFF10B981), width: 6)
+                  : BorderSide.none,
+            ),
+            borderRadius: BorderRadius.only(
+              topLeft: alignment == Alignment.topLeft
+                  ? const Radius.circular(24)
+                  : Radius.zero,
+              topRight: alignment == Alignment.topRight
+                  ? const Radius.circular(24)
+                  : Radius.zero,
+              bottomLeft: alignment == Alignment.bottomLeft
+                  ? const Radius.circular(24)
+                  : Radius.zero,
+              bottomRight: alignment == Alignment.bottomRight
+                  ? const Radius.circular(24)
+                  : Radius.zero,
+            )),
       ),
     );
   }

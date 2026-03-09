@@ -9,6 +9,7 @@ import 'features/product/presentation/bloc/product_bloc.dart';
 import 'features/shop/presentation/bloc/shop_bloc.dart';
 import 'features/settings/presentation/bloc/printer_bloc.dart';
 import 'features/settings/presentation/bloc/printer_event.dart';
+import 'features/billing/presentation/bloc/sales_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,10 +30,14 @@ class MyApp extends StatelessWidget {
         BlocProvider<ShopBloc>(
             create: (context) => di.sl<ShopBloc>()..add(LoadShopEvent())),
         BlocProvider<BillingBloc>(
-            create: (context) =>
-                BillingBloc(getProductByBarcodeUseCase: di.sl())),
+            create: (context) => BillingBloc(
+                  getProductByBarcodeUseCase: di.sl(),
+                  billingRepository: di.sl(),
+                )),
         BlocProvider<PrinterBloc>(
             create: (context) => di.sl<PrinterBloc>()..add(InitPrinterEvent())),
+        BlocProvider<SalesBloc>(
+            create: (context) => di.sl<SalesBloc>()..add(LoadSalesEvent())),
       ],
       child: MaterialApp.router(
         title: 'Billing App',

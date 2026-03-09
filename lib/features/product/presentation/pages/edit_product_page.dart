@@ -48,96 +48,123 @@ class _EditProductPageState extends State<EditProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.chevron_left,
-                size: 32, color: Theme.of(context).primaryColor),
-            onPressed: () => context.pop(),
-          ),
-          title: const Text('Edit Product',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          centerTitle: true,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left_rounded,
+              size: 32, color: Theme.of(context).primaryColor),
+          onPressed: () => context.pop(),
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Display Barcode details (immutable block)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.only(bottom: 24),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.qr_code_scanner,
+        title: const Text('Edit Product',
+            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Display Barcode details (immutable block)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.only(bottom: 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: const Color(0xFFF1F5F9), width: 2), // Slate 100
+                    boxShadow: [
+                      BoxShadow(
+                          color:
+                              const Color(0xFF0F172A).withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4))
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.qr_code_2_rounded,
                             color: AppTheme.primaryColor, size: 28),
-                        const SizedBox(width: 12),
-                        Column(
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('BARCODE',
+                            const Text('LINKED BARCODE',
                                 style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryColor
-                                        .withValues(alpha: 0.7))),
-                            const SizedBox(height: 2),
+                                    color: Color(0xFF94A3B8),
+                                    letterSpacing: 1.2)),
+                            const SizedBox(height: 4),
                             Text(widget.product.barcode,
                                 style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'monospace')),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'monospace',
+                                    color: Color(0xFF1E293B))),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const Icon(Icons.lock_rounded,
+                          color: Color(0xFFCBD5E1), size: 20),
+                    ],
                   ),
+                ),
 
-                  const InputLabel(text: 'Product Name'),
-
-                  TextFormField(
-                    initialValue: _name,
-                    textCapitalization: TextCapitalization.words,
-                    validator: AppValidators.required('Please enter a name'),
-                    onSaved: (value) => _name = value!,
+                const InputLabel(text: 'Product Name'),
+                TextFormField(
+                  initialValue: _name,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.inventory_2_outlined,
+                        color: Color(0xFF94A3B8)),
                   ),
-                  const SizedBox(height: 24),
+                  validator: AppValidators.required('Please enter a name'),
+                  onSaved: (value) => _name = value!,
+                ),
 
-                  const InputLabel(text: 'Price'),
-
-                  TextFormField(
-                    initialValue: _price.toStringAsFixed(2),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      prefixText: '₹ ',
-                      prefixStyle: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black),
-                    ),
-                    validator: AppValidators.price,
-                    onSaved: (value) => _price = double.parse(value!),
+                const SizedBox(height: 24),
+                const InputLabel(text: 'Selling Price'),
+                TextFormField(
+                  initialValue: _price.toStringAsFixed(2),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    prefixText: '₹ ',
+                    prefixStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B)),
                   ),
-                ],
-              ),
+                  validator: AppValidators.price,
+                  onSaved: (value) => _price = double.parse(value!),
+                ),
+
+                const SizedBox(height: 48), // Padding at bottom
+              ],
             ),
           ),
         ),
-        bottomNavigationBar: PrimaryButton(
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.only(bottom: 12),
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: PrimaryButton(
           onPressed: _submit,
-          icon: Icons.save,
+          icon: Icons.save_rounded,
           label: 'Save Changes',
-        ));
+        ),
+      ),
+    );
   }
 }

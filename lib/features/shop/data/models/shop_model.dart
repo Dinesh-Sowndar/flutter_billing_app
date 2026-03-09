@@ -1,3 +1,4 @@
+// ignore_for_file: overridden_fields
 import 'package:hive/hive.dart';
 import '../../domain/entities/shop.dart';
 

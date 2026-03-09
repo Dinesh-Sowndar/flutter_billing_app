@@ -10,10 +10,22 @@ import '../../features/shop/presentation/bloc/shop_bloc.dart';
 import '../../features/settings/data/repositories/printer_repository_impl.dart';
 import '../../features/settings/domain/repositories/printer_repository.dart';
 import '../../features/settings/presentation/bloc/printer_bloc.dart';
+import '../../features/billing/domain/repositories/billing_repository.dart';
+import '../../features/billing/presentation/bloc/sales_bloc.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  sl.registerLazySingleton<BillingRepository>(
+    () => BillingRepository(),
+  );
+
+  sl.registerFactory(
+    () => SalesBloc(
+      billingRepository: sl(),
+    ),
+  );
+
   // Features - Product
   // Bloc
   sl.registerFactory(

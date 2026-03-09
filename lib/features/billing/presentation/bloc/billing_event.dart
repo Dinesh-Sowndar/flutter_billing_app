@@ -37,6 +37,8 @@ class UpdateQuantityEvent extends BillingEvent {
 
 class ClearCartEvent extends BillingEvent {}
 
+class FinishTransactionEvent extends BillingEvent {}
+
 class PrintReceiptEvent extends BillingEvent {
   final String shopName;
   final String address1;

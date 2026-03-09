@@ -5,21 +5,27 @@ import 'package:billing_app/features/product/domain/entities/product.dart';
 import 'package:billing_app/features/product/domain/usecases/product_usecases.dart';
 import '../../../../core/utils/printer_helper.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../data/models/transaction_model.dart';
+import '../../domain/repositories/billing_repository.dart';
 
 part 'billing_event.dart';
 part 'billing_state.dart';
 
 class BillingBloc extends Bloc<BillingEvent, BillingState> {
   final GetProductByBarcodeUseCase getProductByBarcodeUseCase;
+  final BillingRepository billingRepository;
 
-  BillingBloc({required this.getProductByBarcodeUseCase})
-      : super(const BillingState()) {
+  BillingBloc({
+    required this.getProductByBarcodeUseCase,
+    required this.billingRepository,
+  }) : super(const BillingState()) {
     on<ScanBarcodeEvent>(_onScanBarcode);
     on<AddProductToCartEvent>(_onAddProductToCart);
     on<RemoveProductFromCartEvent>(_onRemoveProductFromCart);
     on<UpdateQuantityEvent>(_onUpdateQuantity);
     on<ClearCartEvent>(_onClearCart);
     on<PrintReceiptEvent>(_onPrintReceipt);
+    on<FinishTransactionEvent>(_onFinishTransaction);
   }
 
   Future<void> _onScanBarcode(
@@ -82,6 +88,33 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     emit(const BillingState());
   }
 
+  Future<void> _onFinishTransaction(
+      FinishTransactionEvent event, Emitter<BillingState> emit) async {
+    emit(state.copyWith(clearError: true));
+    try {
+      final transaction = TransactionModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        date: DateTime.now(),
+        totalAmount: state.totalAmount,
+        items: state.cartItems
+            .map((item) => TransactionItemModel(
+                  productId: item.product.id,
+                  productName: item.product.name,
+                  price: item.product.price,
+                  quantity: item.quantity,
+                  total: item.total,
+                ))
+            .toList(),
+      );
+      await billingRepository.saveTransaction(transaction);
+
+      emit(state.copyWith(printSuccess: true));
+    } catch (e) {
+      emit(state.copyWith(error: 'Transaction failed: $e', clearError: false));
+      emit(state.copyWith(clearError: true));
+    }
+  }
+
   Future<void> _onPrintReceipt(
       PrintReceiptEvent event, Emitter<BillingState> emit) async {
     final printerHelper = PrinterHelper();
@@ -126,6 +159,22 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           items: items,
           total: state.totalAmount,
           footer: event.footer);
+
+      final transaction = TransactionModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        date: DateTime.now(),
+        totalAmount: state.totalAmount,
+        items: state.cartItems
+            .map((item) => TransactionItemModel(
+                  productId: item.product.id,
+                  productName: item.product.name,
+                  price: item.product.price,
+                  quantity: item.quantity,
+                  total: item.total,
+                ))
+            .toList(),
+      );
+      await billingRepository.saveTransaction(transaction);
 
       emit(state.copyWith(isPrinting: false, printSuccess: true));
     } catch (e) {
