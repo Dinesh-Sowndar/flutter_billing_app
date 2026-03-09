@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:app_settings/app_settings.dart';
 import 'dart:ui';
+import 'dart:async';
 
 import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../../billing/presentation/bloc/sales_bloc.dart';
@@ -18,8 +20,9 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final MobileScannerController _scannerController = MobileScannerController(
+    autoStart: false,
     detectionSpeed: DetectionSpeed.normal,
     returnImage: false,
   );
@@ -30,8 +33,43 @@ class _HomePageState extends State<HomePage> {
   final Map<String, DateTime> _lastScanTimes = {};
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _resumeScanner();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+    if (!_scannerController.value.isInitialized) return;
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _resumeScanner();
+        return;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _pauseScanner();
+        return;
+    }
+  }
+
+  Future<void> _resumeScanner() async {
+    if (!mounted || !_isCameraOn) return;
+    await _scannerController.start();
+  }
+
+  Future<void> _pauseScanner() async {
+    await _scannerController.stop();
+  }
+
+  @override
   void dispose() {
-    _scannerController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_scannerController.dispose());
     super.dispose();
   }
 
@@ -120,9 +158,9 @@ class _HomePageState extends State<HomePage> {
                     color: Theme.of(context).scaffoldBackgroundColor,
                     child: PrimaryButton(
                       onPressed: () async {
-                        _scannerController.stop();
+                        await _pauseScanner();
                         await context.push('/checkout');
-                        if (_isCameraOn && mounted) _scannerController.start();
+                        if (_isCameraOn && mounted) await _resumeScanner();
                       },
                       icon: Icons.payments_rounded,
                       label: 'Review Order',
@@ -144,6 +182,7 @@ class _HomePageState extends State<HomePage> {
           MobileScanner(
             controller: _scannerController,
             onDetect: _onDetect,
+            errorBuilder: _buildScannerErrorState,
           )
         else
           _buildCameraOffState(),
@@ -186,9 +225,9 @@ class _HomePageState extends State<HomePage> {
               _buildModernIconButton(
                 icon: Icons.settings_rounded,
                 onPressed: () async {
-                  _scannerController.stop();
+                  await _pauseScanner();
                   await context.push('/settings');
-                  if (_isCameraOn && mounted) _scannerController.start();
+                  if (_isCameraOn && mounted) await _resumeScanner();
                 },
               ),
               const SizedBox(height: 16),
@@ -214,9 +253,9 @@ class _HomePageState extends State<HomePage> {
                     _isCameraOn = !_isCameraOn;
                   });
                   if (_isCameraOn) {
-                    _scannerController.start();
+                    _resumeScanner();
                   } else {
-                    _scannerController.stop();
+                    _pauseScanner();
                   }
                 },
               ),
@@ -233,9 +272,9 @@ class _HomePageState extends State<HomePage> {
               _buildModernIconButton(
                 icon: Icons.inventory_2_rounded,
                 onPressed: () async {
-                  _scannerController.stop();
+                  await _pauseScanner();
                   await context.push('/products');
-                  if (_isCameraOn && mounted) _scannerController.start();
+                  if (_isCameraOn && mounted) await _resumeScanner();
                 },
                 color: AppTheme.primaryColor.withValues(alpha: 0.8),
               ),
@@ -342,7 +381,7 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             onPressed: () {
               setState(() => _isCameraOn = true);
-              _scannerController.start();
+              _resumeScanner();
             },
           )
         ],
@@ -456,6 +495,43 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScannerErrorState(
+    BuildContext context,
+    MobileScannerException error,
+    Widget? child,
+  ) {
+    final isPermissionError =
+        error.errorCode == MobileScannerErrorCode.permissionDenied;
+
+    return Container(
+      color: Colors.black,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.videocam_off_rounded, color: Colors.white, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            isPermissionError
+                ? 'Camera permission is required for scanning.'
+                : 'Unable to open camera. Please retry.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: isPermissionError
+                ? () => AppSettings.openAppSettings()
+                : _resumeScanner,
+            child: Text(
+                isPermissionError ? 'Open App Settings' : 'Retry Camera'),
           ),
         ],
       ),

@@ -67,13 +67,16 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       date: fields[1] as DateTime,
       totalAmount: fields[2] as double,
       items: (fields[3] as List).cast<TransactionItemModel>(),
+      // backward-compat: fields 4 & 5 absent in records written before this version
+      userId: fields[4] as String? ?? '',
+      pendingSync: fields[5] as bool? ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, TransactionModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -81,7 +84,11 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       ..writeByte(2)
       ..write(obj.totalAmount)
       ..writeByte(3)
-      ..write(obj.items);
+      ..write(obj.items)
+      ..writeByte(4)
+      ..write(obj.userId)
+      ..writeByte(5)
+      ..write(obj.pendingSync);
   }
 
   @override

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF4F46E5); // Vibrant Indigo
@@ -8,21 +7,21 @@ class AppTheme {
   static const Color surfaceColor = Colors.white;
   static const Color errorColor = Color(0xFFEF4444); // Red 500
 
-  static final TextTheme textTheme = GoogleFonts.outfitTextTheme().copyWith(
-    bodyLarge: GoogleFonts.outfit(
+  static final TextTheme textTheme = const TextTheme().copyWith(
+    bodyLarge: const TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w500,
-      color: const Color(0xFF1E293B),
+      color: Color(0xFF1E293B),
     ),
-    bodyMedium: GoogleFonts.outfit(
+    bodyMedium: const TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.w400,
-      color: const Color(0xFF334155),
+      color: Color(0xFF334155),
     ),
-    titleLarge: GoogleFonts.outfit(
+    titleLarge: const TextStyle(
       fontSize: 20,
       fontWeight: FontWeight.w700,
-      color: const Color(0xFF0F172A),
+      color: Color(0xFF0F172A),
     ),
   );
 
@@ -66,10 +65,11 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFFF1F5F9), // Slate 100
-        hintStyle: GoogleFonts.outfit(
-            color: const Color(0xFF94A3B8),
-            fontWeight: FontWeight.normal,
-            fontSize: 14),
+        hintStyle: const TextStyle(
+          color: Color(0xFF94A3B8),
+          fontWeight: FontWeight.normal,
+          fontSize: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -98,8 +98,10 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 28),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          textStyle:
-              GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
         ),
       ),
     );

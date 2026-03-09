@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:app_settings/app_settings.dart';
+import 'dart:async';
 
 class ScannerPage extends StatefulWidget {
   const ScannerPage({super.key});
@@ -10,16 +12,48 @@ class ScannerPage extends StatefulWidget {
   State<ScannerPage> createState() => _ScannerPageState();
 }
 
-class _ScannerPageState extends State<ScannerPage> {
+class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
   final MobileScannerController controller = MobileScannerController(
+    autoStart: false,
     detectionSpeed: DetectionSpeed.noDuplicates,
     returnImage: false,
   );
   bool _isScanned = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startScanner();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+    if (!controller.value.isInitialized) return;
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _startScanner();
+        return;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        controller.stop();
+        return;
+    }
+  }
+
+  Future<void> _startScanner() async {
+    if (!mounted || _isScanned) return;
+    await controller.start();
+  }
+
+  @override
   void dispose() {
-    controller.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(controller.dispose());
     super.dispose();
   }
 
@@ -68,6 +102,7 @@ class _ScannerPageState extends State<ScannerPage> {
           MobileScanner(
             controller: controller,
             onDetect: _onDetect,
+            errorBuilder: _buildErrorState,
           ),
 
           // Dark Overlay with Cutout
@@ -154,6 +189,48 @@ class _ScannerPageState extends State<ScannerPage> {
                   ? const Radius.circular(24)
                   : Radius.zero,
             )),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(
+    BuildContext context,
+    MobileScannerException error,
+    Widget? child,
+  ) {
+    final isPermissionError =
+        error.errorCode == MobileScannerErrorCode.permissionDenied;
+    final message = isPermissionError
+        ? 'Camera permission is required to scan barcodes.'
+        : 'Unable to open camera. Please try again.';
+
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.videocam_off_rounded,
+                  size: 48, color: Colors.white),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: isPermissionError
+                    ? () => AppSettings.openAppSettings()
+                    : _startScanner,
+                child: Text(
+                    isPermissionError ? 'Open App Settings' : 'Retry Camera'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

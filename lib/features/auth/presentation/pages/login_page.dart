@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
@@ -108,19 +107,19 @@ class _LoginPageState extends State<LoginPage> {
                         // Welcome Text
                         Text(
                           'Welcome Back',
-                          style: GoogleFonts.outfit(
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF0F172A), // Slate 900
+                            color: Color(0xFF0F172A), // Slate 900
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Sign in to manage your billing',
-                          style: GoogleFonts.outfit(
+                          style: const TextStyle(
                             fontSize: 16,
-                            color: const Color(0xFF64748B), // Slate 500
+                            color: Color(0xFF64748B), // Slate 500
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -227,8 +226,8 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Text(
                               "Don't have an account?",
-                              style: GoogleFonts.outfit(
-                                color: const Color(0xFF64748B),
+                              style: const TextStyle(
+                                color: Color(0xFF64748B),
                                 fontSize: 15,
                               ),
                             ),
@@ -238,7 +237,7 @@ class _LoginPageState extends State<LoginPage> {
                               },
                               child: Text(
                                 'Sign Up',
-                                style: GoogleFonts.outfit(
+                                style: const TextStyle(
                                   color: AppTheme.primaryColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../bloc/product_bloc.dart';
 import '../../domain/entities/product.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/sync_service.dart';
+import '../../../../core/service_locator.dart' as di;
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({super.key});
@@ -47,6 +49,8 @@ class _ProductListPageState extends State<ProductListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isOnline = di.sl<SyncService>().isOnline;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -57,10 +61,22 @@ class _ProductListPageState extends State<ProductListPage> {
         title: const Text('Inventory',
             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Tooltip(
+              message: isOnline ? 'Synced with Cloud' : 'Offline – changes saved locally',
+              child: Icon(
+                isOnline ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+                color: isOnline ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // Elegant Header / Search Area
+          // Search Area
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             decoration: BoxDecoration(
@@ -91,7 +107,7 @@ class _ProductListPageState extends State<ProductListPage> {
                         onTap: () => _scanQR(state.products),
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          height: 56, // matches input height
+                          height: 56,
                           width: 56,
                           decoration: BoxDecoration(
                             color: AppTheme.primaryColor,
@@ -210,8 +226,7 @@ class _ProductListPageState extends State<ProductListPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border:
-            Border.all(color: const Color(0xFFF1F5F9), width: 2), // Slate 100
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
         boxShadow: [
           BoxShadow(
               color: const Color(0xFF0F172A).withValues(alpha: 0.02),
@@ -223,16 +238,36 @@ class _ProductListPageState extends State<ProductListPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Avatar/Icon for Product
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppTheme.secondaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.inventory_2_rounded,
-                color: AppTheme.secondaryColor, size: 28),
+          // Icon
+          Stack(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.inventory_2_rounded,
+                    color: AppTheme.secondaryColor, size: 28),
+              ),
+              if (product.pendingSync)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: const Icon(Icons.cloud_upload_outlined,
+                        size: 8, color: Colors.white),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -243,7 +278,7 @@ class _ProductListPageState extends State<ProductListPage> {
                   product.name,
                   style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: 16,
                       color: Color(0xFF1E293B),
                       letterSpacing: -0.3),
                 ),
@@ -254,33 +289,39 @@ class _ProductListPageState extends State<ProductListPage> {
                       '₹${product.price.toStringAsFixed(2)}',
                       style: const TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                          fontSize: 14,
                           color: AppTheme.primaryColor),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        product.barcode,
-                        style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.bold),
-                      ),
+                    // Unit badge
+                    _Badge(
+                      label: product.unit.shortLabel,
+                      color: AppTheme.primaryColor,
+                    ),
+                    const SizedBox(width: 6),
+                    // Stock badge
+                    _Badge(
+                      label: 'Qty: ${product.stock}',
+                      color: product.stock > 0
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFEF4444),
                     ),
                   ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  product.barcode,
+                  style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      color: Color(0xFF94A3B8),
+                      fontWeight: FontWeight.bold),
                 ),
               ],
             ),
           ),
           // Actions
-          Row(
+          Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildActionButton(
@@ -289,7 +330,7 @@ class _ProductListPageState extends State<ProductListPage> {
                 onPressed: () => context.push('/products/edit/${product.id}',
                     extra: product),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(height: 8),
               _buildActionButton(
                 icon: Icons.delete_outline_rounded,
                 color: AppTheme.errorColor,
@@ -343,7 +384,7 @@ class _ProductListPageState extends State<ProductListPage> {
                 fontSize: 20,
                 color: Color(0xFF1E293B))),
         const SizedBox(height: 8),
-        const Text('Add your first product to get started blending inventory.',
+        const Text('Add your first product to get started.',
             style: TextStyle(color: Color(0xFF64748B), fontSize: 15)),
       ],
     );
@@ -388,6 +429,32 @@ class _ProductListPageState extends State<ProductListPage> {
           ],
         );
       },
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _Badge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
     );
   }
 }
