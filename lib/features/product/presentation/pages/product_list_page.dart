@@ -366,27 +366,33 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Widget _buildEmptyState() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 100,
-          height: 100,
-          decoration: const BoxDecoration(
-              color: Color(0xFFF1F5F9), shape: BoxShape.circle),
-          child: const Icon(Icons.inventory_2_outlined,
-              size: 48, color: Color(0xFF94A3B8)),
-        ),
-        const SizedBox(height: 24),
-        const Text('No Products Yet',
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-                color: Color(0xFF1E293B))),
-        const SizedBox(height: 8),
-        const Text('Add your first product to get started.',
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 15)),
-      ],
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: AppTheme.secondaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.inventory_2_outlined,
+                size: 56, color: AppTheme.secondaryColor),
+          ),
+          const SizedBox(height: 24),
+          const Text('No Products Yet',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Color(0xFF1E293B),
+                  letterSpacing: -0.5)),
+          const SizedBox(height: 8),
+          const Text('Add your first product to get started.',
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 15)),
+        ],
+      ),
     );
   }
 

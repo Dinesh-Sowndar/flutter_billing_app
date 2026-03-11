@@ -155,7 +155,109 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: 'Sign out of your account',
                   trailingIcon: null,
                   onTap: () {
-                    context.read<AuthBloc>().add(const AuthLogoutRequested());
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext dialogContext) {
+                        return Dialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          backgroundColor: Colors.white,
+                          elevation: 12,
+                          child: Padding(
+                            padding: const EdgeInsets.all(28.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 72,
+                                  height: 72,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.errorColor.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.logout_rounded,
+                                    color: AppTheme.errorColor,
+                                    size: 32,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                const Text(
+                                  'Confirm Logout',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Are you sure you want to sign out of your account? You will need to sign in again to continue.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Color(0xFF64748B),
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextButton(
+                                        onPressed: () => Navigator.of(dialogContext).pop(),
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          foregroundColor: const Color(0xFF64748B),
+                                        ),
+                                        child: const Text(
+                                          'Cancel',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.of(dialogContext).pop();
+                                          context.read<AuthBloc>().add(const AuthLogoutRequested());
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppTheme.errorColor,
+                                          foregroundColor: Colors.white,
+                                          elevation: 4,
+                                          shadowColor: AppTheme.errorColor.withValues(alpha: 0.4),
+                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Logout',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
                   },
                 ),
               ],
