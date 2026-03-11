@@ -13,10 +13,12 @@ part 'billing_state.dart';
 
 class BillingBloc extends Bloc<BillingEvent, BillingState> {
   final GetProductByBarcodeUseCase getProductByBarcodeUseCase;
+  final UpdateProductUseCase updateProductUseCase;
   final BillingRepository billingRepository;
 
   BillingBloc({
     required this.getProductByBarcodeUseCase,
+    required this.updateProductUseCase,
     required this.billingRepository,
   }) : super(const BillingState()) {
     on<ScanBarcodeEvent>(_onScanBarcode);
@@ -108,6 +110,14 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       );
       await billingRepository.saveTransaction(transaction);
 
+      // Decrease stock for each item sold
+      for (final item in state.cartItems) {
+        final newStock = item.product.stock - item.quantity;
+        await updateProductUseCase(
+          item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
+        );
+      }
+
       emit(state.copyWith(printSuccess: true));
     } catch (e) {
       emit(state.copyWith(error: 'Transaction failed: $e', clearError: false));
@@ -175,6 +185,14 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
             .toList(),
       );
       await billingRepository.saveTransaction(transaction);
+
+      // Decrease stock for each item sold
+      for (final item in state.cartItems) {
+        final newStock = item.product.stock - item.quantity;
+        await updateProductUseCase(
+          item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
+        );
+      }
 
       emit(state.copyWith(isPrinting: false, printSuccess: true));
     } catch (e) {

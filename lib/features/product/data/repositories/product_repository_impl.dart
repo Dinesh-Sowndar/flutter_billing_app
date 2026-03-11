@@ -31,7 +31,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final box = HiveDatabase.productBox;
       final product = box.values.firstWhere(
-        (element) => element.barcode == barcode,
+        (element) => element.barcode == barcode || element.id == barcode,
         orElse: () => throw Exception('Product not found'),
       );
       return Right(product.toEntity());

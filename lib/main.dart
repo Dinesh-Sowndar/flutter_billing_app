@@ -65,6 +65,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<BillingBloc>(
             create: (context) => BillingBloc(
                   getProductByBarcodeUseCase: di.sl(),
+                  updateProductUseCase: di.sl(),
                   billingRepository: di.sl(),
                 )),
         BlocProvider<PrinterBloc>(

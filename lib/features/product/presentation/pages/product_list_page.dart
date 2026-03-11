@@ -306,6 +306,13 @@ class _ProductListPageState extends State<ProductListPage> {
                           ? const Color(0xFF10B981)
                           : const Color(0xFFEF4444),
                     ),
+                    if (product.stock < 5) ...[
+                      const SizedBox(width: 6),
+                      const _Badge(
+                        label: 'Low Stock',
+                        color: Color(0xFFF59E0B),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 4),
