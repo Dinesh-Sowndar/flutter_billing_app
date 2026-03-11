@@ -1,12 +1,50 @@
 import 'package:equatable/equatable.dart';
 
+/// Unit used to measure/sell a product.
+enum QuantityUnit {
+  piece,  // individual items
+  kg,     // kilograms
+  liter,  // litres
+  box,    // boxes / cartons
+}
+
+extension QuantityUnitLabel on QuantityUnit {
+  String get label {
+    switch (this) {
+      case QuantityUnit.piece:
+        return 'Piece';
+      case QuantityUnit.kg:
+        return 'KG';
+      case QuantityUnit.liter:
+        return 'Litre';
+      case QuantityUnit.box:
+        return 'Box';
+    }
+  }
+
+  String get shortLabel {
+    switch (this) {
+      case QuantityUnit.piece:
+        return 'pc';
+      case QuantityUnit.kg:
+        return 'kg';
+      case QuantityUnit.liter:
+        return 'L';
+      case QuantityUnit.box:
+        return 'box';
+    }
+  }
+}
+
 class Product extends Equatable {
-  final String
-      id; // Using barcode as ID usually, but keeping separate ID is safer
+  final String id;
   final String name;
   final String barcode;
   final double price;
-  final int stock; // Optional implementation detail
+  final int stock;
+  final QuantityUnit unit;
+  /// True when the record needs to be pushed to Firestore.
+  final bool pendingSync;
 
   const Product({
     required this.id,
@@ -14,8 +52,30 @@ class Product extends Equatable {
     required this.barcode,
     required this.price,
     this.stock = 0,
+    this.unit = QuantityUnit.piece,
+    this.pendingSync = false,
   });
 
+  Product copyWith({
+    String? id,
+    String? name,
+    String? barcode,
+    double? price,
+    int? stock,
+    QuantityUnit? unit,
+    bool? pendingSync,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      barcode: barcode ?? this.barcode,
+      price: price ?? this.price,
+      stock: stock ?? this.stock,
+      unit: unit ?? this.unit,
+      pendingSync: pendingSync ?? this.pendingSync,
+    );
+  }
+
   @override
-  List<Object?> get props => [id, name, barcode, price, stock];
+  List<Object?> get props => [id, name, barcode, price, stock, unit, pendingSync];
 }

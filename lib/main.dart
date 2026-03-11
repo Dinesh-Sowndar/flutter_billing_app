@@ -3,36 +3,82 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'config/routes/app_routes.dart';
 import 'core/data/hive_database.dart';
 import 'core/service_locator.dart' as di;
+import 'core/services/sync_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/billing/presentation/bloc/billing_bloc.dart';
 import 'features/product/presentation/bloc/product_bloc.dart';
 import 'features/shop/presentation/bloc/shop_bloc.dart';
 import 'features/settings/presentation/bloc/printer_bloc.dart';
 import 'features/settings/presentation/bloc/printer_event.dart';
+import 'features/billing/presentation/bloc/sales_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await HiveDatabase.init();
   await di.init();
+
+  // Start SyncService so offline→online transitions trigger Firestore sync.
+  await di.sl<SyncService>().initialize();
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void dispose() {
+    di.sl<SyncService>().dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<AuthBloc>.value(
+          value: di.sl<AuthBloc>(),
+        ),
         BlocProvider<ProductBloc>(
-            create: (context) => di.sl<ProductBloc>()..add(LoadProducts())),
+          create: (context) {
+            final bloc = di.sl<ProductBloc>()..add(LoadProducts());
+            // Reload products automatically after a sync completes.
+            di.sl<SyncService>().onSyncComplete.stream.listen((_) {
+              if (!bloc.isClosed) bloc.add(LoadProducts());
+            });
+            return bloc;
+          },
+        ),
         BlocProvider<ShopBloc>(
             create: (context) => di.sl<ShopBloc>()..add(LoadShopEvent())),
         BlocProvider<BillingBloc>(
-            create: (context) =>
-                BillingBloc(getProductByBarcodeUseCase: di.sl())),
+            create: (context) => BillingBloc(
+                  getProductByBarcodeUseCase: di.sl(),
+                  updateProductUseCase: di.sl(),
+                  billingRepository: di.sl(),
+                )),
         BlocProvider<PrinterBloc>(
-            create: (context) => di.sl<PrinterBloc>()..add(InitPrinterEvent())),
+            create: (context) =>
+                di.sl<PrinterBloc>()..add(InitPrinterEvent())),
+        BlocProvider<SalesBloc>(
+            create: (context) {
+              final bloc = di.sl<SalesBloc>()..add(LoadSalesEvent());
+              di.sl<SyncService>().onSyncComplete.stream.listen((_) {
+                if (!bloc.isClosed) bloc.add(LoadSalesEvent());
+              });
+              return bloc;
+            }),
       ],
       child: MaterialApp.router(
         title: 'Billing App',

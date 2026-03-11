@@ -10,12 +10,40 @@ import '../../features/shop/presentation/bloc/shop_bloc.dart';
 import '../../features/settings/data/repositories/printer_repository_impl.dart';
 import '../../features/settings/domain/repositories/printer_repository.dart';
 import '../../features/settings/presentation/bloc/printer_bloc.dart';
+import '../../features/billing/domain/repositories/billing_repository.dart';
+import '../../features/billing/presentation/bloc/sales_bloc.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/data/repositories/firebase_auth_repository_impl.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import 'services/sync_service.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  // Core
+  sl.registerLazySingleton<SyncService>(() => SyncService());
+
+  sl.registerLazySingleton<BillingRepository>(
+    () => BillingRepository(syncService: sl()),
+  );
+
+  sl.registerLazySingleton<AuthRepository>(
+    () => FirebaseAuthRepositoryImpl(),
+  );
+
+  sl.registerLazySingleton(
+    () => AuthBloc(
+      authRepository: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => SalesBloc(
+      billingRepository: sl(),
+    ),
+  );
+
   // Features - Product
-  // Bloc
   sl.registerFactory(
     () => ProductBloc(
       getProductsUseCase: sl(),
@@ -47,15 +75,12 @@ Future<void> init() async {
 
   // Repository
   sl.registerLazySingleton<ProductRepository>(
-    () => ProductRepositoryImpl(),
+    () => ProductRepositoryImpl(syncService: sl()),
   );
 
   // Features - Shop
-  // Use cases
   sl.registerLazySingleton(() => GetShopUseCase(sl()));
   sl.registerLazySingleton(() => UpdateShopUseCase(sl()));
-
-  // Repository
   sl.registerLazySingleton<ShopRepository>(
     () => ShopRepositoryImpl(),
   );
