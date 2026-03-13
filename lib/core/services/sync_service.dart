@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../features/product/data/models/product_model.dart';
 import '../../features/billing/data/models/transaction_model.dart';
+import '../../features/shop/data/models/shop_model.dart';
 import '../data/hive_database.dart';
 
 /// Syncs Hive (local) ↔ Firestore (cloud) whenever connectivity changes.
@@ -20,6 +21,7 @@ class SyncService {
   final Connectivity _connectivity;
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  StreamSubscription<User?>? _authSubscription;
 
   /// Fired whenever connectivity is restored, so listeners (e.g. BLoC) can
   /// reload products from the freshly-synced Hive store.
@@ -51,8 +53,23 @@ class SyncService {
         await pullProductsFromFirestore();
         await syncPendingTransactions();
         await pullTransactionsFromFirestore();
+        await pullShopFromFirestore();
         onSyncComplete.add(null);
       }
+    });
+
+    _authSubscription = _auth.authStateChanges().listen((User? user) async {
+      // When a user logs in and we are online, aggressively pull their latest data
+      // into Hive. If a user logs out, they are handled by clearAllData(), but
+      // we still emit to trigger bloc reloads (emptying them).
+      if (user != null) {
+        if (_isOnline) {
+          await pullProductsFromFirestore();
+          await pullTransactionsFromFirestore();
+          await pullShopFromFirestore();
+        }
+      }
+      onSyncComplete.add(null);
     });
   }
 
@@ -69,6 +86,9 @@ class SyncService {
 
   CollectionReference<Map<String, dynamic>> get _transactionsCollection =>
       _firestore.collection('users').doc(_userId).collection('transactions');
+
+  DocumentReference<Map<String, dynamic>> get _shopDoc =>
+      _firestore.collection('users').doc(_userId).collection('shop').doc('details');
 
   // ---------------------------------------------------------------------------
   // Push a single product to Firestore (used on every write when online).
@@ -228,6 +248,34 @@ class SyncService {
     } catch (_) {}
   }
 
+  // ---------------------------------------------------------------------------
+  // Push shop details to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushShop(ShopModel model) async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      await _shopDoc.set(model.toFirestore(), SetOptions(merge: true));
+    } catch (_) {
+      // Best effort; we don't have pending sync logic built for one single document yet, 
+      // but users rarely update shop profiles while entirely offline.
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pull shop details from Firestore into Hive.
+  // ---------------------------------------------------------------------------
+  Future<void> pullShopFromFirestore() async {
+    if (_userId == null) return;
+    try {
+      final snapshot = await _shopDoc.get();
+      if (snapshot.exists && snapshot.data() != null) {
+        final model = ShopModel.fromFirestore(snapshot.data()!);
+        await HiveDatabase.shopBox.put('shop_details', model);
+      }
+    } catch (_) {}
+  }
+
   void _markPending(ProductModel model) {
     final updated = ProductModel(
       id: model.id,
@@ -243,6 +291,7 @@ class SyncService {
 
   void dispose() {
     _connectivitySubscription?.cancel();
+    _authSubscription?.cancel();
     onSyncComplete.close();
   }
 }

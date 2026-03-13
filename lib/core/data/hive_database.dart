@@ -31,4 +31,20 @@ class HiveDatabase {
   static Box get settingsBox => Hive.box(settingsBoxName);
   static Box<TransactionModel> get transactionBox =>
       Hive.box<TransactionModel>(transactionBoxName);
+
+  static bool hasUnsyncedData() {
+    final hasUnsyncedProducts =
+        productBox.values.any((product) => product.pendingSync);
+    final hasUnsyncedTransactions =
+        transactionBox.values.any((transaction) => transaction.pendingSync);
+
+    return hasUnsyncedProducts || hasUnsyncedTransactions;
+  }
+
+  static Future<void> clearAllData() async {
+    await productBox.clear();
+    await shopBox.clear();
+    await settingsBox.clear();
+    await transactionBox.clear();
+  }
 }

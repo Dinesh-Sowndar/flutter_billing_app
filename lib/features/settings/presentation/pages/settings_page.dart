@@ -9,6 +9,7 @@ import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/printer_bloc.dart';
 import '../bloc/printer_event.dart';
 import '../bloc/printer_state.dart';
+import '../../../../core/data/hive_database.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -155,6 +156,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: 'Sign out of your account',
                   trailingIcon: null,
                   onTap: () {
+                    final hasUnsynced = HiveDatabase.hasUnsyncedData();
                     showDialog(
                       context: context,
                       builder: (BuildContext dialogContext) {
@@ -193,12 +195,15 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                const Text(
-                                  'Are you sure you want to sign out of your account? You will need to sign in again to continue.',
+                                Text(
+                                  hasUnsynced 
+                                    ? 'Your data is not synched! If you logout, your unsynched data will be lost. Are you sure you want to sign out?'
+                                    : 'Are you sure you want to sign out of your account? You will need to sign in again to continue.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 15,
-                                    color: Color(0xFF64748B),
+                                    color: hasUnsynced ? AppTheme.errorColor : const Color(0xFF64748B),
+                                    fontWeight: hasUnsynced ? FontWeight.w600 : FontWeight.normal,
                                     height: 1.4,
                                   ),
                                 ),

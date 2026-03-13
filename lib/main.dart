@@ -61,7 +61,14 @@ class _MyAppState extends State<MyApp> {
           },
         ),
         BlocProvider<ShopBloc>(
-            create: (context) => di.sl<ShopBloc>()..add(LoadShopEvent())),
+          create: (context) {
+            final bloc = di.sl<ShopBloc>()..add(LoadShopEvent());
+            di.sl<SyncService>().onSyncComplete.stream.listen((_) {
+              if (!bloc.isClosed) bloc.add(LoadShopEvent());
+            });
+            return bloc;
+          },
+        ),
         BlocProvider<BillingBloc>(
             create: (context) => BillingBloc(
                   getProductByBarcodeUseCase: di.sl(),

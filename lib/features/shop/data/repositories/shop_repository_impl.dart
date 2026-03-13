@@ -1,12 +1,16 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/services/sync_service.dart';
 import '../../domain/entities/shop.dart';
 import '../../domain/repositories/shop_repository.dart';
 import '../models/shop_model.dart';
 
 class ShopRepositoryImpl implements ShopRepository {
+  final SyncService _syncService;
   static const String shopKey = 'shop_details';
+
+  ShopRepositoryImpl({required SyncService syncService}) : _syncService = syncService;
 
   @override
   Future<Either<Failure, Shop>> getShop() async {
@@ -36,6 +40,10 @@ class ShopRepositoryImpl implements ShopRepository {
       final box = HiveDatabase.shopBox;
       final model = ShopModel.fromEntity(shop);
       await box.put(shopKey, model);
+      
+      // Push to Firebase so new instances/devices get updated data.
+      await _syncService.pushShop(model);
+      
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));

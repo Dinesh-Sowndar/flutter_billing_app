@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/data/hive_database.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -88,6 +89,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    // Clear local data before logging out to ensure no previous user data persists.
+    await HiveDatabase.clearAllData();
     // The stream will handle transitioning to unauthenticated after signOut.
     await _authRepository.signOut();
   }

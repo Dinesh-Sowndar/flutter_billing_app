@@ -82,7 +82,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetShopUseCase(sl()));
   sl.registerLazySingleton(() => UpdateShopUseCase(sl()));
   sl.registerLazySingleton<ShopRepository>(
-    () => ShopRepositoryImpl(),
+    () => ShopRepositoryImpl(syncService: sl()),
   );
 
   // Features - Settings / Printer
