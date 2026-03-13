@@ -23,7 +23,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
         onPopInvokedWithResult: (bool didPop, dynamic result) {
           if (didPop) return;
           context.read<BillingBloc>().add(ClearCartEvent());
-          context.go('/');
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/');
+          }
         },
         child: Scaffold(
           appBar: AppBar(
@@ -38,7 +42,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   size: 32, color: Theme.of(context).primaryColor),
               onPressed: () {
                 context.read<BillingBloc>().add(ClearCartEvent());
-                context.go('/');
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/');
+                }
               },
             ),
           ),
@@ -46,11 +54,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
             listener: (context, state) {
               if (state.printSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: const Text('Printed successfully'),
+                    content: const Text('Transaction completed successfully'),
                     backgroundColor: const Color(0xFF10B981),
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))));
+                context.read<BillingBloc>().add(ClearCartEvent());
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/');
+                }
               }
             },
             builder: (context, billingState) {

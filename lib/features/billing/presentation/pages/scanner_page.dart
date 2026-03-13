@@ -12,47 +12,15 @@ class ScannerPage extends StatefulWidget {
   State<ScannerPage> createState() => _ScannerPageState();
 }
 
-class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
+class _ScannerPageState extends State<ScannerPage> {
   final MobileScannerController controller = MobileScannerController(
-    autoStart: false,
     detectionSpeed: DetectionSpeed.noDuplicates,
     returnImage: false,
   );
   bool _isScanned = false;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _startScanner();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!mounted) return;
-    if (!controller.value.isInitialized) return;
-
-    switch (state) {
-      case AppLifecycleState.resumed:
-        _startScanner();
-        return;
-      case AppLifecycleState.inactive:
-      case AppLifecycleState.hidden:
-      case AppLifecycleState.paused:
-      case AppLifecycleState.detached:
-        controller.stop();
-        return;
-    }
-  }
-
-  Future<void> _startScanner() async {
-    if (!mounted || _isScanned) return;
-    await controller.start();
-  }
-
-  @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     unawaited(controller.dispose());
     super.dispose();
   }
@@ -224,7 +192,7 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
               ElevatedButton(
                 onPressed: isPermissionError
                     ? () => AppSettings.openAppSettings()
-                    : _startScanner,
+                    : () => controller.start(),
                 child: Text(
                     isPermissionError ? 'Open App Settings' : 'Retry Camera'),
               ),

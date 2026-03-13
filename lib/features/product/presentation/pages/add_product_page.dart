@@ -38,23 +38,6 @@ class _AddProductPageState extends State<AddProductPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      final productState = context.read<ProductBloc>().state;
-      final existingProduct =
-          productState.products.where((p) => p.barcode == _barcode).firstOrNull;
-
-      if (existingProduct != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Product with barcode "$_barcode" already exists!'),
-            backgroundColor: AppTheme.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-        return;
-      }
-
       final product = Product(
         id: const Uuid().v4(),
         name: _name,
@@ -65,14 +48,31 @@ class _AddProductPageState extends State<AddProductPage> {
       );
 
       context.read<ProductBloc>().add(AddProduct(product));
-      context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return BlocListener<ProductBloc, ProductState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status &&
+          (current.status == ProductStatus.success || current.status == ProductStatus.error),
+      listener: (context, state) {
+        if (state.status == ProductStatus.success) {
+          context.pop();
+        } else if (state.status == ProductStatus.error && state.message != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message!),
+              backgroundColor: AppTheme.errorColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.chevron_left_rounded,
               size: 32, color: Theme.of(context).primaryColor),
@@ -228,6 +228,7 @@ class _AddProductPageState extends State<AddProductPage> {
           label: 'Save Product',
         ),
       ),
+    ),
     );
   }
 }
