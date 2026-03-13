@@ -10,6 +10,7 @@ import '../../features/billing/presentation/pages/checkout_page.dart';
 import '../../features/product/domain/entities/product.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
+import '../../features/billing/presentation/pages/transactions_page.dart';
 import '../../core/service_locator.dart' as di;
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import 'go_router_refresh_stream.dart';
@@ -58,6 +59,10 @@ final router = GoRouter(
         GoRoute(
           path: 'checkout',
           builder: (context, state) => const CheckoutPage(),
+        ),
+        GoRoute(
+          path: 'transactions',
+          builder: (context, state) => const TransactionsPage(),
         ),
       ],
     ),
