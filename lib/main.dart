@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'config/routes/app_routes.dart';
 import 'core/data/hive_database.dart';
 import 'core/service_locator.dart' as di;
@@ -16,7 +17,10 @@ import 'firebase_options.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  // Preserve the native splash until we finish initializing.
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -25,6 +29,9 @@ void main() async {
 
   // Start SyncService so offline→online transitions trigger Firestore sync.
   await di.sl<SyncService>().initialize();
+
+  // Initialization done — remove the splash.
+  FlutterNativeSplash.remove();
 
   runApp(const MyApp());
 }
@@ -88,7 +95,7 @@ class _MyAppState extends State<MyApp> {
             }),
       ],
       child: MaterialApp.router(
-        title: 'Billing App',
+        title: 'QuickReceipt',
         theme: AppTheme.lightTheme,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
