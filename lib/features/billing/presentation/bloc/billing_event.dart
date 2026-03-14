@@ -37,6 +37,14 @@ class UpdateQuantityEvent extends BillingEvent {
 
 class ClearCartEvent extends BillingEvent {}
 
+class SetCustomerEvent extends BillingEvent {
+  final String customerId;
+  final String customerName;
+  const SetCustomerEvent({required this.customerId, required this.customerName});
+  @override
+  List<Object> get props => [customerId, customerName];
+}
+
 class FinishTransactionEvent extends BillingEvent {}
 
 class PrintReceiptEvent extends BillingEvent {

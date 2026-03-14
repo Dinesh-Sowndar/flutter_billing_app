@@ -12,6 +12,7 @@ import '../../../billing/presentation/bloc/sales_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../domain/entities/cart_item.dart';
+import '../../../../core/data/hive_database.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,7 +21,12 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+class _HomePageState extends State<HomePage>
+    with WidgetsBindingObserver, TickerProviderStateMixin {
+  late final TabController _tabController;
+  final TextEditingController _productSearchController = TextEditingController();
+  String _productSearchQuery = '';
+
   final MobileScannerController _scannerController = MobileScannerController(
     autoStart: false,
     detectionSpeed: DetectionSpeed.normal,
@@ -36,6 +42,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _tabController = TabController(length: 2, vsync: this);
     _resumeScanner();
   }
 
@@ -70,6 +77,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_scannerController.dispose());
+    _tabController.dispose();
+    _productSearchController.dispose();
     super.dispose();
   }
 
@@ -137,7 +146,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
             // BOTTOM PANEL (BOTTOM 55% + OVERLAP)
             Positioned(
-              top: (MediaQuery.of(context).size.height * 0.45) - 32,
+              top: MediaQuery.of(context).viewInsets.bottom > 0
+                  ? MediaQuery.of(context).padding.top
+                  : (MediaQuery.of(context).size.height * 0.45) - 32,
               left: 0,
               right: 0,
               bottom: 0,
@@ -280,6 +291,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
               const SizedBox(height: 16),
               _buildModernIconButton(
+                icon: Icons.people_alt_rounded,
+                onPressed: () async {
+                  await _pauseScanner();
+                  await context.push('/customers');
+                  if (_isCameraOn && mounted) await _resumeScanner();
+                },
+                color: const Color(0xFF10B981).withValues(alpha: 0.8),
+              ),
+              const SizedBox(height: 16),
+              _buildModernIconButton(
                 icon: Icons.bar_chart_rounded,
                 onPressed: () => _showSalesDashboard(context),
                 color: const Color(0xFF8B5CF6).withValues(alpha: 0.8),
@@ -410,7 +431,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             child: Container(
               width: 40,
               height: 5,
-              margin: const EdgeInsets.symmetric(vertical: 16),
+              margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
                 color: const Color(0xFFCBD5E1), // Slate 300
                 borderRadius: BorderRadius.circular(4),
@@ -418,86 +439,276 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
           ),
 
-          // Header
-          BlocBuilder<BillingBloc, BillingState>(
-            builder: (context, state) {
-              final totalItems =
-                  state.cartItems.fold<int>(0, (sum, i) => sum + i.quantity);
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Current Order',
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5)),
-                        const SizedBox(height: 4),
-                        Text('$totalItems items scanned',
-                            style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF64748B),
-                                fontWeight: FontWeight.w500)),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Text('TOTAL',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF94A3B8),
-                                letterSpacing: 1.2)),
-                        const SizedBox(height: 2),
-                        Text(
-                          '₹${state.totalAmount.toStringAsFixed(2)}',
-                          style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Theme.of(context).primaryColor,
-                              letterSpacing: -1),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
+          // Tab Bar
+          TabBar(
+            controller: _tabController,
+            labelColor: AppTheme.primaryColor,
+            unselectedLabelColor: const Color(0xFF94A3B8),
+            indicatorColor: AppTheme.primaryColor,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            tabs: const [
+              Tab(text: 'Current Order'),
+              Tab(text: 'Inventory'),
+            ],
           ),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(height: 1, color: Color(0xFFE2E8F0)), // Slate 200
-          ),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
 
-          // List View
+          // Tab Views
           Expanded(
-            child: BlocBuilder<BillingBloc, BillingState>(
-              builder: (context, state) {
-                if (state.cartItems.isEmpty) {
-                  return _buildEmptyCart();
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.only(
-                      left: 20, right: 20, top: 16, bottom: 120),
-                  itemCount: state.cartItems.length,
-                  itemBuilder: (context, index) {
-                    final item = state.cartItems[index];
-                    return _buildCartItemCard(context, item);
-                  },
-                );
-              },
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildOrderTab(),
+                _buildInventoryTab(),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildOrderTab() {
+    return Column(
+      children: [
+        // Header (Current Order)
+        BlocBuilder<BillingBloc, BillingState>(
+          builder: (context, state) {
+            final totalItems =
+                state.cartItems.fold<int>(0, (sum, i) => sum + i.quantity);
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Order Details',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5)),
+                      const SizedBox(height: 4),
+                      Text('$totalItems items scanned',
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text('TOTAL',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF94A3B8),
+                              letterSpacing: 1.2)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '₹${state.totalAmount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Theme.of(context).primaryColor,
+                            letterSpacing: -1),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+        ),
+
+        Expanded(
+          child: BlocBuilder<BillingBloc, BillingState>(
+            builder: (context, state) {
+              if (state.cartItems.isEmpty) {
+                return _buildEmptyCart();
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.only(
+                    left: 20, right: 20, top: 12, bottom: 120),
+                itemCount: state.cartItems.length,
+                itemBuilder: (context, index) {
+                  final item = state.cartItems[index];
+                  return _buildCartItemCard(context, item);
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInventoryTab() {
+    final allProducts = HiveDatabase.productBox.values.toList();
+    final filtered = _productSearchQuery.trim().isEmpty
+        ? allProducts
+        : allProducts
+            .where((p) =>
+                p.name.toLowerCase().contains(_productSearchQuery.toLowerCase()) ||
+                p.barcode.contains(_productSearchQuery))
+            .toList();
+
+    return Column(
+      children: [
+        // Search bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: TextField(
+            controller: _productSearchController,
+            onChanged: (v) => setState(() => _productSearchQuery = v),
+            decoration: InputDecoration(
+              hintText: 'Search inventory…',
+              hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+              prefixIcon: const Icon(Icons.search_rounded,
+                  color: Color(0xFF94A3B8), size: 20),
+              suffixIcon: _productSearchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded,
+                          color: Color(0xFF94A3B8), size: 20),
+                      onPressed: () {
+                        _productSearchController.clear();
+                        setState(() => _productSearchQuery = '');
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: const Color(0xFFF1F5F9),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            ),
+          ),
+        ),
+
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.inventory_2_outlined,
+                          size: 48, color: Colors.grey.shade300),
+                      const SizedBox(height: 12),
+                      const Text('No products found',
+                          style: TextStyle(color: Color(0xFF94A3B8))),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final product = filtered[index];
+                    return BlocBuilder<BillingBloc, BillingState>(
+                      builder: (context, state) {
+                        final inCart = state.cartItems
+                            .any((item) => item.product.id == product.id);
+
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: inCart
+                                ? Border.all(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                    width: 1)
+                                : null,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.inventory_2_outlined,
+                                    color: AppTheme.primaryColor, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(product.name,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: Color(0xFF1E293B))),
+                                    Text(
+                                        '₹${product.price.toStringAsFixed(2)}  •  Stock: ${product.stock}',
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF64748B))),
+                                  ],
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  context
+                                      .read<BillingBloc>()
+                                      .add(AddProductToCartEvent(product));
+                                  final canVibrate = Vibrate.canVibrate;
+                                  canVibrate.then((can) {
+                                    if (can) Vibrate.feedback(FeedbackType.light);
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: inCart
+                                      ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                                      : AppTheme.primaryColor,
+                                  foregroundColor:
+                                      inCart ? AppTheme.primaryColor : Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(inCart ? 'Add More' : 'Add',
+                                    style: const TextStyle(
+                                        fontSize: 12, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../features/product/data/models/product_model.dart';
 import '../../features/billing/data/models/transaction_model.dart';
 import '../../features/shop/data/models/shop_model.dart';
+import '../../features/customer/data/models/customer_model.dart';
 import '../data/hive_database.dart';
 
 /// Syncs Hive (local) ↔ Firestore (cloud) whenever connectivity changes.
@@ -54,6 +55,8 @@ class SyncService {
         await syncPendingTransactions();
         await pullTransactionsFromFirestore();
         await pullShopFromFirestore();
+        await pushPendingCustomers();
+        await pullCustomersFromFirestore();
         onSyncComplete.add(null);
       }
     });
@@ -67,6 +70,7 @@ class SyncService {
           await pullProductsFromFirestore();
           await pullTransactionsFromFirestore();
           await pullShopFromFirestore();
+          await pullCustomersFromFirestore();
         }
       }
       onSyncComplete.add(null);
@@ -89,6 +93,9 @@ class SyncService {
 
   DocumentReference<Map<String, dynamic>> get _shopDoc =>
       _firestore.collection('users').doc(_userId).collection('shop').doc('details');
+
+  CollectionReference<Map<String, dynamic>> get _customersCollection =>
+      _firestore.collection('users').doc(_userId).collection('customers');
 
   // ---------------------------------------------------------------------------
   // Push a single product to Firestore (used on every write when online).
@@ -287,6 +294,63 @@ class SyncService {
       pendingSync: true,
     );
     HiveDatabase.productBox.put(updated.id, updated);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Push a single customer to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushCustomer(CustomerModel model) async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      await _customersCollection
+          .doc(model.id)
+          .set(model.toFirestore(), SetOptions(merge: true));
+      final cleared = CustomerModel(
+        id: model.id,
+        name: model.name,
+        phone: model.phone,
+        userId: model.userId,
+        pendingSync: false,
+      );
+      await HiveDatabase.customerBox.put(cleared.id, cleared);
+    } catch (_) {
+      final pending = CustomerModel(
+        id: model.id,
+        name: model.name,
+        phone: model.phone,
+        userId: model.userId,
+        pendingSync: true,
+      );
+      await HiveDatabase.customerBox.put(pending.id, pending);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Push all locally-pending customers to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushPendingCustomers() async {
+    final pending = HiveDatabase.customerBox.values
+        .where((c) => c.pendingSync)
+        .toList();
+    for (final c in pending) {
+      await pushCustomer(c);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pull the current user's customers from Firestore into Hive.
+  // ---------------------------------------------------------------------------
+  Future<void> pullCustomersFromFirestore() async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      final snapshot = await _customersCollection.get();
+      for (final doc in snapshot.docs) {
+        final model = CustomerModel.fromFirestore(doc.data());
+        await HiveDatabase.customerBox.put(model.id, model);
+      }
+    } catch (_) {}
   }
 
   void dispose() {

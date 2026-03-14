@@ -44,13 +44,20 @@ class TransactionModel {
   final List<TransactionItemModel> items;
 
   /// UID of the Firebase user who created this transaction.
-  /// Empty string for legacy records written before auth was added.
   @HiveField(4)
   final String userId;
 
   /// True when the record has not yet been pushed to Firestore.
   @HiveField(5)
   final bool pendingSync;
+
+  /// Optional: ID of the customer this transaction is linked to.
+  @HiveField(6)
+  final String customerId;
+
+  /// Optional: Display name of the customer this transaction is linked to.
+  @HiveField(7)
+  final String customerName;
 
   TransactionModel({
     required this.id,
@@ -59,6 +66,8 @@ class TransactionModel {
     required this.items,
     this.userId = '',
     this.pendingSync = false,
+    this.customerId = '',
+    this.customerName = '',
   });
 
   factory TransactionModel.fromFirestore(Map<String, dynamic> map) {
@@ -69,6 +78,8 @@ class TransactionModel {
       totalAmount: (map['totalAmount'] as num?)?.toDouble() ?? 0.0,
       userId: map['userId'] as String? ?? '',
       pendingSync: false,
+      customerId: map['customerId'] as String? ?? '',
+      customerName: map['customerName'] as String? ?? '',
       items: rawItems
           .map((i) => TransactionItemModel(
                 productId: i['productId'] as String? ?? '',
@@ -86,6 +97,8 @@ class TransactionModel {
         'date': Timestamp.fromDate(date),
         'totalAmount': totalAmount,
         'userId': userId,
+        'customerId': customerId,
+        'customerName': customerName,
         'items': items
             .map((i) => {
                   'productId': i.productId,
@@ -104,6 +117,8 @@ class TransactionModel {
     List<TransactionItemModel>? items,
     String? userId,
     bool? pendingSync,
+    String? customerId,
+    String? customerName,
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -112,6 +127,8 @@ class TransactionModel {
       items: items ?? this.items,
       userId: userId ?? this.userId,
       pendingSync: pendingSync ?? this.pendingSync,
+      customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
     );
   }
 }

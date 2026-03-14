@@ -26,6 +26,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     on<RemoveProductFromCartEvent>(_onRemoveProductFromCart);
     on<UpdateQuantityEvent>(_onUpdateQuantity);
     on<ClearCartEvent>(_onClearCart);
+    on<SetCustomerEvent>(_onSetCustomer);
     on<PrintReceiptEvent>(_onPrintReceipt);
     on<FinishTransactionEvent>(_onFinishTransaction);
   }
@@ -90,6 +91,13 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     emit(const BillingState());
   }
 
+  void _onSetCustomer(SetCustomerEvent event, Emitter<BillingState> emit) {
+    emit(state.copyWith(
+      customerId: event.customerId,
+      customerName: event.customerName,
+    ));
+  }
+
   Future<void> _onFinishTransaction(
       FinishTransactionEvent event, Emitter<BillingState> emit) async {
     emit(state.copyWith(clearError: true));
@@ -98,6 +106,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         date: DateTime.now(),
         totalAmount: state.totalAmount,
+        customerId: state.customerId,
+        customerName: state.customerName,
         items: state.cartItems
             .map((item) => TransactionItemModel(
                   productId: item.product.id,
@@ -174,6 +184,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         date: DateTime.now(),
         totalAmount: state.totalAmount,
+        customerId: state.customerId,
+        customerName: state.customerName,
         items: state.cartItems
             .map((item) => TransactionItemModel(
                   productId: item.product.id,

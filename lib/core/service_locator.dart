@@ -15,6 +15,10 @@ import '../../features/billing/presentation/bloc/sales_bloc.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/data/repositories/firebase_auth_repository_impl.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/customer/data/repositories/customer_repository_impl.dart';
+import '../../features/customer/domain/repositories/customer_repository.dart';
+import '../../features/customer/domain/usecases/customer_usecases.dart';
+import '../../features/customer/presentation/bloc/customer_bloc.dart';
 import 'services/sync_service.dart';
 
 final sl = GetIt.instance;
@@ -89,4 +93,17 @@ Future<void> init() async {
   sl.registerLazySingleton<PrinterRepository>(
     () => PrinterRepositoryImpl(),
   );
+
+  // Features - Customer
+  sl.registerLazySingleton<CustomerRepository>(
+    () => CustomerRepositoryImpl(syncService: sl()),
+  );
+  sl.registerLazySingleton(() => GetCustomersUseCase(sl()));
+  sl.registerLazySingleton(() => AddCustomerUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteCustomerUseCase(sl()));
+  sl.registerFactory(() => CustomerBloc(
+        getCustomersUseCase: sl(),
+        addCustomerUseCase: sl(),
+        deleteCustomerUseCase: sl(),
+      ));
 }

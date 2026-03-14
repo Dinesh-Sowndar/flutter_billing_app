@@ -107,7 +107,7 @@ class _AddProductPageState extends State<AddProductPage> {
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Scan the barcode on the product packaging to quickly fill in the details.',
+                          'Barcode is optional. You can add products without one and select them manually during checkout.',
                           style: TextStyle(
                               color: Color(0xFF0F172A),
                               fontSize: 13,
@@ -126,13 +126,12 @@ class _AddProductPageState extends State<AddProductPage> {
                         key: ValueKey(_barcode),
                         initialValue: _barcode,
                         decoration: const InputDecoration(
-                          hintText: 'e.g. 890123456789',
+                          hintText: 'e.g. 890123456789 (optional)',
                           prefixIcon: Icon(Icons.qr_code_2_rounded,
                               color: Color(0xFF94A3B8)),
                         ),
-                        validator:
-                            AppValidators.required('Please enter a barcode'),
-                        onSaved: (value) => _barcode = value!,
+                        // barcode is optional — no validator
+                        onSaved: (value) => _barcode = value?.trim() ?? '',
                       ),
                     ),
                     const SizedBox(width: 16),
