@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:app_settings/app_settings.dart';
 import 'dart:ui';
 import 'dart:async';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../../billing/presentation/bloc/sales_bloc.dart';
@@ -555,160 +556,165 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildInventoryTab() {
-    final allProducts = HiveDatabase.productBox.values.toList();
-    final filtered = _productSearchQuery.trim().isEmpty
-        ? allProducts
-        : allProducts
-            .where((p) =>
-                p.name.toLowerCase().contains(_productSearchQuery.toLowerCase()) ||
-                p.barcode.contains(_productSearchQuery))
-            .toList();
+    return ValueListenableBuilder(
+      valueListenable: HiveDatabase.productBox.listenable(),
+      builder: (context, box, _) {
+        final allProducts = box.values.toList();
+        final filtered = _productSearchQuery.trim().isEmpty
+            ? allProducts
+            : allProducts
+                .where((p) =>
+                    p.name.toLowerCase().contains(_productSearchQuery.toLowerCase()) ||
+                    p.barcode.contains(_productSearchQuery))
+                .toList();
 
-    return Column(
-      children: [
-        // Search bar
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: TextField(
-            controller: _productSearchController,
-            onChanged: (v) => setState(() => _productSearchQuery = v),
-            decoration: InputDecoration(
-              hintText: 'Search inventory…',
-              hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-              prefixIcon: const Icon(Icons.search_rounded,
-                  color: Color(0xFF94A3B8), size: 20),
-              suffixIcon: _productSearchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear_rounded,
-                          color: Color(0xFF94A3B8), size: 20),
-                      onPressed: () {
-                        _productSearchController.clear();
-                        setState(() => _productSearchQuery = '');
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: const Color(0xFFF1F5F9),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-            ),
-          ),
-        ),
-
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.inventory_2_outlined,
-                          size: 48, color: Colors.grey.shade300),
-                      const SizedBox(height: 12),
-                      const Text('No products found',
-                          style: TextStyle(color: Color(0xFF94A3B8))),
-                    ],
+        return Column(
+          children: [
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: TextField(
+                controller: _productSearchController,
+                onChanged: (v) => setState(() => _productSearchQuery = v),
+                decoration: InputDecoration(
+                  hintText: 'Search inventory…',
+                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      color: Color(0xFF94A3B8), size: 20),
+                  suffixIcon: _productSearchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded,
+                              color: Color(0xFF94A3B8), size: 20),
+                          onPressed: () {
+                            _productSearchController.clear();
+                            setState(() => _productSearchQuery = '');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: const Color(0xFFF1F5F9),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
                   ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final product = filtered[index];
-                    return BlocBuilder<BillingBloc, BillingState>(
-                      builder: (context, state) {
-                        final inCart = state.cartItems
-                            .any((item) => item.product.id == product.id);
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                ),
+              ),
+            ),
 
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: inCart
-                                ? Border.all(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                                    width: 1)
-                                : null,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.inventory_2_outlined,
+                              size: 48, color: Colors.grey.shade300),
+                          const SizedBox(height: 12),
+                          const Text('No products found',
+                              style: TextStyle(color: Color(0xFF94A3B8))),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final product = filtered[index];
+                        return BlocBuilder<BillingBloc, BillingState>(
+                          builder: (context, state) {
+                            final inCart = state.cartItems
+                                .any((item) => item.product.id == product.id);
+
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: inCart
+                                    ? Border.all(
+                                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                                        width: 1)
+                                    : null,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.inventory_2_outlined,
-                                    color: AppTheme.primaryColor, size: 20),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(product.name,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(Icons.inventory_2_outlined,
+                                        color: AppTheme.primaryColor, size: 20),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(product.name,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: Color(0xFF1E293B))),
+                                        Text(
+                                            '₹${product.price.toStringAsFixed(2)}  •  Stock: ${product.stock}',
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Color(0xFF64748B))),
+                                      ],
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      context
+                                          .read<BillingBloc>()
+                                          .add(AddProductToCartEvent(product));
+                                      final canVibrate = Vibrate.canVibrate;
+                                      canVibrate.then((can) {
+                                        if (can) Vibrate.feedback(FeedbackType.light);
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: inCart
+                                          ? AppTheme.primaryColor.withValues(alpha: 0.1)
+                                          : AppTheme.primaryColor,
+                                      foregroundColor:
+                                          inCart ? AppTheme.primaryColor : Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(inCart ? 'Add More' : 'Add',
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                            color: Color(0xFF1E293B))),
-                                    Text(
-                                        '₹${product.price.toStringAsFixed(2)}  •  Stock: ${product.stock}',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF64748B))),
-                                  ],
-                                ),
+                                            fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
                               ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  context
-                                      .read<BillingBloc>()
-                                      .add(AddProductToCartEvent(product));
-                                  final canVibrate = Vibrate.canVibrate;
-                                  canVibrate.then((can) {
-                                    if (can) Vibrate.feedback(FeedbackType.light);
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: inCart
-                                      ? AppTheme.primaryColor.withValues(alpha: 0.1)
-                                      : AppTheme.primaryColor,
-                                  foregroundColor:
-                                      inCart ? AppTheme.primaryColor : Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: Text(inCart ? 'Add More' : 'Add',
-                                    style: const TextStyle(
-                                        fontSize: 12, fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
-        ),
-      ],
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 

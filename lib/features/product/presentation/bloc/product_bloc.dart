@@ -39,9 +39,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
   Future<void> _onAddProduct(
       AddProduct event, Emitter<ProductState> emit) async {
-    // Check for duplicates first
-    final bool exists = state.products.any(
-      (p) => p.barcode == event.product.barcode,
+    // Check for duplicates first (only if the product has a barcode)
+    final barcode = event.product.barcode;
+    final bool exists = barcode.isNotEmpty && state.products.any(
+      (p) => p.barcode == barcode,
     );
     if (exists) {
       emit(state.copyWith(
