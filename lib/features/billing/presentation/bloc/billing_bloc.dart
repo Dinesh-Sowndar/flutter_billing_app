@@ -1,10 +1,12 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/cart_item.dart';
+import 'package:billing_app/features/billing/domain/entities/order_entity.dart';
+import 'package:billing_app/features/billing/data/models/order_model.dart';
+import 'package:billing_app/features/billing/domain/entities/cart_item.dart';
 import 'package:billing_app/features/product/domain/entities/product.dart';
 import 'package:billing_app/features/product/domain/usecases/product_usecases.dart';
-import '../../../../core/utils/printer_helper.dart';
-import '../../../../core/data/hive_database.dart';
+import 'package:billing_app/core/utils/printer_helper.dart';
+import 'package:billing_app/core/data/hive_database.dart';
 
 part 'billing_event.dart';
 part 'billing_state.dart';
@@ -20,6 +22,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     on<UpdateQuantityEvent>(_onUpdateQuantity);
     on<ClearCartEvent>(_onClearCart);
     on<PrintReceiptEvent>(_onPrintReceipt);
+    on<SaveOrderEvent>(_onSaveOrder);
+    on<LoadOrdersEvent>(_onLoadOrders);
   }
 
   Future<void> _onScanBarcode(
@@ -134,5 +138,37 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       // Reset error instantly avoids sticky error
       emit(state.copyWith(clearError: true));
     }
+  }
+
+  Future<void> _onSaveOrder(
+      SaveOrderEvent event, Emitter<BillingState> emit) async {
+    if (state.cartItems.isEmpty) return;
+
+    final orderEntity = OrderEntity(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      items: state.cartItems
+          .map((item) => OrderItem(
+                product: item.product,
+                quantity: item.quantity,
+              ))
+          .toList(),
+      totalAmount: state.totalAmount,
+      dateTime: DateTime.now(),
+      shopName: event.shopName,
+    );
+
+    final orderModel = OrderModel.fromEntity(orderEntity);
+    await HiveDatabase.orderBox.add(orderModel);
+
+    // Refresh order list if needed
+    add(LoadOrdersEvent());
+  }
+
+  void _onLoadOrders(LoadOrdersEvent event, Emitter<BillingState> emit) {
+    final orders =
+        HiveDatabase.orderBox.values.map((model) => model.toEntity()).toList();
+    // Sort by date descending
+    orders.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    emit(state.copyWith(pastOrders: orders));
   }
 }

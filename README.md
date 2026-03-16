@@ -18,6 +18,8 @@ This application serves as a complete offline POS system for small to medium-siz
 - **Smart Checkout System**: Rapid cart building via camera-based barcode scanning or manual entry, and robust order calculation functionality.
 - **Bluetooth Thermal Printing**: Direct integration with thermal printers (`print_bluetooth_thermal`) to instantly output physical receipts.
 - **Shop Settings & Customization**: Centrally managed shop details printed dynamically on receipts.
+- **Order History Management**: Persistent local record of all past checkouts with intelligent sorting and filtering.
+- **PDF Invoice Engine**: Dynamic generation of 80mm roll-format digital receipts for sharing or a-sync viewing.
 - **Offline-First Architecture**: Powered by `Hive` for lightning-fast localized NoSQL data storage. No active internet connectivity required.
 
 ## 🛠 Tech Stack & Architecture
@@ -31,7 +33,8 @@ Built leveraging industry-standard architectural principles (Clean Architecture 
 - **Local Database**: `hive` & `hive_flutter`
 - **Data Modeling**: `json_serializable`, `equatable`
 - **Functional Programming**: `fpdart`
-- **Hardware Integrations**: `mobile_scanner` (barcodes), `print_bluetooth_thermal`
+- **Hardware Integrations**: `mobile_scanner` (barcodes), `print_bluetooth_thermal` (thermal printing)
+- **Document Engine**: `pdf`, `printing` (PDF generation and system print dialogs)
 
 ## 📁 File Structure
 
@@ -62,6 +65,7 @@ lib/
 - **Rapid Billing Entry**: A cashier launches the app, navigates to the checkout page, and uses the device camera to instantly scan product barcodes. The products are added to the cart, the total is calculated including taxes, and a receipt is finalized.
 - **Physical Receipt Generation**: After checkout confirmation, the app triggers a connected external Bluetooth thermal POS printer to instantly print an itemized paper receipt with the shop’s header.
 - **Inventory Sideloading**: A manager opens the Product feature to add new stock to the local database, taking a picture of the barcode to bind the SKU for future lightning-fast checkouts.
+- **Audit & Receipt Re-generation**: A customer returns for a copy of their bill; the manager searches the Order History (persisted in Hive), retrieves the record, and either shares a PDF or prints a duplicate thermal receipt instantly.
 - **No-Connection Operation**: The business operates a stall at an exhibition with poor networking. The app functions entirely via its embedded Hive local database and Bluetooth, completely undisturbed by network drops.
 
 ## 🚀 Getting Started

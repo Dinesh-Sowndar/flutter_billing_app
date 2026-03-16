@@ -5,6 +5,7 @@ import 'package:vibration/vibration.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../billing/presentation/bloc/billing_bloc.dart';
+import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../domain/entities/cart_item.dart';
@@ -106,17 +107,32 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       bottomSheet:
-          BlocBuilder<BillingBloc, BillingState>(builder: (context, state) {
-        return PrimaryButton(
-          onPressed: state.cartItems.isEmpty
-              ? null
-              : () async {
-                  _scannerController.stop();
-                  await context.push('/checkout');
-                  if (_isCameraOn && mounted) _scannerController.start();
-                },
-          icon: Icons.payment,
-          label: 'Review Order',
+          BlocBuilder<BillingBloc, BillingState>(builder: (context, billingState) {
+        return BlocBuilder<ShopBloc, ShopState>(
+          builder: (context, shopState) {
+            return PrimaryButton(
+              onPressed: billingState.cartItems.isEmpty
+                  ? null
+                  : () async {
+                      String shopName = 'Elite Groceries';
+                      if (shopState is ShopLoaded) {
+                        shopName = shopState.shop.name;
+                      }
+
+                      _scannerController.stop();
+
+                      // Save order as an order in history when reviewing
+                      context
+                          .read<BillingBloc>()
+                          .add(SaveOrderEvent(shopName: shopName));
+
+                      await context.push('/checkout');
+                      if (_isCameraOn && mounted) _scannerController.start();
+                    },
+              icon: Icons.payment,
+              label: 'Review Order',
+            );
+          },
         );
       }),
     );
@@ -134,12 +150,22 @@ class _HomePageState extends State<HomePage> {
           ),
           if (!_isCameraOn) _buildCameraOffState(),
 
-          // Overlay Actions (Top Right)
+          // Overlay Actions (Top Left)
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
-            right: 16,
+            left: 16,
             child: Column(
               children: [
+                _buildOverlayButton(
+                  icon: Icons.history,
+                  onPressed: () async {
+                    _scannerController.stop();
+                    context.read<BillingBloc>().add(LoadOrdersEvent());
+                    await context.push('/orders');
+                    if (_isCameraOn && mounted) _scannerController.start();
+                  },
+                ),
+                const SizedBox(height: 16),
                 _buildOverlayButton(
                   icon: Icons.settings,
                   onPressed: () async {
@@ -148,7 +174,16 @@ class _HomePageState extends State<HomePage> {
                     if (_isCameraOn && mounted) _scannerController.start();
                   },
                 ),
-                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+
+          // Overlay Actions (Top Right)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: Column(
+              children: [
                 if (_isCameraOn)
                   _buildOverlayButton(
                     icon:
@@ -161,7 +196,6 @@ class _HomePageState extends State<HomePage> {
                 if (_isCameraOn) const SizedBox(height: 16),
                 _buildOverlayButton(
                   icon: _isCameraOn ? Icons.videocam : Icons.videocam_off,
-                  // color:  Colors.white24 ,
                   onPressed: () {
                     setState(() {
                       _isCameraOn = !_isCameraOn;
