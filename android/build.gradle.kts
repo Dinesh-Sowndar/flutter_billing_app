@@ -19,14 +19,20 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
-// Force compileSdk 36 on all subprojects except :app (which already sets it
-// and is already evaluated via evaluationDependsOn).
+// Force compileSdk 36 on all subprojects. If already evaluated, set immediately.
 subprojects {
     if (project.name != "app") {
-        afterEvaluate {
-            if (project.hasProperty("android")) {
-                val android = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
-                android.compileSdkVersion(36)
+        if (project.state.executed) {
+            val android = extensions.findByName("android")
+            if (android != null) {
+                (android as com.android.build.gradle.BaseExtension).compileSdkVersion(36)
+            }
+        } else {
+            afterEvaluate {
+                val android = extensions.findByName("android")
+                if (android != null) {
+                    (android as com.android.build.gradle.BaseExtension).compileSdkVersion(36)
+                }
             }
         }
     }

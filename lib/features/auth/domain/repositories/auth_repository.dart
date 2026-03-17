@@ -1,23 +1,23 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
+import '../entities/app_user.dart';
 
 abstract class AuthRepository {
-  /// Stream of [User] which will emit the current user when
+  /// Stream of [AppUser] which will emit the current user when
   /// the authentication state changes
-  Stream<User?> get user;
+  Stream<AppUser?> get user;
 
   /// Returns the current cached user.
-  User? get currentUser;
+  AppUser? get currentUser;
 
   /// Signs in a user with their [email] and [password].
-  Future<Either<Failure, User>> signInWithEmailAndPassword({
+  Future<Either<Failure, AppUser>> signInWithEmailAndPassword({
     required String email,
     required String password,
   });
 
   /// Registers a new user with their [email] and [password].
-  Future<Either<Failure, User>> signUpWithEmailAndPassword({
+  Future<Either<Failure, AppUser>> signUpWithEmailAndPassword({
     required String email,
     required String password,
   });

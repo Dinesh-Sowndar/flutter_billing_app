@@ -4,7 +4,7 @@ enum AuthStatus { initial, unauthenticated, authenticated, loading, error }
 
 class AuthState extends Equatable {
   final AuthStatus status;
-  final User? user;
+  final AppUser? user;
   final String? errorMessage;
 
   const AuthState._({
@@ -18,7 +18,7 @@ class AuthState extends Equatable {
   const AuthState.unauthenticated()
       : this._(status: AuthStatus.unauthenticated);
 
-  const AuthState.authenticated(User user)
+  const AuthState.authenticated(AppUser user)
       : this._(status: AuthStatus.authenticated, user: user);
 
   const AuthState.loading() : this._(status: AuthStatus.loading);
