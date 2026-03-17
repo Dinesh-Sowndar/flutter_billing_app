@@ -47,7 +47,9 @@ final router = GoRouter(
         authState.status == AuthStatus.error) {
       if (!isLoggingIn && !isSigningUp) return '/login';
     } else if (authState.status == AuthStatus.authenticated) {
-      if (isLoggingIn || isSigningUp) return '/';
+      if (isLoggingIn || isSigningUp) {
+        return '/';
+      }
     }
 
     return null;
@@ -57,8 +59,7 @@ final router = GoRouter(
     GoRoute(
       path: '/splash',
       builder: (context, state) => const SplashPage(),
-    ),
-    GoRoute(
+    ),    GoRoute(
       path: '/login',
       builder: (context, state) => const LoginPage(),
     ),

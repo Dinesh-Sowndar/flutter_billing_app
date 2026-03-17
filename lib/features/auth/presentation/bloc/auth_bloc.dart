@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'package:equatable/equatable.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../domain/entities/app_user.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
-  late final StreamSubscription<User?> _userSubscription;
+  late final StreamSubscription<AppUser?> _userSubscription;
 
   /// How many upcoming AuthUserChanged events from the stream to suppress.
   /// Used to prevent authStateChanges from overriding explicit sign-in/out results.
@@ -34,8 +34,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _suppressUserChanges--;
       return;
     }
-    if (event.user != null) {
-      emit(AuthState.authenticated(event.user!));
+
+    final user = event.user;
+
+    if (user != null) {
+      // Enforcement: If account is deleted or disabled, sign out immediately.
+      // This responds to real-time status changes in Firestore.
+      if (user.status != 'active') {
+        add(const AuthLogoutRequested());
+        return;
+      }
+      emit(AuthState.authenticated(user));
     } else {
       emit(const AuthState.unauthenticated());
     }
@@ -48,7 +57,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthState.loading());
 
     // Sign out first so any persisted session does not bypass credential
-    // validation. Suppress the resulting null event from authStateChanges.
+    // validation. Suppress the null event that authStateChanges emits from
+    // signOut — we emit authenticated directly from the result below.
     _suppressUserChanges++;
     await _authRepository.signOut();
 
@@ -62,8 +72,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthState.error(failure.message));
       },
       (user) {
-        // Success: suppress the signOut's null event which may still be
-        // in the queue, then emit authenticated directly.
+        // Emit authenticated directly. The stream may also emit a user
+        // event but Equatable will block the duplicate re-emission.
         emit(AuthState.authenticated(user));
       },
     );
@@ -89,10 +99,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    // Clear local data before logging out to ensure no previous user data persists.
-    await HiveDatabase.clearAllData();
-    // The stream will handle transitioning to unauthenticated after signOut.
+    // Always sign out first — clearAllData is best-effort and must not
+    // prevent the Firebase session from being terminated.
     await _authRepository.signOut();
+    // Clear local Hive data after signing out (ignore any Hive errors).
+    try {
+      await HiveDatabase.clearAllData();
+    } catch (_) {
+      // Hive errors on clear are non-fatal; the session is already ended.
+    }
   }
 
   @override

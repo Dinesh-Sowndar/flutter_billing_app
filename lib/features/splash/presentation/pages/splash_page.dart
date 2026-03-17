@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -19,6 +21,8 @@ class _SplashPageState extends State<SplashPage>
   late final Animation<double> _logoFade;
   late final Animation<double> _textFade;
   late final Animation<Offset> _textSlide;
+
+  bool _isMinimiumSplashTimePassed = false;
 
   @override
   void initState() {
@@ -66,10 +70,25 @@ class _SplashPageState extends State<SplashPage>
       _textController.forward();
     });
 
-    // Navigate after 3 seconds
+    // Navigate after 3 seconds, but check auth state first
     Timer(const Duration(seconds: 3), () {
-      if (mounted) context.go('/');
+      if (!mounted) return;
+      _isMinimiumSplashTimePassed = true;
+      _navigateBasedOnAuth();
     });
+  }
+
+  void _navigateBasedOnAuth() {
+    final authState = context.read<AuthBloc>().state;
+    // If still resolving session, wait. (The router will handle it if it changes later, 
+    // but splash explicitly redirects right now).
+    if (authState.status == AuthStatus.initial ||
+        authState.status == AuthStatus.loading) {
+      // Just wait for stream to settle.
+      return;
+    }
+
+    context.go('/');
   }
 
   @override
@@ -97,10 +116,21 @@ class _SplashPageState extends State<SplashPage>
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+          child: BlocListener<AuthBloc, AuthState>(
+            listener: (context, state) {
+              // If the timer finished but auth was still loading, 
+              // this listener catches when it finally resolves.
+              if (_isMinimiumSplashTimePassed && 
+                  state.status != AuthStatus.initial &&
+                  state.status != AuthStatus.loading) {
+                // If 3 seconds have passed, navigate.
+                _navigateBasedOnAuth();
+              }
+            },
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                 const Spacer(flex: 2),
 
                 // Animated Logo
@@ -172,6 +202,7 @@ class _SplashPageState extends State<SplashPage>
                 const SizedBox(height: 48),
               ],
             ),
+          ),
           ),
         ),
       ),

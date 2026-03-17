@@ -6,27 +6,28 @@ import 'package:billing_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:billing_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:billing_app/core/error/failure.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:billing_app/features/product/data/models/product_model.dart';
 import 'package:billing_app/features/billing/data/models/transaction_model.dart';
 import 'package:billing_app/features/shop/data/models/shop_model.dart';
+
+import 'package:billing_app/features/auth/domain/entities/app_user.dart';
 
 class MockAuthRepository implements AuthRepository {
   bool signOutCalled = false;
   
   @override
-  Stream<User?> get user => const Stream.empty();
+  Stream<AppUser?> get user => const Stream.empty();
 
   @override
-  User? get currentUser => null;
+  AppUser? get currentUser => null;
 
   @override
-  Future<Either<Failure, User>> signInWithEmailAndPassword({required String email, required String password}) async {
+  Future<Either<Failure, AppUser>> signInWithEmailAndPassword({required String email, required String password}) async {
     return Left(ServerFailure('Not implemented'));
   }
 
   @override
-  Future<Either<Failure, User>> signUpWithEmailAndPassword({required String email, required String password}) async {
+  Future<Either<Failure, AppUser>> signUpWithEmailAndPassword({required String email, required String password, String role = 'user'}) async {
     return Left(ServerFailure('Not implemented'));
   }
 

@@ -234,6 +234,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   return null;
                                 },
                               ),
+
                               const SizedBox(height: 32),
                               ElevatedButton(
                                 onPressed: isLoading ? null : _onSignUp,
