@@ -71,13 +71,15 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       pendingSync: fields[5] as bool,
       customerId: fields[6] as String,
       customerName: fields[7] as String,
+      amountPaid: fields[8] == null ? 0.0 : fields[8] as double,
+      paymentMethod: fields[9] == null ? 'cash' : fields[9] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, TransactionModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -93,7 +95,11 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       ..writeByte(6)
       ..write(obj.customerId)
       ..writeByte(7)
-      ..write(obj.customerName);
+      ..write(obj.customerName)
+      ..writeByte(8)
+      ..write(obj.amountPaid)
+      ..writeByte(9)
+      ..write(obj.paymentMethod);
   }
 
   @override

@@ -28,10 +28,14 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   late final TabController _tabController;
 
   final MobileScannerController _scanner = MobileScannerController(
-    autoStart: true,
+    autoStart: false,
     detectionSpeed: DetectionSpeed.normal,
     returnImage: false,
   );
+  bool _scannerRunning = false;
+  bool _scannerPausedByUser = false;
+  bool _resumeScheduled = false;
+  DateTime? _lastStartAttempt;
 
   final Map<String, DateTime> _lastScanTimes = {};
   final List<_CartItem> _cart = [];
@@ -42,18 +46,26 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Pause scanner when switching to Products tab
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startScannerSafe();
+    });
+
+    // Pause scanner when switching to Products tab.
     _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return;
       if (_tabController.index == 1) {
-        _scanner.stop();
-      } else if (_tabController.index == 0) {
-        _scanner.start();
+        // Keep scanner paused when moving away from Scan tab.
+        _scannerPausedByUser = true;
+        _stopScannerSafe();
+      } else if (_tabController.index == 0 && !_scannerPausedByUser) {
+        _ensureScannerActiveSoon();
       }
     });
   }
 
   @override
   void dispose() {
+    _stopScannerSafe();
     _scanner.dispose();
     _tabController.dispose();
     _searchCtrl.dispose();
@@ -117,7 +129,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       ));
       return;
     }
-    _scanner.stop();
+    await _stopScannerSafe();
 
     final billingBloc = context.read<BillingBloc>();
     billingBloc.add(ClearCartEvent());
@@ -133,9 +145,110 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     }
 
     await context.push('/checkout');
-    if (mounted && _tabController.index == 0) {
-      _scanner.start();
+    if (mounted && _tabController.index == 0 && !_scannerPausedByUser) {
+      await _startScannerSafe();
     }
+  }
+
+  Future<void> _toggleScannerPause() async {
+    if (_scannerRunning) {
+      await _stopScannerSafe();
+      if (mounted) {
+        setState(() => _scannerPausedByUser = true);
+      }
+      return;
+    }
+
+    await _startScannerSafe();
+    if (mounted) {
+      setState(() => _scannerPausedByUser = !_scannerRunning);
+    }
+  }
+
+  Future<void> _startScannerSafe() async {
+    if (!mounted || _scannerRunning) return;
+
+    final now = DateTime.now();
+    if (_lastStartAttempt != null &&
+        now.difference(_lastStartAttempt!) <
+            const Duration(milliseconds: 280)) {
+      return;
+    }
+    _lastStartAttempt = now;
+
+    try {
+      // Reset any stale camera session before starting a fresh preview.
+      try {
+        await _scanner.stop();
+      } catch (_) {}
+
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      await _scanner.start();
+      if (mounted) {
+        setState(() {
+          _scannerRunning = true;
+        });
+      }
+    } catch (e) {
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('already') &&
+          (msg.contains('running') || msg.contains('started'))) {
+        if (mounted) {
+          setState(() {
+            _scannerRunning = true;
+          });
+        } else {
+          _scannerRunning = true;
+        }
+        return;
+      }
+
+      // Retry once after short delay for camera startup race conditions.
+      await Future<void>.delayed(const Duration(milliseconds: 220));
+      if (!mounted || _scannerRunning || _tabController.index != 0) return;
+      try {
+        await _scanner.start();
+        if (mounted) {
+          setState(() {
+            _scannerRunning = true;
+          });
+        }
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _stopScannerSafe() async {
+    try {
+      await _scanner.stop();
+    } catch (_) {
+      // Ignore stop race conditions from rapid tab changes.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _scannerRunning = false;
+        });
+      } else {
+        _scannerRunning = false;
+      }
+    }
+  }
+
+  Future<void> _resumeScannerFromPanel() async {
+    await _startScannerSafe();
+    if (mounted && _scannerRunning) {
+      setState(() => _scannerPausedByUser = false);
+    }
+  }
+
+  void _ensureScannerActiveSoon() {
+    if (_resumeScheduled || !mounted || _scannerPausedByUser) return;
+    _resumeScheduled = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resumeScheduled = false;
+      if (!mounted || _scannerPausedByUser || _tabController.index != 0) return;
+      _startScannerSafe();
+    });
   }
 
   // ─── Corner brackets (same style as ScannerPage) ─────────────────────────
@@ -189,6 +302,10 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    if (_tabController.index == 0 && !_scannerPausedByUser && !_scannerRunning) {
+      _ensureScannerActiveSoon();
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -212,6 +329,18 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           onPressed: () => context.pop(),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              _scannerRunning
+                  ? Icons.pause_circle_outline_rounded
+                  : Icons.play_circle_outline_rounded,
+            ),
+            onPressed: _tabController.index == 0
+                ? () => _toggleScannerPause()
+                : null,
+            tooltip: _scannerRunning ? 'Pause Scanner' : 'Resume Scanner',
+            color: const Color(0xFF64748B),
+          ),
           IconButton(
             icon: const Icon(Icons.flashlight_on_rounded),
             onPressed: () => _scanner.toggleTorch(),
@@ -239,10 +368,12 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
               children: [
                 _ScanTab(
                   scanner: _scanner,
+                  isScannerRunning: _scannerRunning,
                   cart: _cart,
                   total: _total,
                   onDetect: _onDetect,
                   buildCorner: _buildCorner,
+                  onResumeScanner: _resumeScannerFromPanel,
                   onQtyChange: (i, delta) => setState(() {
                     final newQty = _cart[i].quantity + delta;
                     if (newQty <= 0) {
@@ -345,18 +476,22 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 // ─── Scan Tab ────────────────────────────────────────────────────────────────
 class _ScanTab extends StatelessWidget {
   final MobileScannerController scanner;
+  final bool isScannerRunning;
   final List<_CartItem> cart;
   final double total;
   final Function(BarcodeCapture) onDetect;
   final Widget Function(Alignment) buildCorner;
+  final Future<void> Function() onResumeScanner;
   final Function(int, int) onQtyChange;
 
   const _ScanTab({
     required this.scanner,
+    required this.isScannerRunning,
     required this.cart,
     required this.total,
     required this.onDetect,
     required this.buildCorner,
+    required this.onResumeScanner,
     required this.onQtyChange,
   });
 
@@ -366,42 +501,47 @@ class _ScanTab extends StatelessWidget {
       children: [
         // Camera box
         Container(
+          width: double.infinity,
           color: Colors.black,
           height: 220,
           child: Stack(
             fit: StackFit.expand,
             children: [
               MobileScanner(controller: scanner, onDetect: onDetect),
-              Container(color: Colors.black.withValues(alpha: 0.45)),
-              Center(
-                child: Container(
-                  width: 200,
-                  height: 170,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        width: 1.5),
-                    borderRadius: BorderRadius.circular(12),
+              if (isScannerRunning) ...[
+                Container(color: Colors.black.withValues(alpha: 0.45)),
+                Center(
+                  child: Container(
+                    width: 200,
+                    height: 170,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Stack(children: [
+                      buildCorner(Alignment.topLeft),
+                      buildCorner(Alignment.topRight),
+                      buildCorner(Alignment.bottomLeft),
+                      buildCorner(Alignment.bottomRight),
+                    ]),
                   ),
-                  child: Stack(children: [
-                    buildCorner(Alignment.topLeft),
-                    buildCorner(Alignment.topRight),
-                    buildCorner(Alignment.bottomLeft),
-                    buildCorner(Alignment.bottomRight),
-                  ]),
                 ),
-              ),
-              const Positioned(
-                bottom: 8,
-                left: 0,
-                right: 0,
-                child: Text('Align barcode within the frame',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500)),
-              ),
+                const Positioned(
+                  bottom: 8,
+                  left: 0,
+                  right: 0,
+                  child: Text('Align barcode within the frame',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500)),
+                ),
+              ] else ...[
+                _buildPausedScannerState(),
+              ],
             ],
           ),
         ),
@@ -431,6 +571,60 @@ class _ScanTab extends StatelessWidget {
               : _CartList(cart: cart, onQtyChange: onQtyChange),
         ),
       ],
+    );
+  }
+
+  Widget _buildPausedScannerState() {
+    return SizedBox.expand(
+      child: Container(
+        color: const Color(0xFF0F172A),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+          Container(
+            width: 62,
+            height: 62,
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E293B),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.videocam_off_rounded,
+                color: Colors.white, size: 30),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Scanner is Paused',
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 17,
+                letterSpacing: -0.3),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Tap resume to continue scanning.',
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: onResumeScanner,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6C63FF),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: const Text('Resume Scanner',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          ],
+        ),
+      ),
     );
   }
 }

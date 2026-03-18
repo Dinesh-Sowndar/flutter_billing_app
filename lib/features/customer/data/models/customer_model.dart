@@ -20,12 +20,16 @@ class CustomerModel extends HiveObject {
   @HiveField(4)
   final bool pendingSync;
 
+  @HiveField(5, defaultValue: 0.0)
+  final double balance; // Added for Customer Ledger
+
   CustomerModel({
     required this.id,
     required this.name,
     required this.phone,
     this.userId = '',
     this.pendingSync = false,
+    this.balance = 0.0,
   });
 
   factory CustomerModel.fromEntity(CustomerEntity entity, {String userId = ''}) {
@@ -35,6 +39,7 @@ class CustomerModel extends HiveObject {
       phone: entity.phone,
       userId: userId,
       pendingSync: entity.pendingSync,
+      balance: entity.balance,
     );
   }
 
@@ -44,6 +49,7 @@ class CustomerModel extends HiveObject {
       name: map['name'] as String? ?? '',
       phone: map['phone'] as String? ?? '',
       userId: map['userId'] as String? ?? '',
+      balance: (map['balance'] as num?)?.toDouble() ?? 0.0,
       pendingSync: false,
     );
   }
@@ -53,12 +59,14 @@ class CustomerModel extends HiveObject {
         'name': name,
         'phone': phone,
         'userId': userId,
+        'balance': balance,
       };
 
   CustomerEntity toEntity() => CustomerEntity(
         id: id,
         name: name,
         phone: phone,
+        balance: balance,
         pendingSync: pendingSync,
       );
 
@@ -68,6 +76,7 @@ class CustomerModel extends HiveObject {
     String? phone,
     String? userId,
     bool? pendingSync,
+    double? balance,
   }) {
     return CustomerModel(
       id: id ?? this.id,
@@ -75,6 +84,7 @@ class CustomerModel extends HiveObject {
       phone: phone ?? this.phone,
       userId: userId ?? this.userId,
       pendingSync: pendingSync ?? this.pendingSync,
+      balance: balance ?? this.balance,
     );
   }
 }

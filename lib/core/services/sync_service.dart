@@ -50,6 +50,7 @@ class SyncService {
       final wasOnline = _isOnline;
       _isOnline = _resultsHaveConnection(results);
       if (!wasOnline && _isOnline) {
+        await processPendingDeletes();
         await syncPendingProducts();
         await pullProductsFromFirestore();
         await syncPendingTransactions();
@@ -67,6 +68,7 @@ class SyncService {
       // we still emit to trigger bloc reloads (emptying them).
       if (user != null) {
         if (_isOnline) {
+          await processPendingDeletes();
           await pullProductsFromFirestore();
           await pullTransactionsFromFirestore();
           await pullShopFromFirestore();
@@ -96,6 +98,44 @@ class SyncService {
 
   CollectionReference<Map<String, dynamic>> get _customersCollection =>
       _firestore.collection('users').doc(_userId).collection('customers');
+
+  // ---------------------------------------------------------------------------
+  // Push a single product to Firestore (used on every write when online).
+  // ---------------------------------------------------------------------------
+  Future<void> _markAsDeletedLocally(String collection, String id) async {
+    final pendingDeletes = List<String>.from(
+        HiveDatabase.settingsBox.get('pendingDeletes', defaultValue: <String>[]));
+    final entry = '$collection:$id';
+    if (!pendingDeletes.contains(entry)) {
+      pendingDeletes.add(entry);
+      await HiveDatabase.settingsBox.put('pendingDeletes', pendingDeletes);
+    }
+  }
+
+  Future<void> processPendingDeletes() async {
+    if (_userId == null) return;
+    final pendingDeletes = List<String>.from(
+        HiveDatabase.settingsBox.get('pendingDeletes', defaultValue: <String>[]));
+    if (pendingDeletes.isEmpty) return;
+
+    List<String> remaining = [];
+    for (final entry in pendingDeletes) {
+      try {
+        final parts = entry.split(':');
+        final collection = parts[0];
+        final id = parts[1];
+        await _firestore.collection('users').doc(_userId).collection(collection).doc(id).delete();
+      } catch (_) {
+        remaining.add(entry);
+      }
+    }
+
+    if (remaining.isEmpty) {
+      await HiveDatabase.settingsBox.delete('pendingDeletes');
+    } else {
+      await HiveDatabase.settingsBox.put('pendingDeletes', remaining);
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Push a single product to Firestore (used on every write when online).
@@ -130,9 +170,13 @@ class SyncService {
   Future<void> deleteProduct(String id) async {
     if (_userId == null) return;
     try {
-      await _productsCollection.doc(id).delete();
+      if (_isOnline) {
+        await _productsCollection.doc(id).delete();
+      } else {
+        await _markAsDeletedLocally('products', id);
+      }
     } catch (_) {
-      // Deletion failures are not queued; the record is already gone locally.
+      await _markAsDeletedLocally('products', id);
     }
   }
 
@@ -213,8 +257,14 @@ class SyncService {
   Future<void> deleteTransaction(String id) async {
     if (_userId == null) return;
     try {
-      await _transactionsCollection.doc(id).delete();
-    } catch (_) {}
+      if (_isOnline) {
+        await _transactionsCollection.doc(id).delete();
+      } else {
+        await _markAsDeletedLocally('transactions', id);
+      }
+    } catch (_) {
+      await _markAsDeletedLocally('transactions', id);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -323,6 +373,22 @@ class SyncService {
         pendingSync: true,
       );
       await HiveDatabase.customerBox.put(pending.id, pending);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Delete a customer on Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> deleteCustomer(String id) async {
+    if (_userId == null) return;
+    try {
+      if (_isOnline) {
+        await _customersCollection.doc(id).delete();
+      } else {
+        await _markAsDeletedLocally('customers', id);
+      }
+    } catch (_) {
+      await _markAsDeletedLocally('customers', id);
     }
   }
 

@@ -76,9 +76,7 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Either<Failure, void>> deleteProduct(String id) async {
     try {
       await HiveDatabase.productBox.delete(id);
-      if (syncService.isOnline) {
-        await syncService.deleteProduct(id);
-      }
+      await syncService.deleteProduct(id);
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));

@@ -59,6 +59,14 @@ class TransactionModel {
   @HiveField(7)
   final String customerName;
 
+  /// The amount paid by the customer at the time of transaction.
+  @HiveField(8, defaultValue: 0.0)
+  final double amountPaid;
+
+  /// The payment method used.
+  @HiveField(9, defaultValue: 'cash')
+  final String paymentMethod;
+
   TransactionModel({
     required this.id,
     required this.date,
@@ -68,6 +76,8 @@ class TransactionModel {
     this.pendingSync = false,
     this.customerId = '',
     this.customerName = '',
+    this.amountPaid = 0.0,
+    this.paymentMethod = 'cash',
   });
 
   factory TransactionModel.fromFirestore(Map<String, dynamic> map) {
@@ -80,6 +90,8 @@ class TransactionModel {
       pendingSync: false,
       customerId: map['customerId'] as String? ?? '',
       customerName: map['customerName'] as String? ?? '',
+      amountPaid: (map['amountPaid'] as num?)?.toDouble() ?? (map['totalAmount'] as num?)?.toDouble() ?? 0.0,
+      paymentMethod: map['paymentMethod'] as String? ?? 'cash',
       items: rawItems
           .map((i) => TransactionItemModel(
                 productId: i['productId'] as String? ?? '',
@@ -99,6 +111,8 @@ class TransactionModel {
         'userId': userId,
         'customerId': customerId,
         'customerName': customerName,
+        'amountPaid': amountPaid,
+        'paymentMethod': paymentMethod,
         'items': items
             .map((i) => {
                   'productId': i.productId,
@@ -119,6 +133,8 @@ class TransactionModel {
     bool? pendingSync,
     String? customerId,
     String? customerName,
+    double? amountPaid,
+    String? paymentMethod,
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -129,6 +145,8 @@ class TransactionModel {
       pendingSync: pendingSync ?? this.pendingSync,
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
+      amountPaid: amountPaid ?? this.amountPaid,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
     );
   }
 }

@@ -9,6 +9,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:billing_app/features/product/data/models/product_model.dart';
 import 'package:billing_app/features/billing/data/models/transaction_model.dart';
 import 'package:billing_app/features/shop/data/models/shop_model.dart';
+import 'package:billing_app/features/customer/data/models/customer_model.dart';
 
 import 'package:billing_app/features/auth/domain/entities/app_user.dart';
 
@@ -47,12 +48,14 @@ void main() {
     Hive.registerAdapter(ShopModelAdapter());
     Hive.registerAdapter(TransactionItemModelAdapter());
     Hive.registerAdapter(TransactionModelAdapter());
+    Hive.registerAdapter(CustomerModelAdapter());
 
     // Open Boxes
     await Hive.openBox<ProductModel>(HiveDatabase.productBoxName);
     await Hive.openBox<ShopModel>(HiveDatabase.shopBoxName);
     await Hive.openBox(HiveDatabase.settingsBoxName);
     await Hive.openBox<TransactionModel>(HiveDatabase.transactionBoxName);
+    await Hive.openBox<CustomerModel>(HiveDatabase.customerBoxName);
   });
 
   tearDown(() async {

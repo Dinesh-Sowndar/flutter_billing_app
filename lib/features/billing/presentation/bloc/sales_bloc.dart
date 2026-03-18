@@ -29,22 +29,37 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
       final startOfMonth = DateTime(now.year, now.month, 1);
 
       double daily = 0;
+      double dailyPending = 0;
       double weekly = 0;
+      double weeklyPending = 0;
       double monthly = 0;
+      double monthlyPending = 0;
 
       for (var t in transactions) {
+        final isPaymentOnly = t.items.isEmpty && t.amountPaid > 0;
+        final paidAtSale = t.amountPaid.clamp(0.0, t.totalAmount).toDouble();
+        final txPendingDelta = isPaymentOnly
+            ? -t.amountPaid
+            : (t.totalAmount - paidAtSale).clamp(0.0, t.totalAmount).toDouble();
         if (t.date.isAfter(startOfDay) || t.date.isAtSameMomentAs(startOfDay)) {
           daily += t.totalAmount;
+          dailyPending += txPendingDelta;
         }
         if (t.date.isAfter(startOfWeek) ||
             t.date.isAtSameMomentAs(startOfWeek)) {
           weekly += t.totalAmount;
+          weeklyPending += txPendingDelta;
         }
         if (t.date.isAfter(startOfMonth) ||
             t.date.isAtSameMomentAs(startOfMonth)) {
           monthly += t.totalAmount;
+          monthlyPending += txPendingDelta;
         }
       }
+
+      dailyPending = dailyPending < 0 ? 0 : dailyPending;
+      weeklyPending = weeklyPending < 0 ? 0 : weeklyPending;
+      monthlyPending = monthlyPending < 0 ? 0 : monthlyPending;
 
       // Sort transactions by date descending
       transactions.sort((a, b) => b.date.compareTo(a.date));
@@ -54,8 +69,11 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
       emit(state.copyWith(
         status: SalesStatus.success,
         dailySales: daily,
+        dailyPending: dailyPending,
         weeklySales: weekly,
+        weeklyPending: weeklyPending,
         monthlySales: monthly,
+        monthlyPending: monthlyPending,
         recentTransactions: recent,
       ));
     } catch (e) {

@@ -21,6 +21,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
+  Future<CustomerEntity?> getCustomerById(String id) async {
+    final model = HiveDatabase.customerBox.get(id);
+    return model?.toEntity();
+  }
+
+  @override
   Future<void> addCustomer(CustomerEntity customer) async {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
     final model = CustomerModel(
@@ -28,6 +34,25 @@ class CustomerRepositoryImpl implements CustomerRepository {
       name: customer.name,
       phone: customer.phone,
       userId: userId,
+      balance: customer.balance,
+      pendingSync: !_syncService.isOnline,
+    );
+    await HiveDatabase.customerBox.put(model.id, model);
+
+    if (_syncService.isOnline) {
+      await _syncService.pushCustomer(model);
+    }
+  }
+
+  @override
+  Future<void> updateCustomer(CustomerEntity customer) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final model = CustomerModel(
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone,
+      userId: userId,
+      balance: customer.balance,
       pendingSync: !_syncService.isOnline,
     );
     await HiveDatabase.customerBox.put(model.id, model);
@@ -40,5 +65,6 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<void> deleteCustomer(String id) async {
     await HiveDatabase.customerBox.delete(id);
+    await _syncService.deleteCustomer(id);
   }
 }

@@ -116,18 +116,11 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/customers',
-      builder: (context, state) => BlocProvider(
-        create: (_) => di.sl<CustomerBloc>()..add(LoadCustomersEvent()),
-        child: const CustomerListPage(),
-      ),
+      builder: (context, state) => const CustomerListPage(),
       routes: [
         GoRoute(
           path: 'add',
-          builder: (context, state) => BlocProvider.value(
-            value: state.extra as CustomerBloc? ??
-                (di.sl<CustomerBloc>()..add(LoadCustomersEvent())),
-            child: const AddCustomerPage(),
-          ),
+          builder: (context, state) => const AddCustomerPage(),
         ),
         GoRoute(
           path: ':id',

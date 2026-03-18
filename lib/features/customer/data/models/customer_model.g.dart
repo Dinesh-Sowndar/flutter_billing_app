@@ -22,13 +22,14 @@ class CustomerModelAdapter extends TypeAdapter<CustomerModel> {
       phone: fields[2] as String,
       userId: fields[3] as String,
       pendingSync: fields[4] as bool,
+      balance: fields[5] == null ? 0.0 : fields[5] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, CustomerModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class CustomerModelAdapter extends TypeAdapter<CustomerModel> {
       ..writeByte(3)
       ..write(obj.userId)
       ..writeByte(4)
-      ..write(obj.pendingSync);
+      ..write(obj.pendingSync)
+      ..writeByte(5)
+      ..write(obj.balance);
   }
 
   @override

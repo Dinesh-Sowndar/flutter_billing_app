@@ -7,6 +7,7 @@ import '../../../../core/utils/printer_helper.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../data/models/transaction_model.dart';
 import '../../domain/repositories/billing_repository.dart';
+import '../../../customer/domain/repositories/customer_repository.dart';
 
 part 'billing_event.dart';
 part 'billing_state.dart';
@@ -15,11 +16,13 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
   final GetProductByBarcodeUseCase getProductByBarcodeUseCase;
   final UpdateProductUseCase updateProductUseCase;
   final BillingRepository billingRepository;
+  final CustomerRepository customerRepository;
 
   BillingBloc({
     required this.getProductByBarcodeUseCase,
     required this.updateProductUseCase,
     required this.billingRepository,
+    required this.customerRepository,
   }) : super(const BillingState()) {
     on<ScanBarcodeEvent>(_onScanBarcode);
     on<AddProductToCartEvent>(_onAddProductToCart);
@@ -102,12 +105,16 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       FinishTransactionEvent event, Emitter<BillingState> emit) async {
     emit(state.copyWith(clearError: true));
     try {
+      final normalizedAmountPaid =
+          event.amountPaid.clamp(0.0, state.totalAmount).toDouble();
       final transaction = TransactionModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         date: DateTime.now(),
         totalAmount: state.totalAmount,
         customerId: state.customerId,
         customerName: state.customerName,
+        amountPaid: normalizedAmountPaid,
+        paymentMethod: event.paymentMethod,
         items: state.cartItems
             .map((item) => TransactionItemModel(
                   productId: item.product.id,
@@ -126,6 +133,22 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         await updateProductUseCase(
           item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
         );
+      }
+
+      // Update customer balance if applicable
+      if (state.customerId.isNotEmpty) {
+        final dueAmount = (state.totalAmount - normalizedAmountPaid)
+            .clamp(0.0, state.totalAmount)
+            .toDouble();
+        if (dueAmount > 0) {
+          final customer =
+              await customerRepository.getCustomerById(state.customerId);
+          if (customer != null) {
+            final updatedCustomer =
+                customer.copyWith(balance: customer.balance + dueAmount);
+            await customerRepository.updateCustomer(updatedCustomer);
+          }
+        }
       }
 
       emit(state.copyWith(printSuccess: true));
@@ -162,6 +185,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         isPrinting: true, printSuccess: false, clearError: true));
 
     try {
+      final normalizedAmountPaid =
+        event.amountPaid.clamp(0.0, state.totalAmount).toDouble();
       final items = state.cartItems
           .map((item) => {
                 'name': item.product.name,
@@ -186,6 +211,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         totalAmount: state.totalAmount,
         customerId: state.customerId,
         customerName: state.customerName,
+        amountPaid: normalizedAmountPaid,
+        paymentMethod: event.paymentMethod,
         items: state.cartItems
             .map((item) => TransactionItemModel(
                   productId: item.product.id,
@@ -204,6 +231,22 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         await updateProductUseCase(
           item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
         );
+      }
+
+      // Update customer balance if applicable
+      if (state.customerId.isNotEmpty) {
+        final dueAmount = (state.totalAmount - normalizedAmountPaid)
+            .clamp(0.0, state.totalAmount)
+            .toDouble();
+        if (dueAmount > 0) {
+          final customer =
+              await customerRepository.getCustomerById(state.customerId);
+          if (customer != null) {
+            final updatedCustomer =
+                customer.copyWith(balance: customer.balance + dueAmount);
+            await customerRepository.updateCustomer(updatedCustomer);
+          }
+        }
       }
 
       emit(state.copyWith(isPrinting: false, printSuccess: true));

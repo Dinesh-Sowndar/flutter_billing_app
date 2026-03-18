@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
+import '../../../customer/presentation/bloc/customer_bloc.dart';
+import '../../../customer/presentation/bloc/customer_event.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/billing_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -16,18 +18,25 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
+  final TextEditingController _amountPaidController = TextEditingController();
+  String _paymentMethod = 'cash';
+  bool _isInitialized = false;
+  bool _isPaymentDetailsExpanded = false;
+  double _qrAmount = 0.0;
+
+  @override
+  void dispose() {
+    _amountPaidController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
         canPop: false,
         onPopInvokedWithResult: (bool didPop, dynamic result) {
           if (didPop) return;
-          context.read<BillingBloc>().add(ClearCartEvent());
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/');
-          }
+          _handleCheckoutExit(context);
         },
         child: Scaffold(
           appBar: AppBar(
@@ -41,18 +50,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
               icon: Icon(Icons.close_rounded,
                   size: 32, color: Theme.of(context).primaryColor),
               onPressed: () {
-                context.read<BillingBloc>().add(ClearCartEvent());
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go('/');
-                }
+                _handleCheckoutExit(context);
               },
             ),
           ),
           body: BlocConsumer<BillingBloc, BillingState>(
             listener: (context, state) {
               if (state.printSuccess) {
+                // Inform global CustomerBloc to refresh data
+                context.read<CustomerBloc>().add(LoadCustomersEvent());
+
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: const Text('Transaction completed successfully'),
                     backgroundColor: const Color(0xFF10B981),
@@ -60,14 +67,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))));
                 context.read<BillingBloc>().add(ClearCartEvent());
-                if (context.canPop()) {
-                  context.pop();
-                } else {
-                  context.go('/');
-                }
+                context.go('/');
               }
             },
             builder: (context, billingState) {
+              if (!_isInitialized && billingState.totalAmount > 0) {
+                _amountPaidController.text =
+                    billingState.totalAmount.toStringAsFixed(2);
+                _qrAmount = billingState.totalAmount;
+                _isInitialized = true;
+              }
+
               return BlocBuilder<ShopBloc, ShopState>(
                   builder: (context, shopState) {
                 String upiId = '';
@@ -210,13 +220,227 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             ),
                             const SizedBox(height: 32),
 
+                            // Credit Payment Details (customer mode only)
+                            if (billingState.customerId.isNotEmpty)
+                              Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                    color: const Color(0xFFF1F5F9), width: 2),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _isPaymentDetailsExpanded =
+                                            !_isPaymentDetailsExpanded;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 6, horizontal: 2),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Credit Payment Details',
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF1E293B))),
+                                          AnimatedRotation(
+                                            turns: _isPaymentDetailsExpanded
+                                                ? 0.5
+                                                : 0,
+                                            duration: const Duration(
+                                                milliseconds: 200),
+                                            child: const Icon(
+                                                Icons.keyboard_arrow_down_rounded,
+                                                color: Color(0xFF64748B)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  AnimatedCrossFade(
+                                    duration: const Duration(milliseconds: 220),
+                                    crossFadeState: _isPaymentDetailsExpanded
+                                        ? CrossFadeState.showFirst
+                                        : CrossFadeState.showSecond,
+                                    firstChild: Column(
+                                      children: [
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  TextFormField(
+                                                    controller:
+                                                        _amountPaidController,
+                                                    keyboardType:
+                                                        const TextInputType
+                                                            .numberWithOptions(
+                                                            decimal: true),
+                                                    decoration: InputDecoration(
+                                                      labelText:
+                                                          'Amount Willing to Pay',
+                                                      prefixText: '₹ ',
+                                                      border:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12),
+                                                      ),
+                                                    ),
+                                                    onChanged: (val) {
+                                                      setState(() {});
+                                                    },
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    child: FilledButton.icon(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          _qrAmount =
+                                                              double.tryParse(
+                                                                      _amountPaidController
+                                                                          .text) ??
+                                                                  0.0;
+                                                        });
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                                SnackBar(
+                                                          content: Text(
+                                                              'QR amount updated to ₹${_qrAmount.toStringAsFixed(2)}'),
+                                                          behavior:
+                                                              SnackBarBehavior
+                                                                  .floating,
+                                                          duration:
+                                                              const Duration(
+                                                                  seconds: 1),
+                                                        ));
+                                                      },
+                                                      icon: const Icon(
+                                                          Icons.qr_code_2_rounded,
+                                                          size: 18),
+                                                      label: const Text(
+                                                          'Update Amount'),
+                                                      style:
+                                                          FilledButton.styleFrom(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 14),
+                                                        textStyle:
+                                                            const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          fontSize: 15,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child:
+                                                  DropdownButtonFormField<String>(
+                                                value: _paymentMethod,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Method',
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12),
+                                                  ),
+                                                ),
+                                                items: const [
+                                                  DropdownMenuItem(
+                                                      value: 'cash',
+                                                      child: Text('Cash')),
+                                                  DropdownMenuItem(
+                                                      value: 'upi',
+                                                      child: Text('UPI')),
+                                                  DropdownMenuItem(
+                                                      value: 'card',
+                                                      child: Text('Card')),
+                                                ],
+                                                onChanged: (val) {
+                                                  if (val != null) {
+                                                    setState(() {
+                                                      _paymentMethod = val;
+                                                    });
+                                                  }
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (billingState.customerId.isNotEmpty)
+                                          ...[
+                                          const SizedBox(height: 12),
+                                          Builder(builder: (context) {
+                                            final total = billingState.totalAmount;
+                                            final paid =
+                                                _parseWillingToPay(total);
+                                            final due = total - paid;
+                                            if (due > 0) {
+                                              return Text(
+                                                'Remaining ₹${due.toStringAsFixed(2)} will be added to ${billingState.customerName}\'s ledger.',
+                                                style: const TextStyle(
+                                                    color: Colors.orange,
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              );
+                                            }
+                                            return const SizedBox.shrink();
+                                          }),
+                                        ],
+                                      ],
+                                    ),
+                                    secondChild: const SizedBox.shrink(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (billingState.customerId.isNotEmpty)
+                              const SizedBox(height: 32),
+
                             // Payment QR Section (if exists)
                             if (upiId.isNotEmpty) ...[
-                              const Text('Pay via UPI',
-                                  style: TextStyle(
-                                      fontSize: 16,
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Pay via UPI',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF64748B))),
+                                  Text(
+                                    'Amount: ₹${_qrAmount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF64748B))),
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
                               const SizedBox(height: 16),
                               Container(
                                 padding: const EdgeInsets.all(24),
@@ -231,7 +455,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   height: 160,
                                   child: PrettyQrView.data(
                                     data:
-                                        'upi://pay?pa=$upiId&pn=$shopName&am=${billingState.totalAmount.toStringAsFixed(2)}&cu=INR',
+                                        'upi://pay?pa=$upiId&pn=$shopName&am=${_qrAmount.toStringAsFixed(2)}&cu=INR',
                                   ),
                                 ),
                               ),
@@ -258,9 +482,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               width: double.infinity,
                               child: OutlinedButton.icon(
                                 onPressed: () {
-                                  context
-                                      .read<BillingBloc>()
-                                      .add(FinishTransactionEvent());
+                                  final paid = billingState.customerId.isNotEmpty
+                                      ? _parseWillingToPay(
+                                          billingState.totalAmount)
+                                      : billingState.totalAmount;
+                                  context.read<BillingBloc>().add(
+                                      FinishTransactionEvent(
+                                          amountPaid: paid,
+                                          paymentMethod: _paymentMethod));
                                 },
                                 style: OutlinedButton.styleFrom(
                                   padding:
@@ -284,13 +513,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           PrimaryButton(
                             onPressed: () {
                               if (shopState is ShopLoaded) {
-                                context.read<BillingBloc>().add(
-                                    PrintReceiptEvent(
-                                        shopName: shopState.shop.name,
-                                        address1: shopState.shop.addressLine1,
-                                        address2: shopState.shop.addressLine2,
-                                        phone: shopState.shop.phoneNumber,
-                                        footer: shopState.shop.footerText));
+                              final paid = billingState.customerId.isNotEmpty
+                                ? _parseWillingToPay(
+                                  billingState.totalAmount)
+                                : billingState.totalAmount;
+                                context
+                                    .read<BillingBloc>()
+                                    .add(PrintReceiptEvent(
+                                      shopName: shopState.shop.name,
+                                      address1: shopState.shop.addressLine1,
+                                      address2: shopState.shop.addressLine2,
+                                      phone: shopState.shop.phoneNumber,
+                                      footer: shopState.shop.footerText,
+                                      amountPaid: paid,
+                                      paymentMethod: _paymentMethod,
+                                    ));
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
@@ -344,5 +581,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ),
       ),
     );
+  }
+
+  double _parseWillingToPay(double totalAmount) {
+    final parsed = double.tryParse(_amountPaidController.text.trim()) ?? 0.0;
+    if (parsed.isNaN || parsed.isInfinite) return 0.0;
+    if (parsed < 0) return 0.0;
+    if (parsed > totalAmount) return totalAmount;
+    return parsed;
+  }
+
+  void _handleCheckoutExit(BuildContext context) {
+    final billingState = context.read<BillingBloc>().state;
+
+    // Preserve cart in guest-mode so user can go back and edit/add items.
+    if (billingState.customerId.isNotEmpty) {
+      context.read<BillingBloc>().add(ClearCartEvent());
+    }
+
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/');
+    }
   }
 }

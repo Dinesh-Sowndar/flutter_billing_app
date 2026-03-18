@@ -45,7 +45,14 @@ class SetCustomerEvent extends BillingEvent {
   List<Object> get props => [customerId, customerName];
 }
 
-class FinishTransactionEvent extends BillingEvent {}
+class FinishTransactionEvent extends BillingEvent {
+  final double amountPaid;
+  final String paymentMethod;
+  const FinishTransactionEvent({this.amountPaid = 0.0, this.paymentMethod = 'cash'});
+
+  @override
+  List<Object> get props => [amountPaid, paymentMethod];
+}
 
 class PrintReceiptEvent extends BillingEvent {
   final String shopName;
@@ -53,6 +60,8 @@ class PrintReceiptEvent extends BillingEvent {
   final String address2;
   final String phone;
   final String footer;
+  final double amountPaid;
+  final String paymentMethod;
 
   const PrintReceiptEvent({
     required this.shopName,
@@ -60,8 +69,10 @@ class PrintReceiptEvent extends BillingEvent {
     required this.address2,
     required this.phone,
     required this.footer,
+    this.amountPaid = 0.0,
+    this.paymentMethod = 'cash',
   });
 
   @override
-  List<Object> get props => [shopName, address1, address2, phone, footer];
+  List<Object> get props => [shopName, address1, address2, phone, footer, amountPaid, paymentMethod];
 }

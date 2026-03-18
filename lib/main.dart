@@ -12,6 +12,8 @@ import 'features/shop/presentation/bloc/shop_bloc.dart';
 import 'features/settings/presentation/bloc/printer_bloc.dart';
 import 'features/settings/presentation/bloc/printer_event.dart';
 import 'features/billing/presentation/bloc/sales_bloc.dart';
+import 'features/customer/presentation/bloc/customer_bloc.dart';
+import 'features/customer/presentation/bloc/customer_event.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -67,6 +69,15 @@ class _MyAppState extends State<MyApp> {
             return bloc;
           },
         ),
+        BlocProvider<CustomerBloc>(
+          create: (context) {
+            final bloc = di.sl<CustomerBloc>()..add(LoadCustomersEvent());
+            di.sl<SyncService>().onSyncComplete.stream.listen((_) {
+              if (!bloc.isClosed) bloc.add(LoadCustomersEvent());
+            });
+            return bloc;
+          },
+        ),
         BlocProvider<ShopBloc>(
           create: (context) {
             final bloc = di.sl<ShopBloc>()..add(LoadShopEvent());
@@ -81,6 +92,7 @@ class _MyAppState extends State<MyApp> {
                   getProductByBarcodeUseCase: di.sl(),
                   updateProductUseCase: di.sl(),
                   billingRepository: di.sl(),
+                  customerRepository: di.sl(),
                 )),
         BlocProvider<PrinterBloc>(
             create: (context) =>
