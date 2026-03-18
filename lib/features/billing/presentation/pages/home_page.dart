@@ -216,6 +216,16 @@ class _HomePageState extends State<HomePage>
     context.read<BillingBloc>().add(UpdateQuantityEvent(item.product.id, qty));
   }
 
+  void _clearAllGuestCart() {
+    context.read<BillingBloc>().add(ClearCartEvent());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('All added items cleared'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     _ensureScannerActiveSoon();
@@ -625,6 +635,22 @@ class _HomePageState extends State<HomePage>
                             color: Theme.of(context).primaryColor,
                             letterSpacing: -1),
                       ),
+                      if (state.cartItems.isNotEmpty)
+                        TextButton.icon(
+                          onPressed: _clearAllGuestCart,
+                          icon: const Icon(
+                            Icons.delete_sweep_rounded,
+                            size: 16,
+                            color: Color(0xFFEF4444),
+                          ),
+                          label: const Text(
+                            'Clear All',
+                            style: TextStyle(
+                              color: Color(0xFFEF4444),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],
@@ -857,6 +883,14 @@ class _HomePageState extends State<HomePage>
                                                   item);
                                             },
                                           ),
+                                        _circularIconButton(
+                                          icon: Icons.close_rounded,
+                                          onPressed: () {
+                                            context.read<BillingBloc>().add(
+                                                RemoveProductFromCartEvent(
+                                                    product.id));
+                                          },
+                                        ),
                                         _circularIconButton(
                                           icon: Icons.add_rounded,
                                           onPressed: () {
@@ -1100,6 +1134,14 @@ class _HomePageState extends State<HomePage>
                     icon: Icons.edit_rounded,
                     onPressed: () => _setManualQuantityForCartItem(item),
                   ),
+                _circularIconButton(
+                  icon: Icons.close_rounded,
+                  onPressed: () {
+                    context
+                        .read<BillingBloc>()
+                        .add(RemoveProductFromCartEvent(item.product.id));
+                  },
+                ),
                 _circularIconButton(
                     icon: Icons.add_rounded,
                     onPressed: () {

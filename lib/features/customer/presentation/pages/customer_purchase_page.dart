@@ -173,6 +173,19 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
   double get _total => _cart.fold(0, (sum, item) => sum + item.total);
 
+  void _clearAllCart() {
+    if (_cart.isEmpty) return;
+    setState(() {
+      _cart.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('All added items cleared'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   // ─── Checkout ─────────────────────────────────────────────────────────────
   Future<void> _goToCheckout() async {
     if (_cart.isEmpty) {
@@ -383,6 +396,13 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           onPressed: () => context.pop(),
         ),
         actions: [
+          if (_cart.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_rounded),
+              onPressed: _clearAllCart,
+              tooltip: 'Clear all items',
+              color: const Color(0xFFEF4444),
+            ),
           IconButton(
             icon: Icon(
               _scannerRunning
@@ -438,6 +458,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                       _cart[i].quantity = newQty;
                     }
                   }),
+                  onRemove: (i) => setState(() {
+                    _cart.removeAt(i);
+                  }),
                   onManualQty: (i) async {
                     final current = _cart[i];
                     final qty = await _showManualQtyDialog(
@@ -486,6 +509,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                     } else {
                       _cart[i].quantity = newQty;
                     }
+                  }),
+                  onRemove: (i) => setState(() {
+                    _cart.removeAt(i);
                   }),
                   onManualQty: (i) async {
                     final current = _cart[i];
@@ -590,6 +616,7 @@ class _ScanTab extends StatelessWidget {
   final Widget Function(Alignment) buildCorner;
   final Future<void> Function() onResumeScanner;
   final Function(int, double) onQtyChange;
+  final Function(int) onRemove;
   final Future<void> Function(int) onManualQty;
   final bool Function(ProductModel) isWeighted;
   final String Function(double) qtyText;
@@ -603,6 +630,7 @@ class _ScanTab extends StatelessWidget {
     required this.buildCorner,
     required this.onResumeScanner,
     required this.onQtyChange,
+    required this.onRemove,
     required this.onManualQty,
     required this.isWeighted,
     required this.qtyText,
@@ -684,6 +712,7 @@ class _ScanTab extends StatelessWidget {
               : _CartList(
                   cart: cart,
                   onQtyChange: onQtyChange,
+                  onRemove: onRemove,
                   onManualQty: onManualQty,
                   isWeighted: isWeighted,
                   qtyText: qtyText,
@@ -757,6 +786,7 @@ class _ProductsTab extends StatelessWidget {
   final Function(String) onSearchChanged;
   final Future<void> Function(ProductModel) onAdd;
   final Function(int, double) onQtyChange;
+  final Function(int) onRemove;
   final Future<void> Function(int) onManualQty;
   final double Function(ProductModel) stepForProduct;
   final bool Function(ProductModel) isWeighted;
@@ -769,6 +799,7 @@ class _ProductsTab extends StatelessWidget {
     required this.onSearchChanged,
     required this.onAdd,
     required this.onQtyChange,
+    required this.onRemove,
     required this.onManualQty,
     required this.stepForProduct,
     required this.isWeighted,
@@ -908,6 +939,9 @@ class _ProductsTab extends StatelessWidget {
                               _qtyBtn(Icons.edit_rounded, () {
                                 onManualQty(cartIdx);
                               }),
+                            _qtyBtn(Icons.close_rounded, () {
+                              onRemove(cartIdx);
+                            }),
                             _qtyBtn(Icons.add, () {
                               onQtyChange(cartIdx, stepForProduct(product));
                             }, accent: true),
@@ -965,12 +999,14 @@ class _ProductsTab extends StatelessWidget {
 class _CartList extends StatelessWidget {
   final List<_CartItem> cart;
   final Function(int, double) onQtyChange;
+  final Function(int) onRemove;
   final Future<void> Function(int) onManualQty;
   final bool Function(ProductModel) isWeighted;
   final String Function(double) qtyText;
   const _CartList({
     required this.cart,
     required this.onQtyChange,
+    required this.onRemove,
     required this.onManualQty,
     required this.isWeighted,
     required this.qtyText,
@@ -1040,6 +1076,9 @@ class _CartList extends StatelessWidget {
                 _qtyBtn(Icons.edit_rounded, () {
                   onManualQty(i);
                 }),
+              _qtyBtn(Icons.close_rounded, () {
+                onRemove(i);
+              }),
               _qtyBtn(
                 Icons.add,
                 () => onQtyChange(i, isWeighted(item.product) ? 0.25 : 1.0),
