@@ -3,7 +3,7 @@ import 'package:billing_app/features/product/domain/entities/product.dart';
 
 class CartItem extends Equatable {
   final Product product;
-  final int quantity;
+  final double quantity;
 
   const CartItem({
     required this.product,
@@ -14,7 +14,7 @@ class CartItem extends Equatable {
 
   CartItem copyWith({
     Product? product,
-    int? quantity,
+    double? quantity,
   }) {
     return CartItem(
       product: product ?? this.product,

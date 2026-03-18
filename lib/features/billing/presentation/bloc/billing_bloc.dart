@@ -34,6 +34,11 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     on<FinishTransactionEvent>(_onFinishTransaction);
   }
 
+  bool _isWeightedUnit(QuantityUnit unit) =>
+      unit == QuantityUnit.kg || unit == QuantityUnit.liter;
+
+  double _stepForUnit(QuantityUnit unit) => _isWeightedUnit(unit) ? 0.25 : 1.0;
+
   Future<void> _onScanBarcode(
       ScanBarcodeEvent event, Emitter<BillingState> emit) async {
     final result = await getProductByBarcodeUseCase(event.barcode);
@@ -56,8 +61,10 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     if (existingIndex >= 0) {
       final existingItem = cleanState.cartItems[existingIndex];
       final backendItems = List<CartItem>.from(cleanState.cartItems);
-      backendItems[existingIndex] =
-          existingItem.copyWith(quantity: existingItem.quantity + 1);
+      final increment = _stepForUnit(existingItem.product.unit);
+      backendItems[existingIndex] = existingItem.copyWith(
+        quantity: existingItem.quantity + increment,
+      );
       emit(cleanState.copyWith(cartItems: backendItems, error: null));
     } else {
       final newItem = CartItem(product: event.product);
@@ -129,7 +136,11 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
 
       // Decrease stock for each item sold
       for (final item in state.cartItems) {
-        final newStock = item.product.stock - item.quantity;
+        final stockDelta = item.product.unit == QuantityUnit.piece ||
+                item.product.unit == QuantityUnit.box
+            ? item.quantity.round()
+            : item.quantity.floor();
+        final newStock = item.product.stock - stockDelta;
         await updateProductUseCase(
           item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
         );
@@ -186,7 +197,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
 
     try {
       final normalizedAmountPaid =
-        event.amountPaid.clamp(0.0, state.totalAmount).toDouble();
+          event.amountPaid.clamp(0.0, state.totalAmount).toDouble();
       final items = state.cartItems
           .map((item) => {
                 'name': item.product.name,
@@ -227,7 +238,11 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
 
       // Decrease stock for each item sold
       for (final item in state.cartItems) {
-        final newStock = item.product.stock - item.quantity;
+        final stockDelta = item.product.unit == QuantityUnit.piece ||
+                item.product.unit == QuantityUnit.box
+            ? item.quantity.round()
+            : item.quantity.floor();
+        final newStock = item.product.stock - stockDelta;
         await updateProductUseCase(
           item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
         );

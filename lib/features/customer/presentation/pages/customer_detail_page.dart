@@ -219,7 +219,7 @@ class CustomerDetailPage extends StatelessWidget {
           child:
               const Icon(Icons.payments_rounded, color: Colors.green, size: 20),
         ),
-        title: const Text('Payment Received',
+        title: const Text('Due Payment Received',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
         subtitle: Text(_formatDate(tx.date),
             style: TextStyle(color: Colors.green.shade700, fontSize: 12)),
@@ -272,7 +272,7 @@ class CustomerDetailPage extends StatelessWidget {
             Text(_formatDate(tx.date),
                 style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
             if (due > 0)
-              Text('Due: ₹${due.toStringAsFixed(2)}',
+              Text('Balance Amount: ₹${due.toStringAsFixed(2)}',
                   style: const TextStyle(
                       color: Colors.red,
                       fontSize: 12,

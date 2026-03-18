@@ -6,11 +6,12 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../../product/data/models/product_model.dart';
+import '../../../product/domain/entities/product.dart';
 import '../../domain/entities/customer_entity.dart';
 
 class _CartItem {
   final ProductModel product;
-  int quantity;
+  double quantity;
   _CartItem({required this.product, required this.quantity});
   double get total => product.price * quantity;
 }
@@ -111,11 +112,63 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     setState(() {
       final existing = _cart.where((c) => c.product.id == product.id);
       if (existing.isNotEmpty) {
-        existing.first.quantity++;
+        existing.first.quantity += _stepForUnit(product);
       } else {
-        _cart.add(_CartItem(product: product, quantity: 1));
+        _cart.add(_CartItem(product: product, quantity: 1.0));
       }
     });
+  }
+
+  bool _isWeightedUnit(ProductModel product) =>
+      product.unit == QuantityUnit.kg || product.unit == QuantityUnit.liter;
+
+  double _stepForUnit(ProductModel product) =>
+      _isWeightedUnit(product) ? 0.25 : 1.0;
+
+  String _formatQty(double qty) {
+    if ((qty - qty.roundToDouble()).abs() < 0.0001) {
+      return qty.toStringAsFixed(0);
+    }
+    var text = qty.toStringAsFixed(2);
+    while (text.endsWith('0')) {
+      text = text.substring(0, text.length - 1);
+    }
+    if (text.endsWith('.')) {
+      text = text.substring(0, text.length - 1);
+    }
+    return text;
+  }
+
+  Future<double?> _showManualQtyDialog(
+      ProductModel product, double currentQty) {
+    final controller = TextEditingController(text: _formatQty(currentQty));
+    return showDialog<double>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Set Quantity (${product.unit.shortLabel})'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Quantity',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(
+              context,
+              double.tryParse(controller.text.trim()),
+            ),
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
   }
 
   double get _total => _cart.fold(0, (sum, item) => sum + item.total);
@@ -139,7 +192,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     ));
     for (final item in _cart) {
       billingBloc.add(AddProductToCartEvent(item.product));
-      if (item.quantity > 1) {
+      if ((item.quantity - 1.0).abs() > 0.0001) {
         billingBloc.add(UpdateQuantityEvent(item.product.id, item.quantity));
       }
     }
@@ -302,7 +355,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    if (_tabController.index == 0 && !_scannerPausedByUser && !_scannerRunning) {
+    if (_tabController.index == 0 &&
+        !_scannerPausedByUser &&
+        !_scannerRunning) {
       _ensureScannerActiveSoon();
     }
 
@@ -316,8 +371,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             const Text('Add Items',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
             Text(widget.customer.name,
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF10B981))),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF10B981))),
           ],
         ),
         backgroundColor: Colors.white,
@@ -335,9 +389,8 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   ? Icons.pause_circle_outline_rounded
                   : Icons.play_circle_outline_rounded,
             ),
-            onPressed: _tabController.index == 0
-                ? () => _toggleScannerPause()
-                : null,
+            onPressed:
+                _tabController.index == 0 ? () => _toggleScannerPause() : null,
             tooltip: _scannerRunning ? 'Pause Scanner' : 'Resume Scanner',
             color: const Color(0xFF64748B),
           ),
@@ -353,9 +406,12 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           unselectedLabelColor: const Color(0xFF94A3B8),
           indicatorColor: const Color(0xFF6C63FF),
           indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          labelStyle:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
-            Tab(icon: Icon(Icons.qr_code_scanner_rounded, size: 20), text: 'Scan'),
+            Tab(
+                icon: Icon(Icons.qr_code_scanner_rounded, size: 20),
+                text: 'Scan'),
             Tab(icon: Icon(Icons.list_alt_rounded, size: 20), text: 'Products'),
           ],
         ),
@@ -382,14 +438,47 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                       _cart[i].quantity = newQty;
                     }
                   }),
+                  onManualQty: (i) async {
+                    final current = _cart[i];
+                    final qty = await _showManualQtyDialog(
+                      current.product,
+                      current.quantity,
+                    );
+                    if (!mounted || qty == null) return;
+                    setState(() {
+                      if (qty <= 0) {
+                        _cart.removeAt(i);
+                      } else {
+                        _cart[i].quantity = qty;
+                      }
+                    });
+                  },
+                  isWeighted: (p) => _isWeightedUnit(p),
+                  qtyText: _formatQty,
                 ),
                 _ProductsTab(
                   search: _productSearch,
                   searchCtrl: _searchCtrl,
                   cart: _cart,
-                  onSearchChanged: (v) =>
-                      setState(() => _productSearch = v),
-                  onAdd: _addToCart,
+                  onSearchChanged: (v) => setState(() => _productSearch = v),
+                  onAdd: (product) async {
+                    _addToCart(product);
+                    if (_isWeightedUnit(product)) {
+                      final index =
+                          _cart.indexWhere((c) => c.product.id == product.id);
+                      if (index < 0) return;
+                      final qty = await _showManualQtyDialog(
+                          product, _cart[index].quantity);
+                      if (!mounted || qty == null) return;
+                      setState(() {
+                        if (qty <= 0) {
+                          _cart.removeAt(index);
+                        } else {
+                          _cart[index].quantity = qty;
+                        }
+                      });
+                    }
+                  },
                   onQtyChange: (i, delta) => setState(() {
                     final newQty = _cart[i].quantity + delta;
                     if (newQty <= 0) {
@@ -398,6 +487,24 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                       _cart[i].quantity = newQty;
                     }
                   }),
+                  onManualQty: (i) async {
+                    final current = _cart[i];
+                    final qty = await _showManualQtyDialog(
+                      current.product,
+                      current.quantity,
+                    );
+                    if (!mounted || qty == null) return;
+                    setState(() {
+                      if (qty <= 0) {
+                        _cart.removeAt(i);
+                      } else {
+                        _cart[i].quantity = qty;
+                      }
+                    });
+                  },
+                  stepForProduct: (p) => _stepForUnit(p),
+                  isWeighted: (p) => _isWeightedUnit(p),
+                  qtyText: _formatQty,
                 ),
               ],
             ),
@@ -436,14 +543,14 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   // Items badge
                   Container(
                     margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '${_cart.fold(0, (s, i) => s + i.quantity)} item(s)',
+                      '${_formatQty(_cart.fold<double>(0, (s, i) => s + i.quantity))} unit(s)',
                       style: const TextStyle(
                           color: Color(0xFF6C63FF),
                           fontWeight: FontWeight.bold,
@@ -482,7 +589,10 @@ class _ScanTab extends StatelessWidget {
   final Function(BarcodeCapture) onDetect;
   final Widget Function(Alignment) buildCorner;
   final Future<void> Function() onResumeScanner;
-  final Function(int, int) onQtyChange;
+  final Function(int, double) onQtyChange;
+  final Future<void> Function(int) onManualQty;
+  final bool Function(ProductModel) isWeighted;
+  final String Function(double) qtyText;
 
   const _ScanTab({
     required this.scanner,
@@ -493,6 +603,9 @@ class _ScanTab extends StatelessWidget {
     required this.buildCorner,
     required this.onResumeScanner,
     required this.onQtyChange,
+    required this.onManualQty,
+    required this.isWeighted,
+    required this.qtyText,
   });
 
   @override
@@ -568,7 +681,13 @@ class _ScanTab extends StatelessWidget {
                     ],
                   ),
                 )
-              : _CartList(cart: cart, onQtyChange: onQtyChange),
+              : _CartList(
+                  cart: cart,
+                  onQtyChange: onQtyChange,
+                  onManualQty: onManualQty,
+                  isWeighted: isWeighted,
+                  qtyText: qtyText,
+                ),
         ),
       ],
     );
@@ -581,47 +700,48 @@ class _ScanTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-          Container(
-            width: 62,
-            height: 62,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E293B),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: const Icon(Icons.videocam_off_rounded,
-                color: Colors.white, size: 30),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Scanner is Paused',
-            style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 17,
-                letterSpacing: -0.3),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Tap resume to continue scanning.',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          const SizedBox(height: 14),
-          ElevatedButton.icon(
-            onPressed: onResumeScanner,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6C63FF),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            Container(
+              width: 62,
+              height: 62,
+              decoration: const BoxDecoration(
+                color: Color(0xFF1E293B),
+                shape: BoxShape.circle,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              elevation: 0,
+              alignment: Alignment.center,
+              child: const Icon(Icons.videocam_off_rounded,
+                  color: Colors.white, size: 30),
             ),
-            icon: const Icon(Icons.play_arrow_rounded),
-            label: const Text('Resume Scanner',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
+            const SizedBox(height: 12),
+            const Text(
+              'Scanner is Paused',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  letterSpacing: -0.3),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Tap resume to continue scanning.',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              onPressed: onResumeScanner,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6C63FF),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Resume Scanner',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
       ),
@@ -635,8 +755,12 @@ class _ProductsTab extends StatelessWidget {
   final TextEditingController searchCtrl;
   final List<_CartItem> cart;
   final Function(String) onSearchChanged;
-  final Function(ProductModel) onAdd;
-  final Function(int, int) onQtyChange;
+  final Future<void> Function(ProductModel) onAdd;
+  final Function(int, double) onQtyChange;
+  final Future<void> Function(int) onManualQty;
+  final double Function(ProductModel) stepForProduct;
+  final bool Function(ProductModel) isWeighted;
+  final String Function(double) qtyText;
 
   const _ProductsTab({
     required this.search,
@@ -645,6 +769,10 @@ class _ProductsTab extends StatelessWidget {
     required this.onSearchChanged,
     required this.onAdd,
     required this.onQtyChange,
+    required this.onManualQty,
+    required this.stepForProduct,
+    required this.isWeighted,
+    required this.qtyText,
   });
 
   @override
@@ -669,8 +797,8 @@ class _ProductsTab extends StatelessWidget {
             decoration: InputDecoration(
               hintText: 'Search products…',
               hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
-              prefixIcon: const Icon(Icons.search_rounded,
-                  color: Color(0xFF94A3B8)),
+              prefixIcon:
+                  const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
               suffixIcon: search.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear_rounded,
@@ -706,10 +834,10 @@ class _ProductsTab extends StatelessWidget {
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (ctx, i) {
                     final product = filtered[i];
-                    final cartIdx = cart
-                        .indexWhere((c) => c.product.id == product.id);
+                    final cartIdx =
+                        cart.indexWhere((c) => c.product.id == product.id);
                     final inCart = cartIdx >= 0;
-                    final qty = inCart ? cart[cartIdx].quantity : 0;
+                    final qty = inCart ? cart[cartIdx].quantity : 0.0;
 
                     return Container(
                       padding: const EdgeInsets.symmetric(
@@ -765,22 +893,29 @@ class _ProductsTab extends StatelessWidget {
                           const SizedBox(width: 8),
                           if (inCart) ...[
                             _qtyBtn(Icons.remove, () {
-                              onQtyChange(cartIdx, -1);
+                              onQtyChange(cartIdx, -stepForProduct(product));
                             }),
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 8),
-                              child: Text('$qty',
+                              child: Text(
+                                  '${qtyText(qty)} ${product.unit.shortLabel}',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
+                                      fontSize: 13)),
                             ),
+                            if (isWeighted(product))
+                              _qtyBtn(Icons.edit_rounded, () {
+                                onManualQty(cartIdx);
+                              }),
                             _qtyBtn(Icons.add, () {
-                              onQtyChange(cartIdx, 1);
+                              onQtyChange(cartIdx, stepForProduct(product));
                             }, accent: true),
                           ] else
                             GestureDetector(
-                              onTap: () => onAdd(product),
+                              onTap: () {
+                                onAdd(product);
+                              },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 14, vertical: 8),
@@ -820,9 +955,7 @@ class _ProductsTab extends StatelessWidget {
         ),
         child: Icon(icon,
             size: 16,
-            color: accent
-                ? const Color(0xFF6C63FF)
-                : const Color(0xFF64748B)),
+            color: accent ? const Color(0xFF6C63FF) : const Color(0xFF64748B)),
       ),
     );
   }
@@ -831,8 +964,17 @@ class _ProductsTab extends StatelessWidget {
 // ─── Shared cart list ─────────────────────────────────────────────────────────
 class _CartList extends StatelessWidget {
   final List<_CartItem> cart;
-  final Function(int, int) onQtyChange;
-  const _CartList({required this.cart, required this.onQtyChange});
+  final Function(int, double) onQtyChange;
+  final Future<void> Function(int) onManualQty;
+  final bool Function(ProductModel) isWeighted;
+  final String Function(double) qtyText;
+  const _CartList({
+    required this.cart,
+    required this.onQtyChange,
+    required this.onManualQty,
+    required this.isWeighted,
+    required this.qtyText,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -843,8 +985,7 @@ class _CartList extends StatelessWidget {
       itemBuilder: (ctx, i) {
         final item = cart[i];
         return Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
@@ -877,20 +1018,33 @@ class _CartList extends StatelessWidget {
                     Text(item.product.name,
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text('₹${item.product.price.toStringAsFixed(2)} each',
+                    Text(
+                        '₹${item.product.price.toStringAsFixed(2)} per ${item.product.unit.shortLabel}',
                         style: const TextStyle(
                             fontSize: 12, color: Color(0xFF94A3B8))),
                   ],
                 ),
               ),
-              _qtyBtn(Icons.remove, () => onQtyChange(i, -1)),
+              _qtyBtn(
+                Icons.remove,
+                () => onQtyChange(i, isWeighted(item.product) ? -0.25 : -1.0),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text('${item.quantity}',
+                child: Text(
+                    '${qtyText(item.quantity)} ${item.product.unit.shortLabel}',
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
+                        fontWeight: FontWeight.bold, fontSize: 13)),
               ),
-              _qtyBtn(Icons.add, () => onQtyChange(i, 1), accent: true),
+              if (isWeighted(item.product))
+                _qtyBtn(Icons.edit_rounded, () {
+                  onManualQty(i);
+                }),
+              _qtyBtn(
+                Icons.add,
+                () => onQtyChange(i, isWeighted(item.product) ? 0.25 : 1.0),
+                accent: true,
+              ),
               const SizedBox(width: 12),
               Text('₹${item.total.toStringAsFixed(0)}',
                   style: const TextStyle(
@@ -919,9 +1073,7 @@ class _CartList extends StatelessWidget {
         ),
         child: Icon(icon,
             size: 16,
-            color: accent
-                ? const Color(0xFF6C63FF)
-                : const Color(0xFF64748B)),
+            color: accent ? const Color(0xFF6C63FF) : const Color(0xFF64748B)),
       ),
     );
   }

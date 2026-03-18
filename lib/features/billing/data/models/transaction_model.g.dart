@@ -20,7 +20,7 @@ class TransactionItemModelAdapter extends TypeAdapter<TransactionItemModel> {
       productId: fields[0] as String,
       productName: fields[1] as String,
       price: fields[2] as double,
-      quantity: fields[3] as int,
+      quantity: fields[3] as double,
       total: fields[4] as double,
     );
   }

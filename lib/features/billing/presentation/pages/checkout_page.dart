@@ -6,6 +6,7 @@ import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 import '../../../customer/presentation/bloc/customer_bloc.dart';
 import '../../../customer/presentation/bloc/customer_event.dart';
+import '../../../product/domain/entities/product.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/billing_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -28,6 +29,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void dispose() {
     _amountPaidController.dispose();
     super.dispose();
+  }
+
+  String _formatQty(double qty) {
+    if ((qty - qty.roundToDouble()).abs() < 0.0001) {
+      return qty.toStringAsFixed(0);
+    }
+    var text = qty.toStringAsFixed(2);
+    while (text.endsWith('0')) {
+      text = text.substring(0, text.length - 1);
+    }
+    if (text.endsWith('.')) {
+      text = text.substring(0, text.length - 1);
+    }
+    return text;
   }
 
   @override
@@ -167,7 +182,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                           return TableRow(
                                             children: [
                                               _buildDataCell(
-                                                '${item.quantity} x ${item.product.name}',
+                                                '${_formatQty(item.quantity)} ${item.product.unit.shortLabel} x ${item.product.name}',
                                                 TextAlign.left,
                                               ),
                                               _buildDataCell(
@@ -223,201 +238,205 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             // Credit Payment Details (customer mode only)
                             if (billingState.customerId.isNotEmpty)
                               Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                    color: const Color(0xFFF1F5F9), width: 2),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _isPaymentDetailsExpanded =
-                                            !_isPaymentDetailsExpanded;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 6, horizontal: 2),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text('Credit Payment Details',
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF1E293B))),
-                                          AnimatedRotation(
-                                            turns: _isPaymentDetailsExpanded
-                                                ? 0.5
-                                                : 0,
-                                            duration: const Duration(
-                                                milliseconds: 200),
-                                            child: const Icon(
-                                                Icons.keyboard_arrow_down_rounded,
-                                                color: Color(0xFF64748B)),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  AnimatedCrossFade(
-                                    duration: const Duration(milliseconds: 220),
-                                    crossFadeState: _isPaymentDetailsExpanded
-                                        ? CrossFadeState.showFirst
-                                        : CrossFadeState.showSecond,
-                                    firstChild: Column(
-                                      children: [
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                      color: const Color(0xFFF1F5F9), width: 2),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _isPaymentDetailsExpanded =
+                                              !_isPaymentDetailsExpanded;
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 6, horizontal: 2),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  TextFormField(
-                                                    controller:
-                                                        _amountPaidController,
-                                                    keyboardType:
-                                                        const TextInputType
-                                                            .numberWithOptions(
-                                                            decimal: true),
-                                                    decoration: InputDecoration(
-                                                      labelText:
-                                                          'Amount Willing to Pay',
-                                                      prefixText: '₹ ',
-                                                      border:
-                                                          OutlineInputBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(12),
-                                                      ),
-                                                    ),
-                                                    onChanged: (val) {
-                                                      setState(() {});
-                                                    },
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  SizedBox(
-                                                    width: double.infinity,
-                                                    child: FilledButton.icon(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          _qrAmount =
-                                                              double.tryParse(
-                                                                      _amountPaidController
-                                                                          .text) ??
-                                                                  0.0;
-                                                        });
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                                SnackBar(
-                                                          content: Text(
-                                                              'QR amount updated to ₹${_qrAmount.toStringAsFixed(2)}'),
-                                                          behavior:
-                                                              SnackBarBehavior
-                                                                  .floating,
-                                                          duration:
-                                                              const Duration(
-                                                                  seconds: 1),
-                                                        ));
-                                                      },
-                                                      icon: const Icon(
-                                                          Icons.qr_code_2_rounded,
-                                                          size: 18),
-                                                      label: const Text(
-                                                          'Update Amount'),
-                                                      style:
-                                                          FilledButton.styleFrom(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                vertical: 14),
-                                                        textStyle:
-                                                            const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                          fontSize: 15,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Expanded(
-                                              child:
-                                                  DropdownButtonFormField<String>(
-                                                value: _paymentMethod,
-                                                decoration: InputDecoration(
-                                                  labelText: 'Method',
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12),
-                                                  ),
-                                                ),
-                                                items: const [
-                                                  DropdownMenuItem(
-                                                      value: 'cash',
-                                                      child: Text('Cash')),
-                                                  DropdownMenuItem(
-                                                      value: 'upi',
-                                                      child: Text('UPI')),
-                                                  DropdownMenuItem(
-                                                      value: 'card',
-                                                      child: Text('Card')),
-                                                ],
-                                                onChanged: (val) {
-                                                  if (val != null) {
-                                                    setState(() {
-                                                      _paymentMethod = val;
-                                                    });
-                                                  }
-                                                },
-                                              ),
+                                            const Text('Credit Payment Details',
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF1E293B))),
+                                            AnimatedRotation(
+                                              turns: _isPaymentDetailsExpanded
+                                                  ? 0.5
+                                                  : 0,
+                                              duration: const Duration(
+                                                  milliseconds: 200),
+                                              child: const Icon(
+                                                  Icons
+                                                      .keyboard_arrow_down_rounded,
+                                                  color: Color(0xFF64748B)),
                                             ),
                                           ],
                                         ),
-                                        if (billingState.customerId.isNotEmpty)
-                                          ...[
-                                          const SizedBox(height: 12),
-                                          Builder(builder: (context) {
-                                            final total = billingState.totalAmount;
-                                            final paid =
-                                                _parseWillingToPay(total);
-                                            final due = total - paid;
-                                            if (due > 0) {
-                                              return Text(
-                                                'Remaining ₹${due.toStringAsFixed(2)} will be added to ${billingState.customerName}\'s ledger.',
-                                                style: const TextStyle(
-                                                    color: Colors.orange,
-                                                    fontSize: 13,
-                                                    fontWeight:
-                                                        FontWeight.w600),
-                                              );
-                                            }
-                                            return const SizedBox.shrink();
-                                          }),
-                                        ],
-                                      ],
+                                      ),
                                     ),
-                                    secondChild: const SizedBox.shrink(),
-                                  ),
-                                ],
+                                    AnimatedCrossFade(
+                                      duration:
+                                          const Duration(milliseconds: 220),
+                                      crossFadeState: _isPaymentDetailsExpanded
+                                          ? CrossFadeState.showFirst
+                                          : CrossFadeState.showSecond,
+                                      firstChild: Column(
+                                        children: [
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    TextFormField(
+                                                      controller:
+                                                          _amountPaidController,
+                                                      keyboardType:
+                                                          const TextInputType
+                                                              .numberWithOptions(
+                                                              decimal: true),
+                                                      decoration:
+                                                          InputDecoration(
+                                                        labelText:
+                                                            'Amount Willing to Pay',
+                                                        prefixText: '₹ ',
+                                                        border:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(12),
+                                                        ),
+                                                      ),
+                                                      onChanged: (val) {
+                                                        setState(() {});
+                                                      },
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    SizedBox(
+                                                      width: double.infinity,
+                                                      child: FilledButton.icon(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            _qrAmount = double.tryParse(
+                                                                    _amountPaidController
+                                                                        .text) ??
+                                                                0.0;
+                                                          });
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                                  SnackBar(
+                                                            content: Text(
+                                                                'QR amount updated to ₹${_qrAmount.toStringAsFixed(2)}'),
+                                                            behavior:
+                                                                SnackBarBehavior
+                                                                    .floating,
+                                                            duration:
+                                                                const Duration(
+                                                                    seconds: 1),
+                                                          ));
+                                                        },
+                                                        icon: const Icon(
+                                                            Icons
+                                                                .qr_code_2_rounded,
+                                                            size: 18),
+                                                        label: const Text(
+                                                            'Update Amount'),
+                                                        style: FilledButton
+                                                            .styleFrom(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  vertical: 14),
+                                                          textStyle:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            fontSize: 15,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              Expanded(
+                                                child: DropdownButtonFormField<
+                                                    String>(
+                                                  value: _paymentMethod,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Method',
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
+                                                    ),
+                                                  ),
+                                                  items: const [
+                                                    DropdownMenuItem(
+                                                        value: 'cash',
+                                                        child: Text('Cash')),
+                                                    DropdownMenuItem(
+                                                        value: 'upi',
+                                                        child: Text('UPI')),
+                                                    DropdownMenuItem(
+                                                        value: 'card',
+                                                        child: Text('Card')),
+                                                  ],
+                                                  onChanged: (val) {
+                                                    if (val != null) {
+                                                      setState(() {
+                                                        _paymentMethod = val;
+                                                      });
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (billingState
+                                              .customerId.isNotEmpty) ...[
+                                            const SizedBox(height: 12),
+                                            Builder(builder: (context) {
+                                              final total =
+                                                  billingState.totalAmount;
+                                              final paid =
+                                                  _parseWillingToPay(total);
+                                              final due = total - paid;
+                                              if (due > 0) {
+                                                return Text(
+                                                  'Remaining ₹${due.toStringAsFixed(2)} will be added to ${billingState.customerName}\'s ledger.',
+                                                  style: const TextStyle(
+                                                      color: Colors.orange,
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                                );
+                                              }
+                                              return const SizedBox.shrink();
+                                            }),
+                                          ],
+                                        ],
+                                      ),
+                                      secondChild: const SizedBox.shrink(),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
                             if (billingState.customerId.isNotEmpty)
                               const SizedBox(height: 32),
 
@@ -482,10 +501,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               width: double.infinity,
                               child: OutlinedButton.icon(
                                 onPressed: () {
-                                  final paid = billingState.customerId.isNotEmpty
-                                      ? _parseWillingToPay(
-                                          billingState.totalAmount)
-                                      : billingState.totalAmount;
+                                  final paid =
+                                      billingState.customerId.isNotEmpty
+                                          ? _parseWillingToPay(
+                                              billingState.totalAmount)
+                                          : billingState.totalAmount;
                                   context.read<BillingBloc>().add(
                                       FinishTransactionEvent(
                                           amountPaid: paid,
@@ -513,10 +533,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           PrimaryButton(
                             onPressed: () {
                               if (shopState is ShopLoaded) {
-                              final paid = billingState.customerId.isNotEmpty
-                                ? _parseWillingToPay(
-                                  billingState.totalAmount)
-                                : billingState.totalAmount;
+                                final paid = billingState.customerId.isNotEmpty
+                                    ? _parseWillingToPay(
+                                        billingState.totalAmount)
+                                    : billingState.totalAmount;
                                 context
                                     .read<BillingBloc>()
                                     .add(PrintReceiptEvent(
