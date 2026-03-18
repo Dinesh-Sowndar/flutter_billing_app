@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/billing/presentation/pages/home_page.dart';
 import '../../features/product/presentation/pages/product_list_page.dart';
 import '../../features/product/presentation/pages/add_product_page.dart';
@@ -19,8 +18,6 @@ import '../../features/customer/presentation/pages/add_customer_page.dart';
 import '../../features/customer/presentation/pages/customer_purchase_page.dart';
 import '../../features/customer/presentation/pages/customer_detail_page.dart';
 import '../../features/customer/domain/entities/customer_entity.dart';
-import '../../features/customer/presentation/bloc/customer_bloc.dart';
-import '../../features/customer/presentation/bloc/customer_event.dart';
 import '../../core/service_locator.dart' as di;
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import 'go_router_refresh_stream.dart';
@@ -59,7 +56,8 @@ final router = GoRouter(
     GoRoute(
       path: '/splash',
       builder: (context, state) => const SplashPage(),
-    ),    GoRoute(
+    ),
+    GoRoute(
       path: '/login',
       builder: (context, state) => const LoginPage(),
     ),

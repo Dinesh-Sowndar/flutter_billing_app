@@ -415,6 +415,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
   void _showTransactionDetails(BuildContext context, TransactionModel t) {
     final due = (t.totalAmount - t.amountPaid).clamp(0.0, double.infinity);
     final isPaymentOnly = t.items.isEmpty && t.amountPaid > 0;
+    final balanceDue = isPaymentOnly
+      ? _customerDueAfterTransaction(t)
+      : due.toDouble();
+    final totalDueAmount =
+      isPaymentOnly ? (balanceDue + t.amountPaid) : t.totalAmount;
 
     showModalBottomSheet(
       context: context,
@@ -517,10 +522,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total Amount',
-                        style: TextStyle(
+                  Text(isPaymentOnly ? 'Total Due Amount' : 'Total Amount',
+                    style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('₹${t.totalAmount.toStringAsFixed(2)}',
+                  Text('₹${totalDueAmount.toStringAsFixed(2)}',
                         style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -548,11 +553,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     const Text('Balance Amount',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('₹${due.toStringAsFixed(2)}',
+                    Text('₹${balanceDue.toStringAsFixed(2)}',
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: due > 0
+                            color: balanceDue > 0
                                 ? const Color(0xFFEF4444)
                                 : const Color(0xFF10B981))),
                   ],
@@ -564,6 +569,37 @@ class _TransactionsPageState extends State<TransactionsPage> {
         );
       },
     );
+  }
+
+  double _customerDueAfterTransaction(TransactionModel selectedTx) {
+    if (selectedTx.customerId.isEmpty) return 0.0;
+
+    final customerTransactions = _allTransactions
+        .where((t) => t.customerId == selectedTx.customerId)
+        .toList()
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        if (byDate != 0) return byDate;
+        return a.id.compareTo(b.id);
+      });
+
+    var runningDue = 0.0;
+    for (final tx in customerTransactions) {
+      final isPaymentOnly = tx.items.isEmpty && tx.amountPaid > 0;
+
+      if (isPaymentOnly) {
+        runningDue -= tx.amountPaid;
+      } else {
+        final paidAtSale = tx.amountPaid.clamp(0.0, tx.totalAmount).toDouble();
+        runningDue += (tx.totalAmount - paidAtSale);
+      }
+
+      if (tx.id == selectedTx.id) {
+        break;
+      }
+    }
+
+    return runningDue < 0 ? 0.0 : runningDue;
   }
 
   Widget _buildMetricRow(String label, double value, Color textColor) {

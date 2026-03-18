@@ -15,7 +15,7 @@ class TransactionItemModel {
   final double price;
 
   @HiveField(3)
-  final int quantity;
+  final double quantity;
 
   @HiveField(4)
   final double total;
@@ -90,14 +90,16 @@ class TransactionModel {
       pendingSync: false,
       customerId: map['customerId'] as String? ?? '',
       customerName: map['customerName'] as String? ?? '',
-      amountPaid: (map['amountPaid'] as num?)?.toDouble() ?? (map['totalAmount'] as num?)?.toDouble() ?? 0.0,
+      amountPaid: (map['amountPaid'] as num?)?.toDouble() ??
+          (map['totalAmount'] as num?)?.toDouble() ??
+          0.0,
       paymentMethod: map['paymentMethod'] as String? ?? 'cash',
       items: rawItems
           .map((i) => TransactionItemModel(
                 productId: i['productId'] as String? ?? '',
                 productName: i['productName'] as String? ?? '',
                 price: (i['price'] as num?)?.toDouble() ?? 0.0,
-                quantity: (i['quantity'] as num?)?.toInt() ?? 1,
+                quantity: (i['quantity'] as num?)?.toDouble() ?? 1,
                 total: (i['total'] as num?)?.toDouble() ?? 0.0,
               ))
           .toList(),

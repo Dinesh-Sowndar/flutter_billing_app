@@ -16,7 +16,7 @@ import '../../domain/entities/customer_entity.dart';
 // Lightweight cart item passed from CustomerPurchasePage
 class CustomerCartItem {
   final ProductModel product;
-  final int quantity;
+  final double quantity;
   CustomerCartItem({required this.product, required this.quantity});
   double get total => product.price * quantity;
 }
@@ -38,8 +38,21 @@ class CustomerReviewPage extends StatefulWidget {
 class _CustomerReviewPageState extends State<CustomerReviewPage> {
   bool _isSaving = false;
 
-  double get _total =>
-      widget.items.fold(0.0, (sum, item) => sum + item.total);
+  String _formatQty(double qty) {
+    if ((qty - qty.roundToDouble()).abs() < 0.0001) {
+      return qty.toStringAsFixed(0);
+    }
+    var text = qty.toStringAsFixed(2);
+    while (text.endsWith('0')) {
+      text = text.substring(0, text.length - 1);
+    }
+    if (text.endsWith('.')) {
+      text = text.substring(0, text.length - 1);
+    }
+    return text;
+  }
+
+  double get _total => widget.items.fold(0.0, (sum, item) => sum + item.total);
 
   Future<void> _confirmPurchase() async {
     setState(() => _isSaving = true);
@@ -126,8 +139,7 @@ class _CustomerReviewPageState extends State<CustomerReviewPage> {
                       children: [
                         CircleAvatar(
                           radius: 26,
-                          backgroundColor:
-                              Colors.white.withValues(alpha: 0.25),
+                          backgroundColor: Colors.white.withValues(alpha: 0.25),
                           child: Text(
                             widget.customer.name.isNotEmpty
                                 ? widget.customer.name[0].toUpperCase()
@@ -151,8 +163,7 @@ class _CustomerReviewPageState extends State<CustomerReviewPage> {
                             const SizedBox(height: 2),
                             Text(widget.customer.phone,
                                 style: TextStyle(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     fontSize: 13)),
                           ],
                         ),
@@ -163,8 +174,7 @@ class _CustomerReviewPageState extends State<CustomerReviewPage> {
                           children: [
                             Text('${widget.items.length} item(s)',
                                 style: TextStyle(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     fontSize: 12)),
                             Text(
                               '₹${_total.toStringAsFixed(2)}',
@@ -199,8 +209,8 @@ class _CustomerReviewPageState extends State<CustomerReviewPage> {
                           padding: const EdgeInsets.all(16),
                           decoration: const BoxDecoration(
                             color: Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(20)),
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(20)),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -235,9 +245,9 @@ class _CustomerReviewPageState extends State<CustomerReviewPage> {
                               // Data rows
                               ...widget.items.map((item) => TableRow(
                                     children: [
-                                      _dataCell(item.product.name,
-                                          TextAlign.left),
-                                      _dataCell('${item.quantity}',
+                                      _dataCell(
+                                          item.product.name, TextAlign.left),
+                                      _dataCell(_formatQty(item.quantity),
                                           TextAlign.center),
                                       _dataCell(
                                           '₹${item.total.toStringAsFixed(2)}',
@@ -249,14 +259,12 @@ class _CustomerReviewPageState extends State<CustomerReviewPage> {
                           ),
                         ),
                         // Divider
-                        const Divider(
-                            indent: 20, endIndent: 20, height: 1),
+                        const Divider(indent: 20, endIndent: 20, height: 1),
                         // Total row
                         Padding(
                           padding: const EdgeInsets.all(20),
                           child: Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text('TOTAL',
                                   style: TextStyle(
