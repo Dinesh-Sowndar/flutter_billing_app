@@ -12,6 +12,7 @@ import '../../features/product/domain/entities/product.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
 import '../../features/billing/presentation/pages/transactions_page.dart';
+import '../../features/billing/presentation/pages/sales_dashboard_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/customer/presentation/pages/customer_list_page.dart';
@@ -98,6 +99,10 @@ final router = GoRouter(
         GoRoute(
           path: 'transactions',
           builder: (context, state) => const TransactionsPage(),
+        ),
+        GoRoute(
+          path: 'sales-dashboard',
+          builder: (context, state) => const SalesDashboardPage(),
         ),
       ],
     ),
