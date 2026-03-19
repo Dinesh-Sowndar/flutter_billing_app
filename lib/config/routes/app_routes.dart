@@ -18,6 +18,7 @@ import '../../features/customer/presentation/pages/customer_list_page.dart';
 import '../../features/customer/presentation/pages/add_customer_page.dart';
 import '../../features/customer/presentation/pages/customer_purchase_page.dart';
 import '../../features/customer/presentation/pages/customer_detail_page.dart';
+import '../../features/customer/presentation/pages/edit_customer_page.dart';
 import '../../features/customer/domain/entities/customer_entity.dart';
 import '../../core/data/hive_database.dart';
 import '../../core/service_locator.dart' as di;
@@ -145,6 +146,14 @@ final router = GoRouter(
             return CustomerDetailPage(customer: customer);
           },
           routes: [
+            GoRoute(
+              path: 'edit',
+              builder: (context, state) {
+                final customer = state.extra as CustomerEntity?;
+                if (customer == null) return const SizedBox.shrink();
+                return EditCustomerPage(customer: customer);
+              },
+            ),
             GoRoute(
               path: 'purchase',
               builder: (context, state) {

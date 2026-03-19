@@ -100,10 +100,12 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => GetCustomersUseCase(sl()));
   sl.registerLazySingleton(() => AddCustomerUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateCustomerUseCase(sl()));
   sl.registerLazySingleton(() => DeleteCustomerUseCase(sl()));
   sl.registerFactory(() => CustomerBloc(
         getCustomersUseCase: sl(),
         addCustomerUseCase: sl(),
+        updateCustomerUseCase: sl(),
         deleteCustomerUseCase: sl(),
       ));
 }

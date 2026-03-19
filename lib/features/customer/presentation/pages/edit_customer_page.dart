@@ -3,25 +3,32 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
 
-class AddCustomerPage extends StatefulWidget {
-  const AddCustomerPage({super.key});
+class EditCustomerPage extends StatefulWidget {
+  final CustomerEntity customer;
+  const EditCustomerPage({super.key, required this.customer});
 
   @override
-  State<AddCustomerPage> createState() => _AddCustomerPageState();
+  State<EditCustomerPage> createState() => _EditCustomerPageState();
 }
 
-class _AddCustomerPageState extends State<AddCustomerPage> {
+class _EditCustomerPageState extends State<EditCustomerPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.customer.name);
+    _phoneController = TextEditingController(text: widget.customer.phone);
+  }
 
   @override
   void dispose() {
@@ -34,13 +41,12 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
 
-    final customer = CustomerEntity(
-      id: const Uuid().v4(),
+    final updatedCustomer = widget.customer.copyWith(
       name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
     );
 
-    context.read<CustomerBloc>().add(AddCustomerEvent(customer));
+    context.read<CustomerBloc>().add(UpdateCustomerEvent(updatedCustomer));
     await Future.delayed(const Duration(milliseconds: 300));
 
     if (mounted) context.pop();
@@ -52,7 +58,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
-          'Add Customer',
+          'Edit Customer',
           style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.w700,
             fontSize: 24,
@@ -109,12 +115,12 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.person_add_alt_1_rounded,
+                      child: const Icon(Icons.edit_note_rounded,
                           color: Colors.white, size: 40),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'New Customer',
+                      'Update Details',
                       style: GoogleFonts.spaceGrotesk(
                         color: Colors.white,
                         fontSize: 24,
@@ -123,7 +129,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Fill in the details below',
+                      'Modify customer information',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 14,
@@ -150,12 +156,8 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                   icon: Icons.person_outline_rounded,
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Name is required';
-                  }
-                  if (v.trim().length > 20) {
-                    return 'Name cannot exceed 20 characters';
-                  }
+                  if (v == null || v.trim().isEmpty) return 'Name is required';
+                  if (v.trim().length > 20) return 'Name cannot exceed 20 characters';
                   return null;
                 },
               ),
@@ -213,7 +215,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2.5, color: Colors.white))
                       : const Text(
-                          'Save Customer',
+                          'Update Customer',
                           style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 16,

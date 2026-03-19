@@ -13,6 +13,12 @@ class AddCustomerUseCase {
   Future<void> call(CustomerEntity customer) => repository.addCustomer(customer);
 }
 
+class UpdateCustomerUseCase {
+  final CustomerRepository repository;
+  UpdateCustomerUseCase(this.repository);
+  Future<void> call(CustomerEntity customer) => repository.updateCustomer(customer);
+}
+
 class DeleteCustomerUseCase {
   final CustomerRepository repository;
   DeleteCustomerUseCase(this.repository);
