@@ -1,6 +1,8 @@
 import 'package:billing_app/core/widgets/input_label.dart';
 import 'package:billing_app/core/widgets/primary_button.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -77,8 +79,8 @@ class _EditProductPageState extends State<EditProductPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: const Color(0xFFF1F5F9), width: 2),
+                    border:
+                        Border.all(color: const Color(0xFFF1F5F9), width: 2),
                     boxShadow: [
                       BoxShadow(
                           color:
@@ -128,10 +130,17 @@ class _EditProductPageState extends State<EditProductPage> {
                 const InputLabel(text: 'Product Name'),
                 TextFormField(
                   initialValue: _name,
+                  maxLength: 30,
+                  buildCounter: (context,
+                          {required currentLength,
+                          required isFocused,
+                          required maxLength}) =>
+                      null,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.inventory_2_outlined,
                         color: Color(0xFF94A3B8)),
+                    counterText: '',
                   ),
                   validator: AppValidators.required('Please enter a name'),
                   onSaved: (value) => _name = value!,
@@ -149,7 +158,13 @@ class _EditProductPageState extends State<EditProductPage> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1E293B)),
+                    counterText: '',
                   ),
+                  maxLength: 8,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d{0,8}(\.\d{0,2})?')),
+                  ],
                   validator: AppValidators.price,
                   onSaved: (value) => _price = double.parse(value!),
                 ),
@@ -170,8 +185,8 @@ class _EditProductPageState extends State<EditProductPage> {
                     }
                     return null;
                   },
-                  onSaved: (value) =>
-                      _stock = (value != null && value.isNotEmpty)
+                  onSaved: (value) => _stock =
+                      (value != null && value.isNotEmpty)
                           ? int.parse(value)
                           : _stock,
                 ),
@@ -228,8 +243,7 @@ class _UnitSelector extends StatelessWidget {
           onTap: () => onChanged(unit),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             decoration: BoxDecoration(
               color: isSelected
                   ? AppTheme.primaryColor
@@ -256,9 +270,7 @@ class _UnitSelector extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isSelected
-                        ? Colors.white
-                        : const Color(0xFF334155),
+                    color: isSelected ? Colors.white : const Color(0xFF334155),
                   ),
                 ),
               ],
@@ -282,4 +294,3 @@ class _UnitSelector extends StatelessWidget {
     }
   }
 }
-

@@ -1,6 +1,8 @@
 import 'package:billing_app/core/widgets/input_label.dart';
 import 'package:billing_app/core/widgets/primary_button.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -56,178 +58,189 @@ class _AddProductPageState extends State<AddProductPage> {
     return BlocListener<ProductBloc, ProductState>(
       listenWhen: (previous, current) =>
           previous.status != current.status &&
-          (current.status == ProductStatus.success || current.status == ProductStatus.error),
+          (current.status == ProductStatus.success ||
+              current.status == ProductStatus.error),
       listener: (context, state) {
         if (state.status == ProductStatus.success) {
           context.pop();
-        } else if (state.status == ProductStatus.error && state.message != null) {
+        } else if (state.status == ProductStatus.error &&
+            state.message != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message!),
               backgroundColor: AppTheme.errorColor,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
           );
         }
       },
       child: Scaffold(
         appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.chevron_left_rounded,
-              size: 32, color: Theme.of(context).primaryColor),
-          onPressed: () => context.pop(),
+          leading: IconButton(
+            icon: Icon(Icons.chevron_left_rounded,
+                size: 32, color: Theme.of(context).primaryColor),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text('Add Product',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+          centerTitle: true,
         ),
-        title: const Text('Add Product',
-            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Info Banner
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.only(bottom: 32),
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                        color: AppTheme.secondaryColor.withValues(alpha: 0.2)),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Info Banner
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 32),
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color:
+                              AppTheme.secondaryColor.withValues(alpha: 0.2)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded,
+                            color: AppTheme.secondaryColor),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Barcode is optional. You can add products without one and select them manually during checkout.',
+                            style: TextStyle(
+                                color: Color(0xFF0F172A),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: const Row(
+
+                  const InputLabel(text: 'Barcode Number'),
+                  Row(
                     children: [
-                      Icon(Icons.info_outline_rounded,
-                          color: AppTheme.secondaryColor),
-                      SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          'Barcode is optional. You can add products without one and select them manually during checkout.',
-                          style: TextStyle(
-                              color: Color(0xFF0F172A),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500),
+                        child: TextFormField(
+                          key: ValueKey(_barcode),
+                          initialValue: _barcode,
+                          decoration: const InputDecoration(
+                            hintText: 'e.g. 890123456789 (optional)',
+                            prefixIcon: Icon(Icons.qr_code_2_rounded,
+                                color: Color(0xFF94A3B8)),
+                          ),
+                          // barcode is optional Ã¢â‚¬â€ no validator
+                          onSaved: (value) => _barcode = value?.trim() ?? '',
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      InkWell(
+                        onTap: _scanBarcode,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          height: 56,
+                          width: 56,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.document_scanner_rounded,
+                              color: AppTheme.primaryColor),
                         ),
                       ),
                     ],
                   ),
-                ),
 
-                const InputLabel(text: 'Barcode Number'),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        key: ValueKey(_barcode),
-                        initialValue: _barcode,
-                        decoration: const InputDecoration(
-                          hintText: 'e.g. 890123456789 (optional)',
-                          prefixIcon: Icon(Icons.qr_code_2_rounded,
-                              color: Color(0xFF94A3B8)),
-                        ),
-                        // barcode is optional — no validator
-                        onSaved: (value) => _barcode = value?.trim() ?? '',
-                      ),
+                  const SizedBox(height: 24),
+                  const InputLabel(text: 'Product Name'),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      hintText: 'e.g. Basmati Rice 1kg',
+                      prefixIcon: Icon(Icons.inventory_2_outlined,
+                          color: Color(0xFF94A3B8)),
                     ),
-                    const SizedBox(width: 16),
-                    InkWell(
-                      onTap: _scanBarcode,
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        height: 56,
-                        width: 56,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(Icons.document_scanner_rounded,
-                            color: AppTheme.primaryColor),
-                      ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: AppValidators.required('Please enter a name'),
+                    onSaved: (value) => _name = value!,
+                  ),
+
+                  const SizedBox(height: 24),
+                  const InputLabel(text: 'Selling Price'),
+                  TextFormField(
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      hintText: '0.00',
+                      prefixText: 'â‚¹ ',
+                      prefixStyle: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B)),
+                      counterText: '',
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-                const InputLabel(text: 'Product Name'),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    hintText: 'e.g. Basmati Rice 1kg',
-                    prefixIcon: Icon(Icons.inventory_2_outlined,
-                        color: Color(0xFF94A3B8)),
+                    maxLength: 8,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'^\\d{0,8}(\\.\\d{0,2})?')),
+                    ],
+                    validator: AppValidators.price,
+                    onSaved: (value) => _price = double.parse(value!),
                   ),
-                  textCapitalization: TextCapitalization.words,
-                  validator: AppValidators.required('Please enter a name'),
-                  onSaved: (value) => _name = value!,
-                ),
 
-                const SizedBox(height: 24),
-                const InputLabel(text: 'Selling Price'),
-                TextFormField(
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    hintText: '0.00',
-                    prefixText: '₹ ',
-                    prefixStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B)),
+                  const SizedBox(height: 24),
+                  const InputLabel(text: 'Opening Stock'),
+                  TextFormField(
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      hintText: '0',
+                      prefixIcon: Icon(Icons.warehouse_outlined,
+                          color: Color(0xFF94A3B8)),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return null;
+                      if (int.tryParse(value) == null) {
+                        return 'Enter a valid integer';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _stock =
+                        (value != null && value.isNotEmpty)
+                            ? int.parse(value)
+                            : 0,
                   ),
-                  validator: AppValidators.price,
-                  onSaved: (value) => _price = double.parse(value!),
-                ),
 
-                const SizedBox(height: 24),
-                const InputLabel(text: 'Opening Stock'),
-                TextFormField(
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    hintText: '0',
-                    prefixIcon: Icon(Icons.warehouse_outlined,
-                        color: Color(0xFF94A3B8)),
+                  const SizedBox(height: 24),
+                  const InputLabel(text: 'Quantity Unit'),
+                  const SizedBox(height: 8),
+                  _UnitSelector(
+                    selected: _unit,
+                    onChanged: (unit) => setState(() => _unit = unit),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return null;
-                    if (int.tryParse(value) == null) {
-                      return 'Enter a valid integer';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) =>
-                      _stock = (value != null && value.isNotEmpty)
-                          ? int.parse(value)
-                          : 0,
-                ),
 
-                const SizedBox(height: 24),
-                const InputLabel(text: 'Quantity Unit'),
-                const SizedBox(height: 8),
-                _UnitSelector(
-                  selected: _unit,
-                  onChanged: (unit) => setState(() => _unit = unit),
-                ),
-
-                const SizedBox(height: 48),
-              ],
+                  const SizedBox(height: 48),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.only(bottom: 12),
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: PrimaryButton(
-          onPressed: _submit,
-          icon: Icons.add_rounded,
-          label: 'Save Product',
+        bottomNavigationBar: Container(
+          padding: const EdgeInsets.only(bottom: 12),
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: PrimaryButton(
+            onPressed: _submit,
+            icon: Icons.add_rounded,
+            label: 'Save Product',
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -252,8 +265,7 @@ class _UnitSelector extends StatelessWidget {
           onTap: () => onChanged(unit),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             decoration: BoxDecoration(
               color: isSelected
                   ? AppTheme.primaryColor
@@ -272,8 +284,7 @@ class _UnitSelector extends StatelessWidget {
                 Icon(
                   _unitIcon(unit),
                   size: 18,
-                  color:
-                      isSelected ? Colors.white : AppTheme.primaryColor,
+                  color: isSelected ? Colors.white : AppTheme.primaryColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -281,8 +292,7 @@ class _UnitSelector extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color:
-                        isSelected ? Colors.white : const Color(0xFF334155),
+                    color: isSelected ? Colors.white : const Color(0xFF334155),
                   ),
                 ),
               ],
@@ -306,4 +316,3 @@ class _UnitSelector extends StatelessWidget {
     }
   }
 }
-

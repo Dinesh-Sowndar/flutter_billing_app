@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../bloc/product_bloc.dart';
-import '../../domain/entities/product.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/services/sync_service.dart';
+
 import '../../../../core/service_locator.dart' as di;
+import '../../../../core/services/sync_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../domain/entities/product.dart';
+import '../bloc/product_bloc.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({super.key});
@@ -47,229 +48,436 @@ class _ProductListPageState extends State<ProductListPage> {
     }
   }
 
+  void _confirmDelete(BuildContext context, Product product) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Delete Product?',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+        content: Text('Are you sure you want to delete "${product.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<ProductBloc>().add(DeleteProduct(product.id));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE11D48),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Delete',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isOnline = di.sl<SyncService>().isOnline;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.chevron_left_rounded,
-              size: 32, color: Theme.of(context).primaryColor),
-          onPressed: () => context.pop(),
+        title: const Text(
+          'Inventory',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+            color: Color(0xFF0F172A),
+          ),
         ),
-        title: const Text('Inventory',
-            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        titleSpacing: 8,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Center(
+            child: Material(
+              color: Colors.white,
+              shape: const CircleBorder(),
+              elevation: 2,
+              shadowColor: Colors.black12,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+                color: const Color(0xFF0F172A),
+                onPressed: () => context.pop(),
+              ),
+            ),
+          ),
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: Tooltip(
-              message: isOnline ? 'Synced with Cloud' : 'Offline – changes saved locally',
-              child: Icon(
-                isOnline ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
-                color: isOnline ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isOnline
+                    ? const Color(0xFFDCFCE7)
+                    : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: isOnline
+                        ? const Color(0xFFBBF7D0)
+                        : const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isOnline
+                        ? Icons.cloud_done_rounded
+                        : Icons.cloud_off_rounded,
+                    color: isOnline
+                        ? const Color(0xFF15803D)
+                        : const Color(0xFF64748B),
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isOnline ? 'Online' : 'Offline',
+                    style: TextStyle(
+                      color: isOnline
+                          ? const Color(0xFF15803D)
+                          : const Color(0xFF64748B),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search Area
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-            ),
-            child: BlocBuilder<ProductBloc, ProductState>(
-                builder: (context, state) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _searchController,
-                          textCapitalization: TextCapitalization.words,
-                          decoration: const InputDecoration(
-                            hintText: 'Search or scan barcode...',
-                            prefixIcon: Icon(Icons.search_rounded,
-                                color: Color(0xFF94A3B8)),
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 16),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      InkWell(
-                        onTap: () => _scanQR(state.products),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          height: 56,
-                          width: 56,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: AppTheme.primaryColor
-                                      .withValues(alpha: 0.3),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4))
-                            ],
-                          ),
-                          child: const Icon(Icons.qr_code_scanner_rounded,
-                              color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            }),
-          ),
-
-          // Product List
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      body: BlocConsumer<ProductBloc, ProductState>(
+        listener: (context, state) {
+          if (state.status == ProductStatus.success && state.message != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(state.message!)),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF10B981),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
-              child: BlocConsumer<ProductBloc, ProductState>(
-                listener: (context, state) {
-                  if (state.status == ProductStatus.success &&
-                      state.message != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(state.message!),
-                          backgroundColor: const Color(0xFF10B981),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                    );
-                  } else if (state.status == ProductStatus.error &&
-                      state.message != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(state.message!),
-                          backgroundColor: AppTheme.errorColor,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                    );
-                  }
-                },
-                builder: (context, state) {
-                  if (state.status == ProductStatus.loading &&
-                      state.products.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (state.products.isEmpty) {
-                    if (state.status == ProductStatus.error) {
-                      return Center(child: Text('Error: ${state.message}'));
-                    }
-                    return _buildEmptyState();
-                  }
-
-                  final filteredProducts = state.products
-                      .where((product) =>
-                          product.name.toLowerCase().contains(_searchQuery) ||
-                          product.barcode.toLowerCase().contains(_searchQuery))
-                      .toList();
-
-                  if (filteredProducts.isEmpty) {
-                    return const Center(
-                        child: Text('No products match your search.',
-                            style: TextStyle(
-                                color: Color(0xFF64748B), fontSize: 16)));
-                  }
-
-                  return ListView.separated(
-                    padding: const EdgeInsets.only(
-                        left: 20, right: 20, top: 24, bottom: 120),
-                    itemCount: filteredProducts.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final product = filteredProducts[index];
-                      return _buildProductCard(context, product);
-                    },
-                  );
-                },
+            );
+          } else if (state.status == ProductStatus.error &&
+              state.message != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error_outline_rounded,
+                        color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(state.message!)),
+                  ],
+                ),
+                backgroundColor: const Color(0xFFE11D48),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
-            ),
-          ),
-        ],
+            );
+          }
+        },
+        builder: (context, state) {
+          return Column(
+            children: [
+              _buildSearchBar(state.products),
+              Expanded(
+                child: _buildMainContent(state),
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/products/add'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
-        elevation: 8,
-        focusElevation: 12,
-        hoverElevation: 12,
-        highlightElevation: 12,
+        elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add Product',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
       ),
     );
   }
 
-  Widget _buildProductCard(BuildContext context, Product product) {
+  Widget _buildSearchBar(List<Product> products) {
     return Container(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: _searchController,
+              textCapitalization: TextCapitalization.words,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              decoration: InputDecoration(
+                hintText: 'Search or scan barcode...',
+                hintStyle: const TextStyle(
+                    color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                prefixIcon:
+                    const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded,
+                            color: Color(0xFF94A3B8)),
+                        onPressed: () {
+                          _searchController.clear();
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(
+                      color: AppTheme.primaryColor, width: 1.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          InkWell(
+            onTap: () => _scanQR(products),
+            borderRadius: BorderRadius.circular(16),
+            child: Ink(
+              height: 52,
+              width: 52,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.qr_code_scanner_rounded,
+                  color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainContent(ProductState state) {
+    if (state.status == ProductStatus.loading && state.products.isEmpty) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (state.products.isEmpty) {
+      if (state.status == ProductStatus.error) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  size: 48, color: Color(0xFFE11D48)),
+              const SizedBox(height: 16),
+              const Text('Failed to load products',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              Text(state.message ?? 'Unknown error',
+                  style: const TextStyle(color: Color(0xFF64748B))),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () =>
+                    context.read<ProductBloc>().add(LoadProducts()),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Try Again'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+              )
+            ],
+          ),
+        );
+      }
+      return _buildEmptyState();
+    }
+
+    final filteredProducts = state.products
+        .where((product) =>
+            product.name.toLowerCase().contains(_searchQuery) ||
+            product.barcode.toLowerCase().contains(_searchQuery))
+        .toList();
+
+    if (filteredProducts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off_rounded, size: 64, color: Color(0xFFCBD5E1)),
+            SizedBox(height: 16),
+            Text(
+              'No products found',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  color: Color(0xFF475569)),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Try adjusting your search or try scanning.',
+              style: TextStyle(
+                  color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+      physics: const BouncingScrollPhysics(),
+      itemCount: filteredProducts.length,
+      itemBuilder: (context, index) {
+        final product = filteredProducts[index];
+        return _buildProductListItem(context, product);
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.inventory_2_rounded,
+                size: 64, color: AppTheme.primaryColor),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Your inventory is empty',
+            style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 20,
+                color: Color(0xFF0F172A)),
+          ),
+          const SizedBox(height: 8),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              'Start adding products to your store catalogue by scanning barcodes or adding manually.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 14,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500),
+            ),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () => context.push('/products/add'),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add First Product',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductListItem(BuildContext context, Product product) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+        border: Border.all(color: Colors.grey.shade100, width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icon
           Stack(
             children: [
               Container(
-                width: 56,
-                height: 56,
+                height: 52,
+                width: 52,
                 decoration: BoxDecoration(
                   color: AppTheme.secondaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.inventory_2_rounded,
-                    color: AppTheme.secondaryColor, size: 28),
+                    color: AppTheme.secondaryColor, size: 24),
               ),
               if (product.pendingSync)
                 Positioned(
-                  top: 0,
-                  right: 0,
+                  top: -2,
+                  right: -2,
                   child: Container(
-                    width: 14,
-                    height: 14,
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
-                    child: const Icon(Icons.cloud_upload_outlined,
-                        size: 8, color: Colors.white),
+                    child: const Icon(Icons.cloud_upload_rounded,
+                        size: 10, color: Colors.white),
                   ),
                 ),
             ],
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,71 +485,137 @@ class _ProductListPageState extends State<ProductListPage> {
                 Text(
                   product.name,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF1E293B),
-                      letterSpacing: -0.3),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: Color(0xFF1E293B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Text(
-                      '₹${product.price.toStringAsFixed(2)}',
+                      'Rs ${product.price.toStringAsFixed(0)}',
                       style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: AppTheme.primaryColor),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    // Unit badge
-                    _Badge(
-                      label: product.unit.shortLabel,
-                      color: AppTheme.primaryColor,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        product.unit.shortLabel,
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 6),
-                    // Stock badge
-                    _Badge(
-                      label: 'Qty: ${product.stock}',
-                      color: product.stock > 0
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFEF4444),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: product.stock > 0
+                            ? const Color(0xFFDCFCE7)
+                            : const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Qty: ${product.stock}',
+                        style: TextStyle(
+                          color: product.stock > 0
+                              ? const Color(0xFF15803D)
+                              : const Color(0xFFB91C1C),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                    if (product.stock < 5) ...[
-                      const SizedBox(width: 6),
-                      const _Badge(
-                        label: 'Low Stock',
-                        color: Color(0xFFF59E0B),
+                    if (product.stock > 0 && product.stock <= 5) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Low',
+                          style: TextStyle(
+                            color: Color(0xFFB45309),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  product.barcode,
-                  style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      color: Color(0xFF94A3B8),
-                      fontWeight: FontWeight.bold),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.qr_code_2_rounded,
+                        size: 12, color: Color(0xFF94A3B8)),
+                    const SizedBox(width: 4),
+                    Text(
+                      product.barcode,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          // Actions
-          Column(
+          Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildActionButton(
-                icon: Icons.edit_rounded,
-                color: AppTheme.primaryColor,
-                onPressed: () => context.push('/products/edit/${product.id}',
-                    extra: product),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  onPressed: () => context.push('/products/edit/${product.id}',
+                      extra: product),
+                  icon: const Icon(Icons.edit_rounded, size: 20),
+                  color: AppTheme.primaryColor,
+                  splashRadius: 24,
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Edit Product',
+                ),
               ),
-              const SizedBox(height: 8),
-              _buildActionButton(
-                icon: Icons.delete_outline_rounded,
-                color: AppTheme.errorColor,
-                onPressed: () => _confirmDelete(context, product),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE11D48).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  onPressed: () => _confirmDelete(context, product),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                  color: const Color(0xFFE11D48),
+                  splashRadius: 24,
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Delete Product',
+                ),
               ),
             ],
           )
@@ -349,125 +623,6 @@ class _ProductListPageState extends State<ProductListPage> {
       ),
     );
   }
-
-  Widget _buildActionButton(
-      {required IconData icon,
-      required Color color,
-      required VoidCallback onPressed}) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return SizedBox(
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppTheme.secondaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.inventory_2_outlined,
-                size: 56, color: AppTheme.secondaryColor),
-          ),
-          const SizedBox(height: 24),
-          const Text('No Products Yet',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                  color: Color(0xFF1E293B),
-                  letterSpacing: -0.5)),
-          const SizedBox(height: 8),
-          const Text('Add your first product to get started.',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 15)),
-        ],
-      ),
-    );
-  }
-
-  void _confirmDelete(BuildContext context, Product product) {
-    showDialog(
-      context: context,
-      builder: (innerContext) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Delete Product',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text(
-              'Are you sure you want to delete ${product.name}? This action cannot be undone.',
-              style: const TextStyle(color: Color(0xFF475569))),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(innerContext),
-              style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF64748B)),
-              child: const Text('Cancel',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                context.read<ProductBloc>().add(DeleteProduct(product.id));
-                Navigator.pop(innerContext);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.errorColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              child: const Text('Delete',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
 
-class _Badge extends StatelessWidget {
-  final String label;
-  final Color color;
 
-  const _Badge({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
