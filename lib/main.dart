@@ -20,6 +20,7 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
   // Preserve the native splash until we finish initializing.
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
@@ -29,10 +30,10 @@ void main() async {
   await HiveDatabase.init();
   await di.init();
 
-  // Start SyncService so offline→online transitions trigger Firestore sync.
+  // Start SyncService so offline->online transitions trigger Firestore sync.
   await di.sl<SyncService>().initialize();
 
-  // Initialization done — remove the splash.
+  // Initialization done - remove the splash.
   FlutterNativeSplash.remove();
 
   runApp(const MyApp());
@@ -95,16 +96,14 @@ class _MyAppState extends State<MyApp> {
                   customerRepository: di.sl(),
                 )),
         BlocProvider<PrinterBloc>(
-            create: (context) =>
-                di.sl<PrinterBloc>()..add(InitPrinterEvent())),
-        BlocProvider<SalesBloc>(
-            create: (context) {
-              final bloc = di.sl<SalesBloc>()..add(LoadSalesEvent());
-              di.sl<SyncService>().onSyncComplete.stream.listen((_) {
-                if (!bloc.isClosed) bloc.add(LoadSalesEvent());
-              });
-              return bloc;
-            }),
+            create: (context) => di.sl<PrinterBloc>()..add(InitPrinterEvent())),
+        BlocProvider<SalesBloc>(create: (context) {
+          final bloc = di.sl<SalesBloc>()..add(LoadSalesEvent());
+          di.sl<SyncService>().onSyncComplete.stream.listen((_) {
+            if (!bloc.isClosed) bloc.add(LoadSalesEvent());
+          });
+          return bloc;
+        }),
       ],
       child: MaterialApp.router(
         title: 'QuickReceipt',

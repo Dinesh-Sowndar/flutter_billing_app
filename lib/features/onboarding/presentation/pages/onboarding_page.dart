@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/data/hive_database.dart';
 
@@ -98,7 +97,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   children: [
                     Text(
                       'QuickReceipt',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0F172A),
@@ -164,7 +163,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           const SizedBox(height: 42),
                           Text(
                             current.title,
-                            style: GoogleFonts.spaceGrotesk(
+                            style: TextStyle(
                               fontSize: 34,
                               height: 1.1,
                               fontWeight: FontWeight.w700,

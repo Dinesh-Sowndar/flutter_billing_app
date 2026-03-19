@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -47,7 +46,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
       appBar: AppBar(
         title: Text(
           'Customers',
-          style: GoogleFonts.spaceGrotesk(
+          style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 24,
             color: const Color(0xFF0F172A),
@@ -129,7 +128,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
         onChanged: (v) => setState(() => _searchQuery = v),
         style: const TextStyle(fontWeight: FontWeight.w500),
         decoration: InputDecoration(
-          hintText: 'Search by name or phone…',
+          hintText: 'Search by name or phone...',
           hintStyle: const TextStyle(
               color: Color(0xFF94A3B8), fontWeight: FontWeight.normal),
           prefixIcon:
@@ -195,7 +194,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           const SizedBox(height: 24),
           Text(
             _searchQuery.isNotEmpty ? 'No customers found' : 'No Customers Yet',
-            style: GoogleFonts.spaceGrotesk(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1E293B),
@@ -242,7 +241,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   Widget _buildCustomerList(
       List<CustomerEntity> customers, List<TransactionModel> transactions) {
-    final currencyFormat = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+    final currencyFormat =
+        NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -307,7 +307,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                         customer.name.isNotEmpty
                             ? customer.name[0].toUpperCase()
                             : '?',
-                        style: GoogleFonts.spaceGrotesk(
+                        style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 22,

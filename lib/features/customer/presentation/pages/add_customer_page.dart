@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -53,7 +52,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       appBar: AppBar(
         title: Text(
           'Add Customer',
-          style: GoogleFonts.spaceGrotesk(
+          style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 24,
             color: const Color(0xFF0F172A),
@@ -115,7 +114,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                     const SizedBox(height: 16),
                     Text(
                       'New Customer',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.w700,

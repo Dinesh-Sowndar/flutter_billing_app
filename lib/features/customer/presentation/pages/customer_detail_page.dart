@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -70,7 +69,7 @@ class CustomerDetailPage extends StatelessWidget {
               appBar: AppBar(
                 title: Text(
                   'Customer Details',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 22,
                     color: const Color(0xFF0F172A),
@@ -83,9 +82,10 @@ class CustomerDetailPage extends StatelessWidget {
                 actions: [
                   if (ledgerDue > 0)
                     TextButton.icon(
-                      onPressed: () =>
-                          _showPaymentDialog(context, currentCustomer, ledgerDue),
-                      icon: const Icon(Icons.payments_rounded, color: Color(0xFF10B981)),
+                      onPressed: () => _showPaymentDialog(
+                          context, currentCustomer, ledgerDue),
+                      icon: const Icon(Icons.payments_rounded,
+                          color: Color(0xFF10B981)),
                       label: const Text('Pay Due',
                           style: TextStyle(
                               color: Color(0xFF10B981),
@@ -102,18 +102,21 @@ class CustomerDetailPage extends StatelessWidget {
                 icon: const Icon(Icons.qr_code_scanner_rounded),
                 label: const Text(
                   'Add Bill',
-                  style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700, letterSpacing: 0.5),
                 ),
                 backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
                 elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
               ),
               body: Column(
                 children: [
                   // Modern Header Banner
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -142,14 +145,16 @@ class CustomerDetailPage extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                width: 1.5),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             currentCustomer.name.isNotEmpty
                                 ? currentCustomer.name[0].toUpperCase()
                                 : '?',
-                            style: GoogleFonts.spaceGrotesk(
+                            style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28),
@@ -162,7 +167,7 @@ class CustomerDetailPage extends StatelessWidget {
                             children: [
                               Text(
                                 currentCustomer.name,
-                                style: GoogleFonts.spaceGrotesk(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 22,
                                   color: Colors.white,
@@ -172,15 +177,17 @@ class CustomerDetailPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               InkWell(
-                                onTap: () =>
-                                    _makePhoneCall(context, currentCustomer.phone),
+                                onTap: () => _makePhoneCall(
+                                    context, currentCustomer.phone),
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 4, horizontal: 2),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.call_rounded, size: 16, color: Colors.white70),
+                                      const Icon(Icons.call_rounded,
+                                          size: 16, color: Colors.white70),
                                       const SizedBox(width: 6),
                                       Text(
                                         currentCustomer.phone,
@@ -201,9 +208,12 @@ class CustomerDetailPage extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.2),
                           shape: const CircleBorder(),
                           child: IconButton(
-                            icon: const Icon(Icons.edit_rounded, color: Colors.white),
+                            icon: const Icon(Icons.edit_rounded,
+                                color: Colors.white),
                             onPressed: () {
-                              context.push('/customers/${currentCustomer.id}/edit', extra: currentCustomer);
+                              context.push(
+                                  '/customers/${currentCustomer.id}/edit',
+                                  extra: currentCustomer);
                             },
                             tooltip: 'Edit Customer',
                           ),
@@ -214,24 +224,33 @@ class CustomerDetailPage extends StatelessWidget {
 
                   // Stats Row
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
-                        Expanded(child: _buildStatCard('Total Spent', totalSpent, Icons.shopping_bag_rounded, Colors.purple)),
+                        Expanded(
+                            child: _buildStatCard('Total Spent', totalSpent,
+                                Icons.shopping_bag_rounded, Colors.purple)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildStatCard('Due Balance', ledgerDue, Icons.account_balance_wallet_rounded, ledgerDue > 0 ? Colors.red : Colors.green)),
+                        Expanded(
+                            child: _buildStatCard(
+                                'Due Balance',
+                                ledgerDue,
+                                Icons.account_balance_wallet_rounded,
+                                ledgerDue > 0 ? Colors.red : Colors.green)),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 8),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Transaction History',
-                        style: GoogleFonts.spaceGrotesk(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1E293B),
@@ -254,17 +273,19 @@ class CustomerDetailPage extends StatelessWidget {
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.05),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.05),
                                         blurRadius: 15,
                                         offset: const Offset(0, 5),
                                       )
                                     ],
                                   ),
-                                  child: const Icon(Icons.receipt_long_rounded, size: 48, color: Color(0xFFCBD5E1)),
+                                  child: const Icon(Icons.receipt_long_rounded,
+                                      size: 48, color: Color(0xFFCBD5E1)),
                                 ),
                                 const SizedBox(height: 16),
                                 Text('No history yet',
-                                    style: GoogleFonts.spaceGrotesk(
+                                    style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF94A3B8))),
@@ -299,8 +320,10 @@ class CustomerDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, double amount, IconData icon, MaterialColor color) {
-    final currencyFormat = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+  Widget _buildStatCard(
+      String title, double amount, IconData icon, MaterialColor color) {
+    final currencyFormat =
+        NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -377,7 +400,8 @@ class CustomerDetailPage extends StatelessWidget {
 
   Widget _buildTransactionTile(TransactionModel tx) {
     final dueForTx = tx.totalAmount - tx.amountPaid;
-    final currencyFormat = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+    final currencyFormat =
+        NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -395,17 +419,19 @@ class CustomerDetailPage extends StatelessWidget {
             color: const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF64748B)),
+          child: const Icon(Icons.shopping_cart_outlined,
+              color: Color(0xFF64748B)),
         ),
         title: Text(
-          DateFormat('MMM dd, yyyy • hh:mm a').format(tx.date),
+          DateFormat('MMM dd, yyyy - hh:mm a').format(tx.date),
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             '${tx.items.length} items',
-            style: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+            style: const TextStyle(
+                color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
           ),
         ),
         trailing: Column(
@@ -442,7 +468,8 @@ class CustomerDetailPage extends StatelessWidget {
   }
 
   Widget _buildPaymentTile(TransactionModel tx) {
-    final currencyFormat = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+    final currencyFormat =
+        NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -470,8 +497,9 @@ class CustomerDetailPage extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
-            DateFormat('MMM dd, yyyy • hh:mm a').format(tx.date),
-            style: const TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.w500),
+            DateFormat('MMM dd, yyyy - hh:mm a').format(tx.date),
+            style: const TextStyle(
+                color: Color(0xFF059669), fontWeight: FontWeight.w500),
           ),
         ),
         trailing: Text(
@@ -488,7 +516,7 @@ class CustomerDetailPage extends StatelessWidget {
   void _showPaymentDialog(
       BuildContext context, CustomerEntity customer, double due) {
     final amountController =
-      TextEditingController(text: due.toStringAsFixed(2));
+        TextEditingController(text: due.toStringAsFixed(2));
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
 
@@ -498,14 +526,16 @@ class CustomerDetailPage extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Record Payment', style: TextStyle(fontWeight: FontWeight.bold)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('Record Payment',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             content: Form(
               key: formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Current Due: ₹${due.toStringAsFixed(2)}',
+                  Text('Current Due: Rs ${due.toStringAsFixed(2)}',
                       style: const TextStyle(
                           color: Colors.red, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
@@ -515,11 +545,12 @@ class CustomerDetailPage extends StatelessWidget {
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
                       labelText: 'Amount to Pay',
-                      prefixText: '₹ ',
+                      prefixText: 'Rs ',
                       helperText: 'Defaulted to full due amount',
                       filled: true,
                       fillColor: Colors.grey.shade50,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Enter amount';
@@ -570,12 +601,17 @@ class CustomerDetailPage extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 child: isSaving
                     ? const SizedBox(
-                        width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : const Text('Save',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           );

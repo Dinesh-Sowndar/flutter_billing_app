@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/customer_entity.dart';
@@ -59,7 +58,7 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
       appBar: AppBar(
         title: Text(
           'Edit Customer',
-          style: GoogleFonts.spaceGrotesk(
+          style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 24,
             color: const Color(0xFF0F172A),
@@ -121,7 +120,7 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
                     const SizedBox(height: 16),
                     Text(
                       'Update Details',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -157,7 +156,8 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Name is required';
-                  if (v.trim().length > 20) return 'Name cannot exceed 20 characters';
+                  if (v.trim().length > 20)
+                    return 'Name cannot exceed 20 characters';
                   return null;
                 },
               ),

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
 import '../../../../core/data/hive_database.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../../product/data/models/product_model.dart';
 import '../../../product/domain/entities/product.dart';
@@ -61,11 +64,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       _startScannerSafe();
     });
 
-    // Pause scanner when switching to Products tab.
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
       if (_tabController.index == 1) {
-        // Keep scanner paused when moving away from Scan tab.
         _scannerPausedByUser = true;
         _stopScannerSafe();
       } else if (_tabController.index == 0 && !_scannerPausedByUser) {
@@ -103,7 +104,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     }
   }
 
-  // ─── Scanner helpers ─────────────────────────────────────────────────────
+  // â”€â”€â”€ Scanner helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   void _onDetect(BarcodeCapture capture) async {
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
@@ -130,7 +131,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ));
       }
       return;
@@ -175,26 +176,51 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     return showDialog<double>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Set Quantity (${product.unit.shortLabel})'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          'Set Quantity (${product.unit.shortLabel})',
+          style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              color: const Color(0xFF0F172A)),
+        ),
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Quantity',
-            border: OutlineInputBorder(),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.primaryColor),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancel',
+                style: TextStyle(fontWeight: FontWeight.w600)),
           ),
-          FilledButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(
               context,
               double.tryParse(controller.text.trim()),
             ),
-            child: const Text('Apply'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Apply',
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -209,19 +235,24 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       _cart.clear();
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All added items cleared'),
+      SnackBar(
+        content: const Text('All items cleared'),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
 
-  // ─── Checkout ─────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Checkout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Future<void> _goToCheckout() async {
     if (_cart.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Cart is empty — add at least one product'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Cart is empty - add products first.'),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
+        backgroundColor: Colors.orange.shade800,
       ));
       return;
     }
@@ -280,7 +311,6 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     _isStartingScanner = true;
     Object? lastError;
     try {
-      // Reset any stale camera session before starting a fresh preview.
       try {
         await _scanner.stop();
       } catch (_) {}
@@ -346,7 +376,6 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     try {
       await _scanner.stop();
     } catch (_) {
-      // Ignore stop race conditions from rapid tab changes.
     } finally {
       if (mounted) {
         setState(() {
@@ -376,55 +405,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     });
   }
 
-  // ─── Corner brackets (same style as ScannerPage) ─────────────────────────
-  Widget _buildCorner(Alignment alignment) {
-    const color = Color(0xFF10B981);
-    const strokeW = 6.0;
-    const size = 28.0;
-    return Align(
-      alignment: alignment,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          border: Border(
-            top: (alignment == Alignment.topLeft ||
-                    alignment == Alignment.topRight)
-                ? const BorderSide(color: color, width: strokeW)
-                : BorderSide.none,
-            bottom: (alignment == Alignment.bottomLeft ||
-                    alignment == Alignment.bottomRight)
-                ? const BorderSide(color: color, width: strokeW)
-                : BorderSide.none,
-            left: (alignment == Alignment.topLeft ||
-                    alignment == Alignment.bottomLeft)
-                ? const BorderSide(color: color, width: strokeW)
-                : BorderSide.none,
-            right: (alignment == Alignment.topRight ||
-                    alignment == Alignment.bottomRight)
-                ? const BorderSide(color: color, width: strokeW)
-                : BorderSide.none,
-          ),
-          borderRadius: BorderRadius.only(
-            topLeft: alignment == Alignment.topLeft
-                ? const Radius.circular(8)
-                : Radius.zero,
-            topRight: alignment == Alignment.topRight
-                ? const Radius.circular(8)
-                : Radius.zero,
-            bottomLeft: alignment == Alignment.bottomLeft
-                ? const Radius.circular(8)
-                : Radius.zero,
-            bottomRight: alignment == Alignment.bottomRight
-                ? const Radius.circular(8)
-                : Radius.zero,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─── Build ────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Build UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
     if (_tabController.index == 0 &&
@@ -435,395 +416,440 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      extendBody: true,
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Add Items',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-            Text(widget.customer.name,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF10B981))),
-          ],
+        title: Text(
+          'Sale Entry',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 22,
+            color: const Color(0xFF0F172A),
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
+        centerTitle: false,
+        titleSpacing: 8,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12.0),
+          child: Center(
+            child: Material(
+              color: Colors.white,
+              shape: const CircleBorder(),
+              elevation: 2,
+              shadowColor: Colors.black12,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+                color: const Color(0xFF0F172A),
+                onPressed: () => context.pop(),
+              ),
+            ),
+          ),
         ),
         actions: [
           if (_cart.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_sweep_rounded),
-              onPressed: _clearAllCart,
-              tooltip: 'Clear all items',
-              color: const Color(0xFFEF4444),
-            ),
-          IconButton(
-            icon: Icon(
-              _scannerRunning
-                  ? Icons.pause_circle_outline_rounded
-                  : Icons.play_circle_outline_rounded,
-            ),
-            onPressed:
-                _tabController.index == 0 ? () => _toggleScannerPause() : null,
-            tooltip: _scannerRunning ? 'Pause Scanner' : 'Resume Scanner',
-            color: const Color(0xFF64748B),
-          ),
-          IconButton(
-            icon: const Icon(Icons.flashlight_on_rounded),
-            onPressed: () => _scanner.toggleTorch(),
-            color: const Color(0xFF64748B),
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: const Color(0xFF6C63FF),
-          unselectedLabelColor: const Color(0xFF94A3B8),
-          indicatorColor: const Color(0xFF6C63FF),
-          indicatorWeight: 3,
-          labelStyle:
-              const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          tabs: const [
-            Tab(
-                icon: Icon(Icons.qr_code_scanner_rounded, size: 20),
-                text: 'Scan'),
-            Tab(icon: Icon(Icons.list_alt_rounded, size: 20), text: 'Products'),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _ScanTab(
-                  scanner: _scanner,
-                  scannerVersion: _scannerWidgetVersion,
-                  isScannerRunning: _scannerRunning,
-                  cameraErrorMessage: _cameraErrorMessage,
-                  cart: _cart,
-                  total: _total,
-                  onDetect: _onDetect,
-                  buildCorner: _buildCorner,
-                  onResumeScanner: _resumeScannerFromPanel,
-                  onRetryScanner: () async {
-                    await _recreateScannerController();
-                    await _startScannerSafe();
-                  },
-                  onScannerError: (message) {
-                    if (!mounted) return;
-                    setState(() {
-                      _scannerRunning = false;
-                      _cameraErrorMessage = message;
-                    });
-                  },
-                  onQtyChange: (i, delta) => setState(() {
-                    final newQty = _cart[i].quantity + delta;
-                    if (newQty <= 0) {
-                      _cart.removeAt(i);
-                    } else {
-                      _cart[i].quantity = newQty;
-                    }
-                  }),
-                  onRemove: (i) => setState(() {
-                    _cart.removeAt(i);
-                  }),
-                  onManualQty: (i) async {
-                    final current = _cart[i];
-                    final qty = await _showManualQtyDialog(
-                      current.product,
-                      current.quantity,
-                    );
-                    if (!mounted || qty == null) return;
-                    setState(() {
-                      if (qty <= 0) {
-                        _cart.removeAt(i);
-                      } else {
-                        _cart[i].quantity = qty;
-                      }
-                    });
-                  },
-                  isWeighted: (p) => _isWeightedUnit(p),
-                  qtyText: _formatQty,
-                ),
-                _ProductsTab(
-                  search: _productSearch,
-                  searchCtrl: _searchCtrl,
-                  cart: _cart,
-                  onSearchChanged: (v) => setState(() => _productSearch = v),
-                  onAdd: (product) async {
-                    _addToCart(product);
-                    if (_isWeightedUnit(product)) {
-                      final index =
-                          _cart.indexWhere((c) => c.product.id == product.id);
-                      if (index < 0) return;
-                      final qty = await _showManualQtyDialog(
-                          product, _cart[index].quantity);
-                      if (!mounted || qty == null) return;
-                      setState(() {
-                        if (qty <= 0) {
-                          _cart.removeAt(index);
-                        } else {
-                          _cart[index].quantity = qty;
-                        }
-                      });
-                    }
-                  },
-                  onQtyChange: (i, delta) => setState(() {
-                    final newQty = _cart[i].quantity + delta;
-                    if (newQty <= 0) {
-                      _cart.removeAt(i);
-                    } else {
-                      _cart[i].quantity = newQty;
-                    }
-                  }),
-                  onRemove: (i) => setState(() {
-                    _cart.removeAt(i);
-                  }),
-                  onManualQty: (i) async {
-                    final current = _cart[i];
-                    final qty = await _showManualQtyDialog(
-                      current.product,
-                      current.quantity,
-                    );
-                    if (!mounted || qty == null) return;
-                    setState(() {
-                      if (qty <= 0) {
-                        _cart.removeAt(i);
-                      } else {
-                        _cart[i].quantity = qty;
-                      }
-                    });
-                  },
-                  stepForProduct: (p) => _stepForUnit(p),
-                  isWeighted: (p) => _isWeightedUnit(p),
-                  qtyText: _formatQty,
-                ),
-              ],
-            ),
-          ),
-
-          // ─── Bottom bar ───
-          if (_cart.isNotEmpty)
-            Container(
-              padding: EdgeInsets.fromLTRB(
-                  20, 14, 20, MediaQuery.of(context).padding.bottom + 14),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-              ),
-              child: Row(
-                children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Total',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF94A3B8),
-                              fontWeight: FontWeight.w500)),
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: InkWell(
+                onTap: _clearAllCart,
+                borderRadius: BorderRadius.circular(14),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF1F2),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFFECDD3)),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.delete_sweep_rounded,
+                          size: 18, color: Color(0xFFE11D48)),
+                      SizedBox(width: 6),
                       Text(
-                        '₹${_total.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B)),
+                        'Clear',
+                        style: TextStyle(
+                          color: Color(0xFFE11D48),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  // Items badge
-                  Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_formatQty(_cart.fold<double>(0, (s, i) => s + i.quantity))} unit(s)',
-                      style: const TextStyle(
-                          color: Color(0xFF6C63FF),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12),
-                    ),
-                  ),
-                  FilledButton.icon(
-                    onPressed: _goToCheckout,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C63FF),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 22, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: const Icon(Icons.receipt_long_rounded, size: 18),
-                    label: const Text('Review Items',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15)),
-                  ),
-                ],
+                ),
               ),
+            ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              _buildCustomerBanner(),
+              _buildCustomTabBar(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    _buildScanTab(),
+                    _buildProductsTab(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_cart.isNotEmpty)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _buildFloatingCheckoutBar(),
             ),
         ],
       ),
     );
   }
-}
 
-// ─── Scan Tab ────────────────────────────────────────────────────────────────
-class _ScanTab extends StatelessWidget {
-  final MobileScannerController scanner;
-  final int scannerVersion;
-  final bool isScannerRunning;
-  final String? cameraErrorMessage;
-  final List<_CartItem> cart;
-  final double total;
-  final Function(BarcodeCapture) onDetect;
-  final Widget Function(Alignment) buildCorner;
-  final Future<void> Function() onResumeScanner;
-  final Future<void> Function() onRetryScanner;
-  final void Function(String?) onScannerError;
-  final Function(int, double) onQtyChange;
-  final Function(int) onRemove;
-  final Future<void> Function(int) onManualQty;
-  final bool Function(ProductModel) isWeighted;
-  final String Function(double) qtyText;
-
-  const _ScanTab({
-    required this.scanner,
-    required this.scannerVersion,
-    required this.isScannerRunning,
-    required this.cameraErrorMessage,
-    required this.cart,
-    required this.total,
-    required this.onDetect,
-    required this.buildCorner,
-    required this.onResumeScanner,
-    required this.onRetryScanner,
-    required this.onScannerError,
-    required this.onQtyChange,
-    required this.onRemove,
-    required this.onManualQty,
-    required this.isWeighted,
-    required this.qtyText,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Camera box
-        Container(
-          width: double.infinity,
-          color: Colors.black,
-          height: 220,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              MobileScanner(
-                key: ValueKey('customer-scan-$scannerVersion'),
-                controller: scanner,
-                onDetect: onDetect,
-                errorBuilder: (context, error, child) {
-                  final isPermissionError = error.errorCode ==
-                      MobileScannerErrorCode.permissionDenied;
-                  onScannerError(error.toString());
-                  return _buildScannerErrorState(
-                    isPermissionError: isPermissionError,
-                    errorMessage: cameraErrorMessage ?? error.toString(),
-                    onRetry: onRetryScanner,
-                  );
-                },
+  // â”€â”€â”€ Header Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildCustomerBanner() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryColor.withValues(alpha: 0.9),
+                  AppTheme.primaryColor,
+                ],
               ),
-              if (isScannerRunning) ...[
-                Container(color: Colors.black.withValues(alpha: 0.45)),
-                Center(
-                  child: Container(
-                    width: 200,
-                    height: 170,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          width: 1.5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Stack(children: [
-                      buildCorner(Alignment.topLeft),
-                      buildCorner(Alignment.topRight),
-                      buildCorner(Alignment.bottomLeft),
-                      buildCorner(Alignment.bottomRight),
-                    ]),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              widget.customer.name.isNotEmpty
+                  ? widget.customer.name[0].toUpperCase()
+                  : '?',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Billing to:",
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                const Positioned(
-                  bottom: 8,
-                  left: 0,
-                  right: 0,
-                  child: Text('Align barcode within the frame',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500)),
+                Text(
+                  widget.customer.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: const Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ] else ...[
-                _buildPausedScannerState(),
               ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${_cart.length} Unit(s)',
+              style: const TextStyle(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // â”€â”€â”€ Custom Segmented TabBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildCustomTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        labelColor: AppTheme.primaryColor,
+        unselectedLabelColor: const Color(0xFF64748B),
+        labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+        unselectedLabelStyle:
+            TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        tabs: const [
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.qr_code_scanner_rounded, size: 18),
+                SizedBox(width: 8),
+                Text('Scan Item'),
+              ],
+            ),
+          ),
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.inventory_2_rounded, size: 18),
+                SizedBox(width: 8),
+                Text('Add Manual'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // â”€â”€â”€ Floating Checkout Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildFloatingCheckoutBar() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          16, 0, 16, MediaQuery.of(context).padding.bottom + 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 14, 14, 14),
+        child: Row(
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Amount',
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Rs ${_total.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            ElevatedButton(
+              onPressed: _goToCheckout,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppTheme.primaryColor,
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+              ),
+              child: Row(
+                children: [
+                  Text('Checkout',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_rounded, size: 18),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // â”€â”€â”€ Scan Tab Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildScanTab() {
+    return Column(
+      children: [
+        // Premium Scanner Card
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          height: 240,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+            border: Border.all(color: Colors.transparent),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                MobileScanner(
+                  key: ValueKey('customer-scan-$_scannerWidgetVersion'),
+                  controller: _scanner,
+                  onDetect: _onDetect,
+                  errorBuilder: (context, error, child) {
+                    final isPermError = error.errorCode ==
+                        MobileScannerErrorCode.permissionDenied;
+                    return _buildScannerErrorState(
+                        isPermissionError: isPermError,
+                        errorMessage: _cameraErrorMessage ?? error.toString());
+                  },
+                ),
+                if (_scannerRunning) ...[
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          width: 2),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: IconButton(
+                      icon: const Icon(Icons.flashlight_on_rounded,
+                          color: Colors.white),
+                      onPressed: () => _scanner.toggleTorch(),
+                      style:
+                          IconButton.styleFrom(backgroundColor: Colors.black45),
+                    ),
+                  ),
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: IconButton(
+                      icon:
+                          const Icon(Icons.pause_rounded, color: Colors.white),
+                      onPressed: _toggleScannerPause,
+                      style:
+                          IconButton.styleFrom(backgroundColor: Colors.black45),
+                    ),
+                  ),
+                  const Center(
+                    child: Icon(Icons.filter_center_focus_rounded,
+                        color: Colors.white54, size: 100),
+                  ),
+                ] else
+                  _buildPausedScannerState(),
+              ],
+            ),
+          ),
+        ),
+        // Section Title
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+          child: Row(
+            children: [
+              Text("Scanned Items",
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: const Color(0xFF1E293B))),
+              const Spacer(),
+              if (_cart.isNotEmpty)
+                Text('${_cart.length} item(s)',
+                    style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
             ],
           ),
         ),
-
-        // Scanned items
+        // Cart List View
         Expanded(
-          child: cart.isEmpty
+          child: _cart.isEmpty
               ? const Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.qr_code_scanner_rounded,
-                          size: 52, color: Color(0xFFE2E8F0)),
-                      SizedBox(height: 10),
-                      Text('No items scanned yet',
+                          size: 48, color: Color(0xFFCBD5E1)),
+                      SizedBox(height: 12),
+                      Text("Points scanner at product barcode",
                           style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF94A3B8))),
-                      SizedBox(height: 4),
-                      Text('Or switch to Products tab to add manually',
-                          style: TextStyle(
-                              fontSize: 12, color: Color(0xFFCBD5E1))),
+                              color: Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w500)),
                     ],
                   ),
                 )
-              : _CartList(
-                  cart: cart,
-                  onQtyChange: onQtyChange,
-                  onRemove: onRemove,
-                  onManualQty: onManualQty,
-                  isWeighted: isWeighted,
-                  qtyText: qtyText,
-                ),
+              : _buildCartListView(),
         ),
       ],
     );
   }
 
-  Widget _buildScannerErrorState({
-    required bool isPermissionError,
-    required String? errorMessage,
-    required Future<void> Function() onRetry,
-  }) {
+  Widget _buildScannerErrorState(
+      {required bool isPermissionError, required String errorMessage}) {
     return Container(
       color: const Color(0xFF0F172A),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -831,27 +857,21 @@ class _ScanTab extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             isPermissionError
-                ? 'Camera permission is required for scanner.'
-                : 'Unable to open camera right now.',
+                ? 'Camera permission denied.'
+                : 'Unable to open camera.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
-          if (errorMessage != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              errorMessage,
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-          ],
           const SizedBox(height: 14),
           ElevatedButton.icon(
-            onPressed: onRetry,
+            onPressed: () async {
+              await _recreateScannerController();
+              await _startScannerSafe();
+            },
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(
-                isPermissionError ? 'Retry After Permission' : 'Retry Camera'),
+            label: const Text('Retry Camera'),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor),
           ),
         ],
       ),
@@ -859,250 +879,103 @@ class _ScanTab extends StatelessWidget {
   }
 
   Widget _buildPausedScannerState() {
-    return SizedBox.expand(
-      child: Container(
-        color: const Color(0xFF0F172A),
+    return Container(
+      color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 62,
-              height: 62,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E293B),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle),
               child: const Icon(Icons.videocam_off_rounded,
-                  color: Colors.white, size: 30),
+                  color: Colors.white, size: 32),
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'Scanner is Paused',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                  letterSpacing: -0.3),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Tap resume to continue scanning.',
-              style: TextStyle(color: Colors.white70, fontSize: 12),
-            ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: onResumeScanner,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C63FF),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                elevation: 0,
-              ),
+              onPressed: _resumeScannerFromPanel,
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Resume Scanner',
+              label: const Text("Resume Scanner",
                   style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white),
+            )
           ],
         ),
       ),
     );
   }
-}
 
-// ─── Products Tab ─────────────────────────────────────────────────────────────
-class _ProductsTab extends StatelessWidget {
-  final String search;
-  final TextEditingController searchCtrl;
-  final List<_CartItem> cart;
-  final Function(String) onSearchChanged;
-  final Future<void> Function(ProductModel) onAdd;
-  final Function(int, double) onQtyChange;
-  final Function(int) onRemove;
-  final Future<void> Function(int) onManualQty;
-  final double Function(ProductModel) stepForProduct;
-  final bool Function(ProductModel) isWeighted;
-  final String Function(double) qtyText;
-
-  const _ProductsTab({
-    required this.search,
-    required this.searchCtrl,
-    required this.cart,
-    required this.onSearchChanged,
-    required this.onAdd,
-    required this.onQtyChange,
-    required this.onRemove,
-    required this.onManualQty,
-    required this.stepForProduct,
-    required this.isWeighted,
-    required this.qtyText,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  // â”€â”€â”€ Products Tab Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildProductsTab() {
     final all = HiveDatabase.productBox.values.toList();
-    final filtered = search.trim().isEmpty
+    final filtered = _productSearch.trim().isEmpty
         ? all
         : all
             .where((p) =>
-                p.name.toLowerCase().contains(search.toLowerCase()) ||
-                p.barcode.contains(search))
+                p.name.toLowerCase().contains(_productSearch.toLowerCase()) ||
+                p.barcode.contains(_productSearch))
             .toList();
 
     return Column(
       children: [
-        // Search bar
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
           child: TextField(
-            controller: searchCtrl,
-            onChanged: onSearchChanged,
+            controller: _searchCtrl,
+            onChanged: (v) => setState(() => _productSearch = v),
+            style: const TextStyle(fontWeight: FontWeight.w500),
             decoration: InputDecoration(
-              hintText: 'Search products…',
-              hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
+              hintText: 'Search products by name or barcode...',
+              hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
               prefixIcon:
                   const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
-              suffixIcon: search.isNotEmpty
+              suffixIcon: _productSearch.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear_rounded,
                           color: Color(0xFF94A3B8)),
                       onPressed: () {
-                        searchCtrl.clear();
-                        onSearchChanged('');
+                        _searchCtrl.clear();
+                        setState(() => _productSearch = '');
                       },
                     )
                   : null,
               filled: true,
-              fillColor: const Color(0xFFF1F5F9),
+              fillColor: Colors.white,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide:
+                    const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             ),
           ),
         ),
-
-        // Product list
         Expanded(
           child: filtered.isEmpty
               ? const Center(
-                  child: Text('No products found',
+                  child: Text('No products match your search.',
                       style: TextStyle(color: Color(0xFF94A3B8))),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (ctx, i) {
                     final product = filtered[i];
                     final cartIdx =
-                        cart.indexWhere((c) => c.product.id == product.id);
-                    final inCart = cartIdx >= 0;
-                    final qty = inCart ? cart[cartIdx].quantity : 0.0;
-
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: inCart
-                            ? Border.all(
-                                color: const Color(0xFF6C63FF)
-                                    .withValues(alpha: 0.4),
-                                width: 1.5)
-                            : null,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6C63FF)
-                                  .withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.inventory_2_outlined,
-                                color: Color(0xFF6C63FF), size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(product.name,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14)),
-                                Text(
-                                    '₹${product.price.toStringAsFixed(2)}  •  Stock: ${product.stock}',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF94A3B8))),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          if (inCart) ...[
-                            _qtyBtn(Icons.remove, () {
-                              onQtyChange(cartIdx, -stepForProduct(product));
-                            }),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: Text(
-                                  '${qtyText(qty)} ${product.unit.shortLabel}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13)),
-                            ),
-                            if (isWeighted(product))
-                              _qtyBtn(Icons.edit_rounded, () {
-                                onManualQty(cartIdx);
-                              }),
-                            _qtyBtn(Icons.close_rounded, () {
-                              onRemove(cartIdx);
-                            }),
-                            _qtyBtn(Icons.add, () {
-                              onQtyChange(cartIdx, stepForProduct(product));
-                            }, accent: true),
-                          ] else
-                            GestureDetector(
-                              onTap: () {
-                                onAdd(product);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF6C63FF),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Text('Add',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13)),
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
+                        _cart.indexWhere((c) => c.product.id == product.id);
+                    return _buildProductListItem(product, cartIdx);
                   },
                 ),
         ),
@@ -1110,122 +983,160 @@ class _ProductsTab extends StatelessWidget {
     );
   }
 
-  static Widget _qtyBtn(IconData icon, VoidCallback onTap,
-      {bool accent = false}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(
-          color: accent
-              ? const Color(0xFF6C63FF).withValues(alpha: 0.1)
-              : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(8),
+  Widget _buildProductListItem(ProductModel product, int cartIdx) {
+    final inCart = cartIdx >= 0;
+    final qty = inCart ? _cart[cartIdx].quantity : 0.0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: inCart
+              ? AppTheme.primaryColor.withValues(alpha: 0.3)
+              : Colors.grey.shade100,
+          width: inCart ? 1.5 : 1,
         ),
-        child: Icon(icon,
-            size: 16,
-            color: accent ? const Color(0xFF6C63FF) : const Color(0xFF64748B)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 48,
+            width: 48,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.inventory_2_rounded,
+                color: AppTheme.primaryColor, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: const Color(0xFF1E293B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Rs ${product.price.toStringAsFixed(0)} / ${product.unit.shortLabel} - Stock: ${product.stock}',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+          if (inCart)
+            _buildQtyControls(cartIdx, product, qty)
+          else
+            GestureDetector(
+              onTap: () async {
+                _addToCart(product);
+                if (_isWeightedUnit(product)) {
+                  final newIdx =
+                      _cart.indexWhere((c) => c.product.id == product.id);
+                  if (newIdx < 0) return;
+                  final q = await _showManualQtyDialog(
+                      product, _cart[newIdx].quantity);
+                  if (!mounted || q == null) return;
+                  setState(() {
+                    if (q <= 0) {
+                      _cart.removeAt(newIdx);
+                    } else {
+                      _cart[newIdx].quantity = q;
+                    }
+                  });
+                }
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text('Add',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14)),
+              ),
+            ),
+        ],
       ),
     );
   }
-}
 
-// ─── Shared cart list ─────────────────────────────────────────────────────────
-class _CartList extends StatelessWidget {
-  final List<_CartItem> cart;
-  final Function(int, double) onQtyChange;
-  final Function(int) onRemove;
-  final Future<void> Function(int) onManualQty;
-  final bool Function(ProductModel) isWeighted;
-  final String Function(double) qtyText;
-  const _CartList({
-    required this.cart,
-    required this.onQtyChange,
-    required this.onRemove,
-    required this.onManualQty,
-    required this.isWeighted,
-    required this.qtyText,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
-      itemCount: cart.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+  // â”€â”€â”€ Shared Cart List Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildCartListView() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+      itemCount: _cart.length,
       itemBuilder: (ctx, i) {
-        final item = cart[i];
+        final item = _cart[i];
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade100, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6C63FF).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.inventory_2_outlined,
-                    color: Color(0xFF6C63FF), size: 20),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(item.product.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14)),
                     Text(
-                        '₹${item.product.price.toStringAsFixed(2)} per ${item.product.unit.shortLabel}',
-                        style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF94A3B8))),
+                      item.product.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: const Color(0xFF1E293B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Rs ${item.product.price.toStringAsFixed(0)} x ${_formatQty(item.quantity)} ${item.product.unit.shortLabel}  =  Rs ${item.total.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF10B981),
+                          fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               ),
-              _qtyBtn(
-                Icons.remove,
-                () => onQtyChange(i, isWeighted(item.product) ? -0.25 : -1.0),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                    '${qtyText(item.quantity)} ${item.product.unit.shortLabel}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 13)),
-              ),
-              if (isWeighted(item.product))
-                _qtyBtn(Icons.edit_rounded, () {
-                  onManualQty(i);
-                }),
-              _qtyBtn(Icons.close_rounded, () {
-                onRemove(i);
-              }),
-              _qtyBtn(
-                Icons.add,
-                () => onQtyChange(i, isWeighted(item.product) ? 0.25 : 1.0),
-                accent: true,
-              ),
-              const SizedBox(width: 12),
-              Text('₹${item.total.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(0xFF1E293B))),
+              const SizedBox(width: 8),
+              _buildQtyControls(i, item.product, item.quantity),
             ],
           ),
         );
@@ -1233,22 +1144,78 @@ class _CartList extends StatelessWidget {
     );
   }
 
-  static Widget _qtyBtn(IconData icon, VoidCallback onTap,
-      {bool accent = false}) {
+  // â”€â”€â”€ Quantity Controls Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildQtyControls(int cartIdx, ProductModel product, double qty) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _qtyBtn(Icons.remove, () {
+          setState(() {
+            final newQty = qty - _stepForUnit(product);
+            if (newQty <= 0) {
+              _cart.removeAt(cartIdx);
+            } else {
+              _cart[cartIdx].quantity = newQty;
+            }
+          });
+        }),
+        GestureDetector(
+          onTap: _isWeightedUnit(product)
+              ? () async {
+                  final q = await _showManualQtyDialog(product, qty);
+                  if (!mounted || q == null) return;
+                  setState(() {
+                    if (q <= 0) {
+                      _cart.removeAt(cartIdx);
+                    } else {
+                      _cart[cartIdx].quantity = q;
+                    }
+                  });
+                }
+              : null,
+          child: Container(
+            constraints: const BoxConstraints(minWidth: 40),
+            alignment: Alignment.center,
+            child: Text(
+              _formatQty(qty),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+          ),
+        ),
+        _qtyBtn(Icons.add, () {
+          setState(() {
+            _cart[cartIdx].quantity += _stepForUnit(product);
+          });
+        }, accent: true),
+      ],
+    );
+  }
+
+  Widget _qtyBtn(IconData icon, VoidCallback onTap, {bool accent = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 30,
-        height: 30,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
-          color: accent
-              ? const Color(0xFF6C63FF).withValues(alpha: 0.1)
-              : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(8),
+          color: accent ? AppTheme.primaryColor : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: accent
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
         ),
         child: Icon(icon,
-            size: 16,
-            color: accent ? const Color(0xFF6C63FF) : const Color(0xFF64748B)),
+            size: 18, color: accent ? Colors.white : const Color(0xFF64748B)),
       ),
     );
   }
