@@ -13,11 +13,13 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
 import '../../features/billing/presentation/pages/transactions_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
+import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/customer/presentation/pages/customer_list_page.dart';
 import '../../features/customer/presentation/pages/add_customer_page.dart';
 import '../../features/customer/presentation/pages/customer_purchase_page.dart';
 import '../../features/customer/presentation/pages/customer_detail_page.dart';
 import '../../features/customer/domain/entities/customer_entity.dart';
+import '../../core/data/hive_database.dart';
 import '../../core/service_locator.dart' as di;
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import 'go_router_refresh_stream.dart';
@@ -26,12 +28,23 @@ final router = GoRouter(
   initialLocation: '/splash',
   redirect: (context, state) {
     final isSplash = state.matchedLocation == '/splash';
+    final isOnboarding = state.matchedLocation == '/onboarding';
     final authState = di.sl<AuthBloc>().state;
     final isLoggingIn = state.matchedLocation == '/login';
     final isSigningUp = state.matchedLocation == '/signup';
+    final isOnboardingCompleted = HiveDatabase.settingsBox
+        .get('onboarding_completed', defaultValue: false) as bool;
 
     // Don't redirect the splash screen.
     if (isSplash) return null;
+
+    if (!isOnboardingCompleted) {
+      return isOnboarding ? null : '/onboarding';
+    }
+
+    if (isOnboarding) {
+      return '/login';
+    }
 
     // While Firebase is still resolving the session or an action is in flight,
     // don't redirect — let the UI show its own loader.
@@ -56,6 +69,10 @@ final router = GoRouter(
     GoRoute(
       path: '/splash',
       builder: (context, state) => const SplashPage(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingPage(),
     ),
     GoRoute(
       path: '/login',
