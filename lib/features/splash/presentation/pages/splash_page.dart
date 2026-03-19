@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/data/hive_database.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class SplashPage extends StatefulWidget {
@@ -11,8 +12,7 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
-    with TickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   late final AnimationController _logoController;
   late final AnimationController _textController;
   late final AnimationController _dotsController;
@@ -79,8 +79,15 @@ class _SplashPageState extends State<SplashPage>
   }
 
   void _navigateBasedOnAuth() {
+    final isOnboardingCompleted = HiveDatabase.settingsBox
+        .get('onboarding_completed', defaultValue: false) as bool;
+    if (!isOnboardingCompleted) {
+      context.go('/onboarding');
+      return;
+    }
+
     final authState = context.read<AuthBloc>().state;
-    // If still resolving session, wait. (The router will handle it if it changes later, 
+    // If still resolving session, wait. (The router will handle it if it changes later,
     // but splash explicitly redirects right now).
     if (authState.status == AuthStatus.initial ||
         authState.status == AuthStatus.loading) {
@@ -118,9 +125,9 @@ class _SplashPageState extends State<SplashPage>
         child: SafeArea(
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
-              // If the timer finished but auth was still loading, 
+              // If the timer finished but auth was still loading,
               // this listener catches when it finally resolves.
-              if (_isMinimiumSplashTimePassed && 
+              if (_isMinimiumSplashTimePassed &&
                   state.status != AuthStatus.initial &&
                   state.status != AuthStatus.loading) {
                 // If 3 seconds have passed, navigate.
@@ -131,78 +138,79 @@ class _SplashPageState extends State<SplashPage>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                const Spacer(flex: 2),
+                  const Spacer(flex: 2),
 
-                // Animated Logo
-                ScaleTransition(
-                  scale: _logoScale,
-                  child: FadeTransition(
-                    opacity: _logoFade,
-                    child: Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(36),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF6C63FF).withValues(alpha: 0.4),
-                            blurRadius: 40,
-                            spreadRadius: 8,
+                  // Animated Logo
+                  ScaleTransition(
+                    scale: _logoScale,
+                    child: FadeTransition(
+                      opacity: _logoFade,
+                      child: Container(
+                        width: 140,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(36),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6C63FF)
+                                  .withValues(alpha: 0.4),
+                              blurRadius: 40,
+                              spreadRadius: 8,
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(18),
+                        child: Image.asset(
+                          'assets/images/quick_receipt.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  // Animated App Name + Tagline
+                  SlideTransition(
+                    position: _textSlide,
+                    child: FadeTransition(
+                      opacity: _textFade,
+                      child: Column(
+                        children: [
+                          const Text(
+                            'QuickReceipt',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 34,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Smart Billing, Simplified.',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.65),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(18),
-                      child: Image.asset(
-                        'assets/images/quick_receipt.png',
-                        fit: BoxFit.contain,
-                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 36),
+                  const Spacer(flex: 2),
 
-                // Animated App Name + Tagline
-                SlideTransition(
-                  position: _textSlide,
-                  child: FadeTransition(
-                    opacity: _textFade,
-                    child: Column(
-                      children: [
-                        const Text(
-                          'QuickReceipt',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 34,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Smart Billing, Simplified.',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.65),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                  // Loading dots
+                  _AnimatedLoadingDots(controller: _dotsController),
 
-                const Spacer(flex: 2),
-
-                // Loading dots
-                _AnimatedLoadingDots(controller: _dotsController),
-
-                const SizedBox(height: 48),
-              ],
+                  const SizedBox(height: 48),
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ),
@@ -233,11 +241,10 @@ class _AnimatedLoadingDots extends StatelessWidget {
             height: 10,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(
-                  alpha: 0.3 + 0.7 * animation.value),
+              color:
+                  Colors.white.withValues(alpha: 0.3 + 0.7 * animation.value),
             ),
-            transform: Matrix4.translationValues(
-                0, -6 * animation.value, 0),
+            transform: Matrix4.translationValues(0, -6 * animation.value, 0),
           ),
         );
       }),
