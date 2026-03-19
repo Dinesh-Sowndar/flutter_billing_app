@@ -25,14 +25,14 @@ class CustomerPurchasePage extends StatefulWidget {
 }
 
 class _CustomerPurchasePageState extends State<CustomerPurchasePage>
-    with TickerProviderStateMixin {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   late final TabController _tabController;
 
-  final MobileScannerController _scanner = MobileScannerController(
-    autoStart: false,
-    detectionSpeed: DetectionSpeed.normal,
-    returnImage: false,
-  );
+  late MobileScannerController _scanner;
+  int _scannerWidgetVersion = 0;
+  bool _isStartingScanner = false;
+  bool _isDisposingScanner = false;
+  String? _cameraErrorMessage;
   bool _scannerRunning = false;
   bool _scannerPausedByUser = false;
   bool _resumeScheduled = false;
@@ -43,9 +43,19 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   String _productSearch = '';
   final _searchCtrl = TextEditingController();
 
+  MobileScannerController _createScannerController() {
+    return MobileScannerController(
+      autoStart: false,
+      detectionSpeed: DetectionSpeed.normal,
+      returnImage: false,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scanner = _createScannerController();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startScannerSafe();
@@ -66,11 +76,31 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _isDisposingScanner = true;
     _stopScannerSafe();
     _scanner.dispose();
     _tabController.dispose();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        if (_tabController.index == 0 && !_scannerPausedByUser) {
+          _startScannerSafe();
+        }
+        return;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _stopScannerSafe();
+        return;
+    }
   }
 
   // ─── Scanner helpers ─────────────────────────────────────────────────────
@@ -232,7 +262,12 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   }
 
   Future<void> _startScannerSafe() async {
-    if (!mounted || _scannerRunning) return;
+    if (!mounted ||
+        _scannerRunning ||
+        _isStartingScanner ||
+        _isDisposingScanner) {
+      return;
+    }
 
     final now = DateTime.now();
     if (_lastStartAttempt != null &&
@@ -242,20 +277,37 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     }
     _lastStartAttempt = now;
 
+    _isStartingScanner = true;
+    Object? lastError;
     try {
       // Reset any stale camera session before starting a fresh preview.
       try {
         await _scanner.stop();
       } catch (_) {}
 
-      await Future<void>.delayed(const Duration(milliseconds: 80));
-      await _scanner.start();
-      if (mounted) {
-        setState(() {
-          _scannerRunning = true;
-        });
+      for (var attempt = 0; attempt < 3; attempt++) {
+        try {
+          await Future<void>.delayed(const Duration(milliseconds: 80));
+          await _scanner.start();
+          if (mounted) {
+            setState(() {
+              _scannerRunning = true;
+              _cameraErrorMessage = null;
+            });
+          }
+          return;
+        } catch (e) {
+          lastError = e;
+          if (attempt == 1) {
+            await _recreateScannerController();
+          }
+          await Future<void>.delayed(
+            Duration(milliseconds: 180 * (attempt + 1)),
+          );
+        }
       }
     } catch (e) {
+      lastError = e;
       final msg = e.toString().toLowerCase();
       if (msg.contains('already') &&
           (msg.contains('running') || msg.contains('started'))) {
@@ -268,19 +320,26 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
         }
         return;
       }
-
-      // Retry once after short delay for camera startup race conditions.
-      await Future<void>.delayed(const Duration(milliseconds: 220));
-      if (!mounted || _scannerRunning || _tabController.index != 0) return;
-      try {
-        await _scanner.start();
-        if (mounted) {
-          setState(() {
-            _scannerRunning = true;
-          });
-        }
-      } catch (_) {}
+    } finally {
+      _isStartingScanner = false;
+      if (mounted && !_scannerRunning && lastError != null) {
+        setState(() => _cameraErrorMessage = lastError.toString());
+      }
     }
+  }
+
+  Future<void> _recreateScannerController() async {
+    try {
+      await _scanner.stop();
+    } catch (_) {}
+    try {
+      await _scanner.dispose();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _scanner = _createScannerController();
+      _scannerWidgetVersion++;
+    });
   }
 
   Future<void> _stopScannerSafe() async {
@@ -444,12 +503,25 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
               children: [
                 _ScanTab(
                   scanner: _scanner,
+                  scannerVersion: _scannerWidgetVersion,
                   isScannerRunning: _scannerRunning,
+                  cameraErrorMessage: _cameraErrorMessage,
                   cart: _cart,
                   total: _total,
                   onDetect: _onDetect,
                   buildCorner: _buildCorner,
                   onResumeScanner: _resumeScannerFromPanel,
+                  onRetryScanner: () async {
+                    await _recreateScannerController();
+                    await _startScannerSafe();
+                  },
+                  onScannerError: (message) {
+                    if (!mounted) return;
+                    setState(() {
+                      _scannerRunning = false;
+                      _cameraErrorMessage = message;
+                    });
+                  },
                   onQtyChange: (i, delta) => setState(() {
                     final newQty = _cart[i].quantity + delta;
                     if (newQty <= 0) {
@@ -609,12 +681,16 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 // ─── Scan Tab ────────────────────────────────────────────────────────────────
 class _ScanTab extends StatelessWidget {
   final MobileScannerController scanner;
+  final int scannerVersion;
   final bool isScannerRunning;
+  final String? cameraErrorMessage;
   final List<_CartItem> cart;
   final double total;
   final Function(BarcodeCapture) onDetect;
   final Widget Function(Alignment) buildCorner;
   final Future<void> Function() onResumeScanner;
+  final Future<void> Function() onRetryScanner;
+  final void Function(String?) onScannerError;
   final Function(int, double) onQtyChange;
   final Function(int) onRemove;
   final Future<void> Function(int) onManualQty;
@@ -623,12 +699,16 @@ class _ScanTab extends StatelessWidget {
 
   const _ScanTab({
     required this.scanner,
+    required this.scannerVersion,
     required this.isScannerRunning,
+    required this.cameraErrorMessage,
     required this.cart,
     required this.total,
     required this.onDetect,
     required this.buildCorner,
     required this.onResumeScanner,
+    required this.onRetryScanner,
+    required this.onScannerError,
     required this.onQtyChange,
     required this.onRemove,
     required this.onManualQty,
@@ -648,7 +728,21 @@ class _ScanTab extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              MobileScanner(controller: scanner, onDetect: onDetect),
+              MobileScanner(
+                key: ValueKey('customer-scan-$scannerVersion'),
+                controller: scanner,
+                onDetect: onDetect,
+                errorBuilder: (context, error, child) {
+                  final isPermissionError = error.errorCode ==
+                      MobileScannerErrorCode.permissionDenied;
+                  onScannerError(error.toString());
+                  return _buildScannerErrorState(
+                    isPermissionError: isPermissionError,
+                    errorMessage: cameraErrorMessage ?? error.toString(),
+                    onRetry: onRetryScanner,
+                  );
+                },
+              ),
               if (isScannerRunning) ...[
                 Container(color: Colors.black.withValues(alpha: 0.45)),
                 Center(
@@ -719,6 +813,48 @@ class _ScanTab extends StatelessWidget {
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _buildScannerErrorState({
+    required bool isPermissionError,
+    required String? errorMessage,
+    required Future<void> Function() onRetry,
+  }) {
+    return Container(
+      color: const Color(0xFF0F172A),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.videocam_off_rounded, color: Colors.white, size: 44),
+          const SizedBox(height: 12),
+          Text(
+            isPermissionError
+                ? 'Camera permission is required for scanner.'
+                : 'Unable to open camera right now.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
+          if (errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+          ],
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(
+                isPermissionError ? 'Retry After Permission' : 'Retry Camera'),
+          ),
+        ],
+      ),
     );
   }
 

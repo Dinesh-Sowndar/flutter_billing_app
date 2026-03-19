@@ -31,24 +31,34 @@ class _HomePageState extends State<HomePage>
       TextEditingController();
   String _productSearchQuery = '';
 
-  final MobileScannerController _scannerController = MobileScannerController(
-    autoStart: false,
-    detectionSpeed: DetectionSpeed.normal,
-    returnImage: false,
-  );
+  late MobileScannerController _scannerController;
+  int _scannerWidgetVersion = 0;
+  bool _isStartingScanner = false;
+  bool _isDisposingScanner = false;
 
   bool _isCameraOn = true;
+  bool _scannerRunning = false;
   bool _isFlashOn = false;
   bool _resumeScheduled = false;
   DateTime? _lastResumeAttempt;
+  String? _cameraErrorMessage;
 
   final Map<String, DateTime> _lastScanTimes = {};
+
+  MobileScannerController _createScannerController() {
+    return MobileScannerController(
+      autoStart: false,
+      detectionSpeed: DetectionSpeed.normal,
+      returnImage: false,
+    );
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this);
+    _scannerController = _createScannerController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_resumeScanner());
     });
@@ -71,27 +81,84 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  Future<void> _resumeScanner() async {
-    if (!mounted || !_isCameraOn) return;
+  Future<void> _recreateScannerController() async {
     try {
-      await _scannerController.start();
-    } catch (_) {
-      // Controller can fail to start right after route transitions; retry once.
-      await Future<void>.delayed(const Duration(milliseconds: 180));
-      if (!mounted || !_isCameraOn) return;
-      try {
-        await _scannerController.start();
-      } catch (_) {
-        // Keep UI responsive; user can manually retry from error state.
+      await _scannerController.stop();
+    } catch (_) {}
+    try {
+      await _scannerController.dispose();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _scannerController = _createScannerController();
+      _scannerWidgetVersion++;
+      _scannerRunning = false;
+    });
+  }
+
+  Future<void> _resumeScanner() async {
+    if (!mounted ||
+        !_isCameraOn ||
+        _isDisposingScanner ||
+        _isStartingScanner ||
+        _scannerRunning) {
+      return;
+    }
+
+    final route = ModalRoute.of(context);
+    if (!(route?.isCurrent ?? false)) return;
+
+    _isStartingScanner = true;
+    Object? lastError;
+    try {
+      for (var attempt = 0; attempt < 3; attempt++) {
+        try {
+          await _scannerController.start();
+          if (!mounted) return;
+          setState(() {
+            _cameraErrorMessage = null;
+            _scannerRunning = true;
+          });
+          return;
+        } catch (e) {
+          final msg = e.toString().toLowerCase();
+          if (msg.contains('already') &&
+              (msg.contains('running') || msg.contains('started'))) {
+            if (mounted) {
+              setState(() {
+                _cameraErrorMessage = null;
+                _scannerRunning = true;
+              });
+            }
+            return;
+          }
+          lastError = e;
+          await Future<void>.delayed(
+              Duration(milliseconds: 180 * (attempt + 1)));
+          if (attempt == 1) {
+            await _recreateScannerController();
+          }
+        }
       }
+
+      if (mounted) {
+        setState(() {
+          _cameraErrorMessage = lastError?.toString();
+        });
+      }
+    } finally {
+      _isStartingScanner = false;
     }
   }
 
   Future<void> _pauseScanner() async {
+    if (_isDisposingScanner) return;
     try {
       await _scannerController.stop();
     } catch (_) {
       // Ignore pause failures during rapid navigation/dispose.
+    } finally {
+      _scannerRunning = false;
     }
   }
 
@@ -121,6 +188,8 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _isDisposingScanner = true;
+    unawaited(_pauseScanner());
     unawaited(_scannerController.dispose());
     _tabController.dispose();
     _productSearchController.dispose();
@@ -307,6 +376,7 @@ class _HomePageState extends State<HomePage>
       children: [
         if (_isCameraOn)
           MobileScanner(
+            key: ValueKey('home-scanner-${_scannerWidgetVersion}'),
             controller: _scannerController,
             onDetect: _onDetect,
             errorBuilder: _buildScannerErrorState,
@@ -972,6 +1042,14 @@ class _HomePageState extends State<HomePage>
     MobileScannerException error,
     Widget? child,
   ) {
+    if (_scannerRunning) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scannerRunning) {
+          setState(() => _scannerRunning = false);
+        }
+      });
+    }
+
     final isPermissionError =
         error.errorCode == MobileScannerErrorCode.permissionDenied;
 
@@ -995,10 +1073,23 @@ class _HomePageState extends State<HomePage>
           ElevatedButton(
             onPressed: isPermissionError
                 ? () => AppSettings.openAppSettings()
-                : _resumeScanner,
+                : () async {
+                    await _recreateScannerController();
+                    await _resumeScanner();
+                  },
             child:
                 Text(isPermissionError ? 'Open App Settings' : 'Retry Camera'),
           ),
+          if (!isPermissionError && _cameraErrorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _cameraErrorMessage!,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+          ]
         ],
       ),
     );
