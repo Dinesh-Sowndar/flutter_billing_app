@@ -45,7 +45,12 @@ class HiveDatabase {
         transactionBox.values.any((transaction) => transaction.pendingSync);
     final hasUnsyncedCustomers =
         customerBox.values.any((customer) => customer.pendingSync);
-    return hasUnsyncedProducts || hasUnsyncedTransactions || hasUnsyncedCustomers;
+    final hasUnsyncedShop =
+        settingsBox.get('pendingShopSync', defaultValue: false) == true;
+    return hasUnsyncedProducts ||
+        hasUnsyncedTransactions ||
+        hasUnsyncedCustomers ||
+        hasUnsyncedShop;
   }
 
   static Future<void> clearAllData() async {

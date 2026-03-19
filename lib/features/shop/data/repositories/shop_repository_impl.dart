@@ -10,7 +10,8 @@ class ShopRepositoryImpl implements ShopRepository {
   final SyncService _syncService;
   static const String shopKey = 'shop_details';
 
-  ShopRepositoryImpl({required SyncService syncService}) : _syncService = syncService;
+  ShopRepositoryImpl({required SyncService syncService})
+      : _syncService = syncService;
 
   @override
   Future<Either<Failure, Shop>> getShop() async {
@@ -40,10 +41,20 @@ class ShopRepositoryImpl implements ShopRepository {
       final box = HiveDatabase.shopBox;
       final model = ShopModel.fromEntity(shop);
       await box.put(shopKey, model);
-      
-      // Push to Firebase so new instances/devices get updated data.
-      await _syncService.pushShop(model);
-      
+
+      // Offline-first: save locally and defer cloud push when offline.
+      if (!_syncService.isOnline) {
+        await _syncService.markShopPendingSync();
+        return const Right(null);
+      }
+
+      // Even if this push is slow/fails, keep local save successful.
+      try {
+        await _syncService.pushShop(model).timeout(const Duration(seconds: 6));
+      } catch (_) {
+        await _syncService.markShopPendingSync();
+      }
+
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));

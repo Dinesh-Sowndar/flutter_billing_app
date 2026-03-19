@@ -17,6 +17,8 @@ import '../data/hive_database.dart';
 ///   • When connectivity is restored, all pending records are pushed and any
 ///     new records from Firestore are pulled into Hive.
 class SyncService {
+  static const String _pendingShopSyncKey = 'pendingShopSync';
+
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final Connectivity _connectivity;
@@ -31,6 +33,9 @@ class SyncService {
 
   bool _isOnline = false;
   bool get isOnline => _isOnline;
+  bool get hasPendingShopSync =>
+      HiveDatabase.settingsBox.get(_pendingShopSyncKey, defaultValue: false) ==
+      true;
 
   SyncService({
     FirebaseFirestore? firestore,
@@ -55,6 +60,7 @@ class SyncService {
         await pullProductsFromFirestore();
         await syncPendingTransactions();
         await pullTransactionsFromFirestore();
+        await syncPendingShop();
         await pullShopFromFirestore();
         await pushPendingCustomers();
         await pullCustomersFromFirestore();
@@ -71,6 +77,7 @@ class SyncService {
           await processPendingDeletes();
           await pullProductsFromFirestore();
           await pullTransactionsFromFirestore();
+          await syncPendingShop();
           await pullShopFromFirestore();
           await pullCustomersFromFirestore();
         }
@@ -93,8 +100,11 @@ class SyncService {
   CollectionReference<Map<String, dynamic>> get _transactionsCollection =>
       _firestore.collection('users').doc(_userId).collection('transactions');
 
-  DocumentReference<Map<String, dynamic>> get _shopDoc =>
-      _firestore.collection('users').doc(_userId).collection('shop').doc('details');
+  DocumentReference<Map<String, dynamic>> get _shopDoc => _firestore
+      .collection('users')
+      .doc(_userId)
+      .collection('shop')
+      .doc('details');
 
   CollectionReference<Map<String, dynamic>> get _customersCollection =>
       _firestore.collection('users').doc(_userId).collection('customers');
@@ -103,8 +113,8 @@ class SyncService {
   // Push a single product to Firestore (used on every write when online).
   // ---------------------------------------------------------------------------
   Future<void> _markAsDeletedLocally(String collection, String id) async {
-    final pendingDeletes = List<String>.from(
-        HiveDatabase.settingsBox.get('pendingDeletes', defaultValue: <String>[]));
+    final pendingDeletes = List<String>.from(HiveDatabase.settingsBox
+        .get('pendingDeletes', defaultValue: <String>[]));
     final entry = '$collection:$id';
     if (!pendingDeletes.contains(entry)) {
       pendingDeletes.add(entry);
@@ -114,8 +124,8 @@ class SyncService {
 
   Future<void> processPendingDeletes() async {
     if (_userId == null) return;
-    final pendingDeletes = List<String>.from(
-        HiveDatabase.settingsBox.get('pendingDeletes', defaultValue: <String>[]));
+    final pendingDeletes = List<String>.from(HiveDatabase.settingsBox
+        .get('pendingDeletes', defaultValue: <String>[]));
     if (pendingDeletes.isEmpty) return;
 
     List<String> remaining = [];
@@ -124,7 +134,12 @@ class SyncService {
         final parts = entry.split(':');
         final collection = parts[0];
         final id = parts[1];
-        await _firestore.collection('users').doc(_userId).collection(collection).doc(id).delete();
+        await _firestore
+            .collection('users')
+            .doc(_userId)
+            .collection(collection)
+            .doc(id)
+            .delete();
       } catch (_) {
         remaining.add(entry);
       }
@@ -186,9 +201,8 @@ class SyncService {
   Future<void> syncPendingProducts() async {
     final uid = _userId;
     if (uid == null) return;
-    final pending = HiveDatabase.productBox.values
-        .where((p) => p.pendingSync)
-        .toList();
+    final pending =
+        HiveDatabase.productBox.values.where((p) => p.pendingSync).toList();
     for (final model in pending) {
       try {
         await _productsCollection
@@ -273,9 +287,8 @@ class SyncService {
   Future<void> syncPendingTransactions() async {
     final uid = _userId;
     if (uid == null || uid.isEmpty) return;
-    final pending = HiveDatabase.transactionBox.values
-        .where((t) => t.pendingSync)
-        .toList();
+    final pending =
+        HiveDatabase.transactionBox.values.where((t) => t.pendingSync).toList();
     for (final model in pending) {
       try {
         await _transactionsCollection
@@ -310,13 +323,39 @@ class SyncService {
   // ---------------------------------------------------------------------------
   Future<void> pushShop(ShopModel model) async {
     final uid = _userId;
-    if (uid == null) return;
+    if (uid == null) {
+      await markShopPendingSync();
+      return;
+    }
     try {
       await _shopDoc.set(model.toFirestore(), SetOptions(merge: true));
+      await clearPendingShopSync();
     } catch (_) {
-      // Best effort; we don't have pending sync logic built for one single document yet, 
-      // but users rarely update shop profiles while entirely offline.
+      await markShopPendingSync();
     }
+  }
+
+  Future<void> markShopPendingSync() async {
+    await HiveDatabase.settingsBox.put(_pendingShopSyncKey, true);
+  }
+
+  Future<void> clearPendingShopSync() async {
+    await HiveDatabase.settingsBox.delete(_pendingShopSyncKey);
+  }
+
+  Future<void> syncPendingShop() async {
+    final hasPending = HiveDatabase.settingsBox
+            .get(_pendingShopSyncKey, defaultValue: false) ==
+        true;
+    if (!hasPending) return;
+
+    final model = HiveDatabase.shopBox.get('shop_details');
+    if (model == null) {
+      await clearPendingShopSync();
+      return;
+    }
+
+    await pushShop(model);
   }
 
   // ---------------------------------------------------------------------------
@@ -396,9 +435,8 @@ class SyncService {
   // Push all locally-pending customers to Firestore.
   // ---------------------------------------------------------------------------
   Future<void> pushPendingCustomers() async {
-    final pending = HiveDatabase.customerBox.values
-        .where((c) => c.pendingSync)
-        .toList();
+    final pending =
+        HiveDatabase.customerBox.values.where((c) => c.pendingSync).toList();
     for (final c in pending) {
       await pushCustomer(c);
     }
