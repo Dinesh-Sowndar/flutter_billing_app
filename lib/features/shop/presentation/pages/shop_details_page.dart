@@ -154,7 +154,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         buildWhen: (previous, current) =>
             current is ShopLoading || current is ShopLoaded,
         builder: (context, state) {
-          if (state is ShopLoading) {
+          final isInitialLoading = state is ShopLoading &&
+              _nameController.text.isEmpty &&
+              _phoneController.text.isEmpty;
+          final isSaving = state is ShopLoading && !isInitialLoading;
+
+          if (isInitialLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -260,6 +265,20 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                         validator: AppValidators.phone,
                       ),
 
+                      _buildTextField(
+                        label: 'GST Number (Optional)',
+                        controller: _address2Controller,
+                        hint: 'e.g. 22AAAAA0000A1Z5',
+                        icon: Icons.receipt_rounded,
+                        keyboardType: TextInputType.text,
+                        maxLength: 15,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'[a-zA-Z0-9]')),
+                          UpperCaseTextFormatter(),
+                        ],
+                      ),
+
                       const SizedBox(height: 12),
                       const Text(
                         'Location Details',
@@ -279,14 +298,6 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                         maxLength: 30,
                         validator: AppValidators.required(
                             'Address Line 1 is required'),
-                      ),
-
-                      _buildTextField(
-                        label: 'Address Line 2 (Optional)',
-                        controller: _address2Controller,
-                        hint: 'e.g. City, ZIP Code',
-                        icon: Icons.map_rounded,
-                        maxLength: 30,
                       ),
 
                       const SizedBox(height: 12),
@@ -342,7 +353,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _saveShop,
+                        onPressed: isSaving ? null : _saveShop,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
@@ -351,20 +362,30 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.save_rounded, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              'Save Details',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
+                        child: isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.3,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.save_rounded, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Save Details',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
@@ -452,5 +473,13 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         const SizedBox(height: 20),
       ],
     );
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    return newValue.copyWith(text: newValue.text.toUpperCase());
   }
 }

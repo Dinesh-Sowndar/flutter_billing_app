@@ -5,6 +5,7 @@ import 'package:billing_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/printer_bloc.dart';
@@ -19,10 +20,39 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  String _appVersionLabel = 'App Version';
+
+  static const String _fallbackBuildName =
+      String.fromEnvironment('FLUTTER_BUILD_NAME');
+  static const String _fallbackBuildNumber =
+      String.fromEnvironment('FLUTTER_BUILD_NUMBER');
+
   @override
   void initState() {
     super.initState();
     context.read<PrinterBloc>().add(InitPrinterEvent());
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() {
+        _appVersionLabel = 'App Version ${info.version} (${info.buildNumber})';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        if (_fallbackBuildName.isNotEmpty) {
+          final buildText =
+              _fallbackBuildNumber.isNotEmpty ? ' ($_fallbackBuildNumber)' : '';
+          _appVersionLabel = 'App Version $_fallbackBuildName$buildText';
+        } else {
+          _appVersionLabel = 'App Version 1.0.0 (1)';
+        }
+      });
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -173,6 +203,21 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Text(
+            _appVersionLabel,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: const Color(0xFF64748B),
+              fontSize: isCompact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -252,7 +297,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ),
-            SizedBox(height: isCompact ? 52 : 64),
+            SizedBox(height: isCompact ? 32 : 40),
           ],
         ),
       ),

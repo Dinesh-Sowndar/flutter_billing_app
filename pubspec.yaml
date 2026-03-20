@@ -52,6 +52,7 @@ dependencies:
   pretty_qr_code: ^3.3.0
   flutter_native_splash: ^2.4.0
   url_launcher: ^6.3.2
+  package_info_plus: ^8.0.2
 
 dev_dependencies:
   flutter_test:
