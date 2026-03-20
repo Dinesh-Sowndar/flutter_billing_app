@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -37,9 +40,11 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   bool _isDisposingScanner = false;
   String? _cameraErrorMessage;
   bool _scannerRunning = false;
-  bool _scannerPausedByUser = false;
-  bool _resumeScheduled = false;
+  bool _scannerPausedByUser = true;
+  bool _isFlashOn = false;
   DateTime? _lastStartAttempt;
+  Timer? _scannerIdleTimer;
+  static const Duration _scannerIdleTimeout = Duration(seconds: 45);
 
   final Map<String, DateTime> _lastScanTimes = {};
   final List<_CartItem> _cart = [];
@@ -60,25 +65,13 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     WidgetsBinding.instance.addObserver(this);
     _scanner = _createScannerController();
     _tabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startScannerSafe();
-    });
-
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging) return;
-      if (_tabController.index == 1) {
-        _scannerPausedByUser = true;
-        _stopScannerSafe();
-      } else if (_tabController.index == 0 && !_scannerPausedByUser) {
-        _ensureScannerActiveSoon();
-      }
-    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _isDisposingScanner = true;
+    _cancelScannerIdleTimer();
     _stopScannerSafe();
     _scanner.dispose();
     _tabController.dispose();
@@ -91,7 +84,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     if (!mounted) return;
     switch (state) {
       case AppLifecycleState.resumed:
-        if (_tabController.index == 0 && !_scannerPausedByUser) {
+        if (!_scannerPausedByUser) {
           _startScannerSafe();
         }
         return;
@@ -106,6 +99,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
   // â”€â”€â”€ Scanner helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   void _onDetect(BarcodeCapture capture) async {
+    _markScannerActive();
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
       if (raw == null) continue;
@@ -137,6 +131,12 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       return;
     }
     _addToCart(product);
+  }
+
+  Future<void> _scanFromAppBar() async {
+    final barcode = await context.push<String>('/scanner');
+    if (!mounted || barcode == null || barcode.isEmpty) return;
+    _addProductByBarcode(barcode);
   }
 
   void _addToCart(ProductModel product) {
@@ -308,7 +308,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     }
 
     await context.push('/checkout');
-    if (mounted && _tabController.index == 0 && !_scannerPausedByUser) {
+    if (mounted && !_scannerPausedByUser) {
       await _startScannerSafe();
     }
   }
@@ -322,6 +322,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       return;
     }
 
+    _cancelScannerIdleTimer();
     await _startScannerSafe();
     if (mounted) {
       setState(() => _scannerPausedByUser = !_scannerRunning);
@@ -347,10 +348,6 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     _isStartingScanner = true;
     Object? lastError;
     try {
-      try {
-        await _scanner.stop();
-      } catch (_) {}
-
       for (var attempt = 0; attempt < 3; attempt++) {
         try {
           await Future<void>.delayed(const Duration(milliseconds: 80));
@@ -361,6 +358,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
               _cameraErrorMessage = null;
             });
           }
+          _startScannerIdleTimer();
           return;
         } catch (e) {
           lastError = e;
@@ -384,6 +382,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
         } else {
           _scannerRunning = true;
         }
+        _startScannerIdleTimer();
         return;
       }
     } finally {
@@ -409,6 +408,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   }
 
   Future<void> _stopScannerSafe() async {
+    _cancelScannerIdleTimer();
     try {
       await _scanner.stop();
     } catch (_) {
@@ -424,32 +424,49 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   }
 
   Future<void> _resumeScannerFromPanel() async {
+    _cancelScannerIdleTimer();
+    await _recreateScannerController();
+    if (!mounted) return;
+    setState(() {
+      _scannerPausedByUser = false;
+      _cameraErrorMessage = null;
+    });
     await _startScannerSafe();
-    if (mounted && _scannerRunning) {
-      setState(() => _scannerPausedByUser = false);
-    }
   }
 
-  void _ensureScannerActiveSoon() {
-    if (_resumeScheduled || !mounted || _scannerPausedByUser) return;
-    _resumeScheduled = true;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _resumeScheduled = false;
-      if (!mounted || _scannerPausedByUser || _tabController.index != 0) return;
-      _startScannerSafe();
+  void _startScannerIdleTimer() {
+    _cancelScannerIdleTimer();
+    _scannerIdleTimer = Timer(_scannerIdleTimeout, () {
+      if (!mounted || _scannerPausedByUser || !_scannerRunning) return;
+      setState(() {
+        _scannerPausedByUser = true;
+        _scannerRunning = false;
+      });
+      _stopScannerSafe();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Scanner auto-paused due to inactivity'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
     });
+  }
+
+  void _cancelScannerIdleTimer() {
+    _scannerIdleTimer?.cancel();
+    _scannerIdleTimer = null;
+  }
+
+  void _markScannerActive() {
+    if (!_scannerPausedByUser && _scannerRunning) {
+      _startScannerIdleTimer();
+    }
   }
 
   // â”€â”€â”€ Build UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
-    if (_tabController.index == 0 &&
-        !_scannerPausedByUser &&
-        !_scannerRunning) {
-      _ensureScannerActiveSoon();
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       extendBody: true,
@@ -483,6 +500,21 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           ),
         ),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              onPressed: _scanFromAppBar,
+              tooltip: 'Scan barcode',
+              icon: const Icon(Icons.qr_code_scanner_rounded,
+                  color: Color(0xFF0F172A), size: 22),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
           if (_cart.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -522,6 +554,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           Column(
             children: [
               _buildCustomerBanner(),
+              _buildCompactScannerPanel(),
               _buildCustomTabBar(),
               Expanded(
                 child: TabBarView(
@@ -549,7 +582,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   Widget _buildCustomerBanner() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -565,8 +598,8 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -583,12 +616,12 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   : '?',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -596,7 +629,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                 Text(
                   "Billing to:",
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: Colors.grey.shade500,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
@@ -606,7 +639,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   widget.customer.name,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: 14,
                     color: const Color(0xFF0F172A),
                   ),
                   maxLines: 1,
@@ -616,7 +649,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: AppTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
@@ -626,7 +659,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
               style: const TextStyle(
                 color: AppTheme.primaryColor,
                 fontWeight: FontWeight.w800,
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
           ),
@@ -686,6 +719,188 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCompactScannerPanel() {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isSmallScreen = screenHeight < 720;
+    final scannerViewportHeight = isSmallScreen ? 130.0 : 140.0;
+    final scanFrameWidth = isSmallScreen ? 150.0 : 175.0;
+    final scanFrameHeight = isSmallScreen ? 72.0 : 84.0;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Scanner',
+                  style: TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: !_scannerPausedByUser
+                      ? const Color(0xFFF0FDF4)
+                      : const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  !_scannerPausedByUser ? 'Live' : 'Paused',
+                  style: TextStyle(
+                    color: !_scannerPausedByUser
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFEF4444),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: SizedBox(
+              height: scannerViewportHeight,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (!_scannerPausedByUser)
+                    MobileScanner(
+                      key: ValueKey('customer-scan-$_scannerWidgetVersion'),
+                      controller: _scanner,
+                      onDetect: _onDetect,
+                      errorBuilder: (context, error, child) {
+                        final isPermError = error.errorCode ==
+                            MobileScannerErrorCode.permissionDenied;
+                        return _buildScannerErrorState(
+                          isPermissionError: isPermError,
+                          errorMessage: _cameraErrorMessage ?? error.toString(),
+                        );
+                      },
+                    )
+                  else
+                    _buildPausedScannerState(),
+                  if (!_scannerPausedByUser)
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.18),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.12),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  if (!_scannerPausedByUser)
+                    Center(
+                      child: Container(
+                        width: scanFrameWidth,
+                        height: scanFrameHeight,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.45),
+                              width: 2),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    ),
+                  if (!_scannerPausedByUser)
+                    Positioned(
+                      bottom: 10,
+                      right: 10,
+                      child: Column(
+                        children: [
+                          _buildScannerOverlayIconButton(
+                            icon: _isFlashOn
+                                ? Icons.flashlight_off_rounded
+                                : Icons.flashlight_on_rounded,
+                            isActive: _isFlashOn,
+                            onPressed: () {
+                              setState(() => _isFlashOn = !_isFlashOn);
+                              _scanner.toggleTorch();
+                              _markScannerActive();
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          _buildScannerOverlayIconButton(
+                            icon: Icons.videocam_off_rounded,
+                            onPressed: _toggleScannerPause,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Point the camera at a barcode to add items instantly.',
+            style: TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScannerOverlayIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool isActive = false,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: InkWell(
+          onTap: onPressed,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? AppTheme.primaryColor
+                  : Colors.black.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+        ),
       ),
     );
   }
@@ -764,91 +979,32 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   Widget _buildScanTab() {
     return Column(
       children: [
-        // Premium Scanner Card
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          height: 240,
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-            border: Border.all(color: Colors.transparent),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                MobileScanner(
-                  key: ValueKey('customer-scan-$_scannerWidgetVersion'),
-                  controller: _scanner,
-                  onDetect: _onDetect,
-                  errorBuilder: (context, error, child) {
-                    final isPermError = error.errorCode ==
-                        MobileScannerErrorCode.permissionDenied;
-                    return _buildScannerErrorState(
-                        isPermissionError: isPermError,
-                        errorMessage: _cameraErrorMessage ?? error.toString());
-                  },
-                ),
-                if (_scannerRunning) ...[
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                          width: 2),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                  ),
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: IconButton(
-                      icon: const Icon(Icons.flashlight_on_rounded,
-                          color: Colors.white),
-                      onPressed: () => _scanner.toggleTorch(),
-                      style:
-                          IconButton.styleFrom(backgroundColor: Colors.black45),
-                    ),
-                  ),
-                  Positioned(
-                    top: 16,
-                    left: 16,
-                    child: IconButton(
-                      icon:
-                          const Icon(Icons.pause_rounded, color: Colors.white),
-                      onPressed: _toggleScannerPause,
-                      style:
-                          IconButton.styleFrom(backgroundColor: Colors.black45),
-                    ),
-                  ),
-                  const Center(
-                    child: Icon(Icons.filter_center_focus_rounded,
-                        color: Colors.white54, size: 100),
-                  ),
-                ] else
-                  _buildPausedScannerState(),
-              ],
-            ),
-          ),
-        ),
         // Section Title
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
           child: Row(
             children: [
-              Text("Scanned Items",
+              Text('Scanned Items',
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
                       color: const Color(0xFF1E293B))),
               const Spacer(),
+              TextButton.icon(
+                onPressed: _scanFromAppBar,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.primaryColor,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
+                label: const Text(
+                  'Scan',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                ),
+              ),
               if (_cart.isNotEmpty)
                 Text('${_cart.length} item(s)',
                     style: const TextStyle(
@@ -868,7 +1024,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                       Icon(Icons.qr_code_scanner_rounded,
                           size: 48, color: Color(0xFFCBD5E1)),
                       SizedBox(height: 12),
-                      Text("Points scanner at product barcode",
+                        Text('Scan products using the camera above',
                           style: TextStyle(
                               color: Color(0xFF94A3B8),
                               fontWeight: FontWeight.w500)),
@@ -915,33 +1071,61 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   }
 
   Widget _buildPausedScannerState() {
-    return Container(
-      color: const Color(0xFF0F172A).withValues(alpha: 0.9),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  shape: BoxShape.circle),
-              child: const Icon(Icons.videocam_off_rounded,
-                  color: Colors.white, size: 32),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight < 135;
+        final iconPad = compact ? 10.0 : 12.0;
+        final iconSize = compact ? 22.0 : 26.0;
+        final gap = compact ? 8.0 : 10.0;
+        final buttonTextSize = compact ? 11.5 : 12.5;
+        final buttonIconSize = compact ? 14.0 : 16.0;
+        final buttonHPad = compact ? 10.0 : 12.0;
+        final buttonVPad = compact ? 6.0 : 8.0;
+
+        return Container(
+          color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(iconPad),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.videocam_off_rounded,
+                      color: Colors.white, size: iconSize),
+                ),
+                SizedBox(height: gap),
+                ElevatedButton.icon(
+                  onPressed: _resumeScannerFromPanel,
+                  icon: Icon(Icons.play_arrow_rounded, size: buttonIconSize),
+                  label: Text(
+                    'Resume Scanner',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: buttonTextSize,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: buttonHPad,
+                      vertical: buttonVPad,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                )
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _resumeScannerFromPanel,
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text("Resume Scanner",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white),
-            )
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
