@@ -179,7 +179,7 @@ class _AddProductPageState extends State<AddProductPage> {
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       hintText: '0.00',
-                      prefixText: 'â‚¹ ',
+                      prefixText: 'Rs ',
                       prefixStyle: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -189,7 +189,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     maxLength: 8,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(
-                          RegExp(r'^\\d{0,8}(\\.\\d{0,2})?')),
+                          RegExp(r'^\d{0,8}(\.\d{0,2})?')),
                     ],
                     validator: AppValidators.price,
                     onSaved: (value) => _price = double.parse(value!),

@@ -37,7 +37,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
   bool _isWeightedUnit(QuantityUnit unit) =>
       unit == QuantityUnit.kg || unit == QuantityUnit.liter;
 
-  double _stepForUnit(QuantityUnit unit) => _isWeightedUnit(unit) ? 0.25 : 1.0;
+  double _stepForUnit(QuantityUnit unit) => 1.0;
 
   Future<void> _onScanBarcode(
       ScanBarcodeEvent event, Emitter<BillingState> emit) async {
