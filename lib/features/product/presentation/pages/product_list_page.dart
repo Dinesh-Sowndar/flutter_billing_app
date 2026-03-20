@@ -56,12 +56,18 @@ class _ProductListPageState extends State<ProductListPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Delete Product?',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
-        content: Text('Are you sure you want to delete "${product.name}"?'),
+        content: Text('Are you sure you want to delete "${product.name}"?',
+            style: const TextStyle(color: Color(0xFF475569), fontSize: 16)),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             child: const Text('Cancel',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -72,11 +78,12 @@ class _ProductListPageState extends State<ProductListPage> {
               backgroundColor: const Color(0xFFE11D48),
               foregroundColor: Colors.white,
               elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('Delete',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
           ),
         ],
       ),
@@ -96,6 +103,7 @@ class _ProductListPageState extends State<ProductListPage> {
             fontWeight: FontWeight.w800,
             fontSize: 22,
             color: Color(0xFF0F172A),
+            letterSpacing: -0.5,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -103,17 +111,22 @@ class _ProductListPageState extends State<ProductListPage> {
         centerTitle: false,
         titleSpacing: 8,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 12.0),
+          padding: const EdgeInsets.only(left: 16.0),
           child: Center(
             child: Material(
               color: Colors.white,
-              shape: const CircleBorder(),
-              elevation: 2,
-              shadowColor: Colors.black12,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                color: const Color(0xFF0F172A),
-                onPressed: () => context.pop(),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => context.pop(),
+                child: const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 18, color: Color(0xFF0F172A)),
+                ),
               ),
             ),
           ),
@@ -125,13 +138,9 @@ class _ProductListPageState extends State<ProductListPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: isOnline
-                    ? const Color(0xFFDCFCE7)
-                    : const Color(0xFFF1F5F9),
+                    ? const Color(0xFF15803D).withValues(alpha: 0.1)
+                    : const Color(0xFF64748B).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: isOnline
-                        ? const Color(0xFFBBF7D0)
-                        : const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -211,15 +220,27 @@ class _ProductListPageState extends State<ProductListPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/products/add'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Product',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => context.push('/products/add'),
+          backgroundColor: AppTheme.primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Add Product',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        ),
       ),
     );
   }
@@ -230,41 +251,54 @@ class _ProductListPageState extends State<ProductListPage> {
       child: Row(
         children: [
           Expanded(
-            child: TextFormField(
-              controller: _searchController,
-              textCapitalization: TextCapitalization.words,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-              decoration: InputDecoration(
-                hintText: 'Search or scan barcode...',
-                hintStyle: const TextStyle(
-                    color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
-                prefixIcon:
-                    const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded,
-                            color: Color(0xFF94A3B8)),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _searchController,
+                textCapitalization: TextCapitalization.words,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: 'Search or scan barcode...',
+                  hintStyle: const TextStyle(
+                      color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                  prefixIcon:
+                      const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded,
+                              color: Color(0xFF94A3B8)),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                        color: AppTheme.primaryColor, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(
-                      color: AppTheme.primaryColor, width: 1.5),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
             ),
           ),
@@ -276,13 +310,20 @@ class _ProductListPageState extends State<ProductListPage> {
               height: 52,
               width: 52,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.primaryColor.withValues(alpha: 0.8),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.25),
                     blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
@@ -394,6 +435,7 @@ class _ProductListPageState extends State<ProductListPage> {
             style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 20,
+                letterSpacing: -0.5,
                 color: Color(0xFF0F172A)),
           ),
           const SizedBox(height: 8),
@@ -410,18 +452,30 @@ class _ProductListPageState extends State<ProductListPage> {
             ),
           ),
           const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: () => context.push('/products/add'),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Add First Product',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () => context.push('/products/add'),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add First Product',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
             ),
           ),
         ],
@@ -436,11 +490,10 @@ class _ProductListPageState extends State<ProductListPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade100, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],

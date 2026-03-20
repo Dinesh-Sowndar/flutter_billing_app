@@ -78,15 +78,40 @@ class _AddProductPageState extends State<AddProductPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.chevron_left_rounded,
-                size: 32, color: Theme.of(context).primaryColor),
-            onPressed: () => context.pop(),
+          title: const Text(
+            'Add Product',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 22,
+              color: Color(0xFF0F172A),
+              letterSpacing: -0.5,
+            ),
           ),
-          title: const Text('Add Product',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: false,
+          titleSpacing: 8,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16.0),
+            child: Center(
+              child: Material(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => context.pop(),
+                  child: const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        size: 18, color: Color(0xFF0F172A)),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
         body: SafeArea(
           child: SingleChildScrollView(

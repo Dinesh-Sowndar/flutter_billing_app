@@ -153,8 +153,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   bool _isWeightedUnit(ProductModel product) =>
       product.unit == QuantityUnit.kg || product.unit == QuantityUnit.liter;
 
-  double _stepForUnit(ProductModel product) =>
-      _isWeightedUnit(product) ? 0.25 : 1.0;
+  double _stepForUnit(ProductModel product) => 1.0;
 
   String _formatQty(double qty) {
     if ((qty - qty.roundToDouble()).abs() < 0.0001) {
@@ -175,55 +174,92 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     final controller = TextEditingController(text: _formatQty(currentQty));
     return showDialog<double>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(
-          'Set Quantity (${product.unit.shortLabel})',
-          style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 20,
-              color: const Color(0xFF0F172A)),
-        ),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: 'Quantity',
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.primaryColor),
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+          contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          title: Text(
+            'Set Quantity (${product.unit.shortLabel})',
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 17,
+              color: Color(0xFF0F172A),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(
-              context,
-              double.tryParse(controller.text.trim()),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: const TextStyle(
+              color: Color(0xFF0F172A),
+              fontWeight: FontWeight.w600,
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+            decoration: InputDecoration(
+              labelText: 'Quantity',
+              labelStyle: const TextStyle(
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+              ),
+              hintText: 'e.g. 1.25',
+              hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide:
+                    const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+              ),
             ),
-            child: const Text('Apply',
-                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF64748B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                final value = double.tryParse(controller.text.trim());
+                Navigator.pop(context, value);
+              },
+              child: const Text(
+                'Apply',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1146,76 +1182,104 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
   // â”€â”€â”€ Quantity Controls Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildQtyControls(int cartIdx, ProductModel product, double qty) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _qtyBtn(Icons.remove, () {
-          setState(() {
-            final newQty = qty - _stepForUnit(product);
-            if (newQty <= 0) {
-              _cart.removeAt(cartIdx);
-            } else {
-              _cart[cartIdx].quantity = newQty;
-            }
-          });
-        }),
-        GestureDetector(
-          onTap: _isWeightedUnit(product)
-              ? () async {
-                  final q = await _showManualQtyDialog(product, qty);
-                  if (!mounted || q == null) return;
+        Container(
+          height: 36,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _circularIconButton(
+                icon: Icons.remove_rounded,
+                color: const Color(0xFF64748B),
+                onPressed: () {
                   setState(() {
-                    if (q <= 0) {
+                    final newQty = qty - _stepForUnit(product);
+                    if (newQty <= 0) {
                       _cart.removeAt(cartIdx);
                     } else {
-                      _cart[cartIdx].quantity = q;
+                      _cart[cartIdx].quantity = newQty;
                     }
                   });
                 }
-              : null,
-          child: Container(
-            constraints: const BoxConstraints(minWidth: 40),
-            alignment: Alignment.center,
-            child: Text(
-              _formatQty(qty),
+              ),
+              SizedBox(
+                width: 48,
+                child: Text(
+                  _formatQty(qty),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              _circularIconButton(
+                icon: Icons.add_rounded,
+                color: AppTheme.primaryColor,
+                onPressed: () {
+                  setState(() {
+                    _cart[cartIdx].quantity += _stepForUnit(product);
+                  });
+                }
+              ),
+            ],
+          ),
+        ),
+        if (_isWeightedUnit(product)) ...[
+          const SizedBox(height: 6),
+          TextButton(
+            onPressed: () async {
+              final q = await _showManualQtyDialog(product, qty);
+              if (!mounted || q == null) return;
+              setState(() {
+                if (q <= 0) {
+                  _cart.removeAt(cartIdx);
+                } else {
+                  _cart[cartIdx].quantity = q;
+                }
+              });
+            },
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Edit qty',
               style: TextStyle(
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: const Color(0xFF0F172A),
               ),
             ),
           ),
-        ),
-        _qtyBtn(Icons.add, () {
-          setState(() {
-            _cart[cartIdx].quantity += _stepForUnit(product);
-          });
-        }, accent: true),
+        ],
       ],
     );
   }
 
-  Widget _qtyBtn(IconData icon, VoidCallback onTap, {bool accent = false}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: accent ? AppTheme.primaryColor : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: accent
-              ? [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  )
-                ]
-              : null,
+  Widget _circularIconButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onPressed,
+        child: Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          child: Icon(icon, size: 18, color: color),
         ),
-        child: Icon(icon,
-            size: 18, color: accent ? Colors.white : const Color(0xFF64748B)),
       ),
     );
   }
