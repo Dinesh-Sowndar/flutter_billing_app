@@ -10,7 +10,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/primary_button.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../../product/domain/entities/product.dart';
 import '../../../../core/data/hive_database.dart';
@@ -543,7 +542,7 @@ class _HomePageState extends State<HomePage>
           if (state.cartItems.isEmpty) return const SizedBox.shrink();
 
           return Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -554,15 +553,35 @@ class _HomePageState extends State<HomePage>
                 )
               ],
             ),
-            child: PrimaryButton(
-              onPressed: () async {
-                await _pauseScanner();
-                await context.push('/checkout');
-                if (_isCameraOn && mounted) await _resumeScanner();
-              },
-              icon: Icons.payments_rounded,
-              label:
+            child: SizedBox(
+              height: 46,
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await _pauseScanner();
+                  await context.push('/checkout');
+                  if (_isCameraOn && mounted) await _resumeScanner();
+                },
+                icon: const Icon(Icons.payments_rounded, size: 18),
+                label: Text(
                   'Review Order   •   ₹${state.totalAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 6,
+                  shadowColor: AppTheme.primaryColor.withValues(alpha: 0.35),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
             ),
           );
         },

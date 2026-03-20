@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../../../core/data/hive_database.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../billing/data/models/transaction_model.dart';
+import '../../../customer/data/models/customer_model.dart';
 import '../bloc/sales_bloc.dart';
 
 class SalesDashboardPage extends StatefulWidget {
@@ -22,6 +26,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 380;
+    final rowCardHeight = isCompact ? 140.0 : 152.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
@@ -97,33 +102,82 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildSalesCard(
-                        'Today',
-                        state.dailySales,
-                        state.dailyPending,
-                        AppTheme.primaryColor,
-                        Icons.today_rounded,
+                      child: SizedBox(
+                        height: rowCardHeight,
+                        child: _buildSalesCard(
+                          'Today',
+                          state.dailySales,
+                          state.dailyPending,
+                          AppTheme.primaryColor,
+                          Icons.today_rounded,
+                          compact: true,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
-                      child: _buildSalesCard(
-                        'This Week',
-                        state.weeklySales,
-                        state.weeklyPending,
-                        const Color(0xFF3B82F6),
-                        Icons.date_range_rounded,
+                      child: SizedBox(
+                        height: rowCardHeight,
+                        child: _buildSalesCard(
+                          'This Week',
+                          state.weeklySales,
+                          state.weeklyPending,
+                          const Color(0xFF3B82F6),
+                          Icons.date_range_rounded,
+                          compact: true,
+                        ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
-                _buildSalesCard(
-                  'This Month',
-                  state.monthlySales,
-                  state.monthlyPending,
-                  const Color(0xFF8B5CF6),
-                  Icons.calendar_month_rounded,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: rowCardHeight,
+                        child: _buildSalesCard(
+                          'This Month',
+                          state.monthlySales,
+                          state.monthlyPending,
+                          const Color(0xFF8B5CF6),
+                          Icons.calendar_month_rounded,
+                          compact: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: SizedBox(
+                        height: rowCardHeight,
+                        child: ValueListenableBuilder<Box<CustomerModel>>(
+                          valueListenable:
+                              HiveDatabase.customerBox.listenable(),
+                          builder: (context, customerBox, _) {
+                            return ValueListenableBuilder<Box<TransactionModel>>(
+                              valueListenable:
+                                  HiveDatabase.transactionBox.listenable(),
+                              builder: (context, txBox, __) {
+                                final customers = customerBox.values.toList();
+                                final transactions = txBox.values.toList();
+                                final dueCustomerCount = _countCustomersWithDue(
+                                    customers, transactions);
+                                final totalDue =
+                                    _totalDueAmount(customers, transactions);
+
+                                return _buildDueCustomersCard(
+                                  dueCustomerCount,
+                                  totalDue,
+                                  compact: true,
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 22),
                 Row(
@@ -455,15 +509,28 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
   }
 
   Widget _buildSalesCard(
-      String title, double amount, double pending, Color color, IconData icon) {
+      String title, double amount, double pending, Color color, IconData icon,
+      {bool compact = false}) {
+    final titleSize = compact ? 13.0 : 15.0;
+    final amountSize = compact ? 22.0 : 28.0;
+    final chipSize = compact ? 11.0 : 12.0;
+    final iconSize = compact ? 20.0 : 24.0;
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(compact ? 16 : 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color,
+            color.withValues(alpha: 0.8),
+          ],
+        ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.08),
+            color: color.withValues(alpha: 0.25),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -475,52 +542,225 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF64748B),
-                      letterSpacing: 0.3)),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: titleSize,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  letterSpacing: 0.3,
+                ),
+              ),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(compact ? 6 : 8),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: Icon(icon, color: Colors.white, size: iconSize),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text('Rs ${amount.toStringAsFixed(0)}',
-              style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -1.0)),
-          const SizedBox(height: 8),
+          SizedBox(height: compact ? 16 : 20),
+          Text(
+            'Rs ${amount.toStringAsFixed(0)}',
+            style: TextStyle(
+              fontSize: amountSize,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -1.0,
+            ),
+          ),
+          const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 8 : 10,
+              vertical: compact ? 4 : 6,
+            ),
             decoration: BoxDecoration(
-              color: pending > 0
-                  ? const Color(0xFFFEF2F2)
-                  : const Color(0xFFF0FDF4),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(
-              pending > 0
-                  ? 'Pending: Rs ${pending.toStringAsFixed(0)}'
-                  : 'All Cleared',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: pending > 0
-                      ? const Color(0xFFEF4444)
-                      : const Color(0xFF10B981)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  pending > 0
+                      ? Icons.pending_actions_rounded
+                      : Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: chipSize + 2,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  pending > 0
+                      ? 'Rs ${pending.toStringAsFixed(0)} Due'
+                      : 'Cleared',
+                  style: TextStyle(
+                    fontSize: chipSize,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildDueCustomersCard(int count, double totalDue,
+      {bool compact = false}) {
+    final titleSize = compact ? 13.0 : 15.0;
+    final valueSize = compact ? 22.0 : 28.0;
+    final detailSize = compact ? 11.0 : 12.0;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/customers', extra: {'dueOnly': true}),
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          padding: EdgeInsets.all(compact ? 16 : 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFFFCA5A5).withValues(alpha: 0.3),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.08),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Due Customers',
+                      style: TextStyle(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF64748B),
+                        letterSpacing: 0.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(compact ? 6 : 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.people_alt_rounded,
+                      color: const Color(0xFFEF4444),
+                      size: compact ? 20 : 24,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: compact ? 16 : 20),
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: valueSize,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0F172A),
+                  letterSpacing: -1.0,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 8 : 10,
+                  vertical: compact ? 4 : 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet_rounded,
+                      color: const Color(0xFFEF4444),
+                      size: detailSize + 2,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Rs ${totalDue.toStringAsFixed(0)} Due',
+                      style: TextStyle(
+                        fontSize: detailSize,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFEF4444),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _countCustomersWithDue(
+    List<CustomerModel> customers,
+    List<TransactionModel> transactions,
+  ) {
+    var count = 0;
+    for (final customer in customers) {
+      final customerTransactions =
+          transactions.where((t) => t.customerId == customer.id).toList()
+            ..sort((a, b) => a.date.compareTo(b.date));
+      if (_calculateCurrentDue(customerTransactions) > 0) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  double _totalDueAmount(
+    List<CustomerModel> customers,
+    List<TransactionModel> transactions,
+  ) {
+    var totalDue = 0.0;
+    for (final customer in customers) {
+      final customerTransactions =
+          transactions.where((t) => t.customerId == customer.id).toList()
+            ..sort((a, b) => a.date.compareTo(b.date));
+      final due = _calculateCurrentDue(customerTransactions);
+      if (due > 0) {
+        totalDue += due;
+      }
+    }
+    return totalDue;
+  }
+
+  double _calculateCurrentDue(List<TransactionModel> transactions) {
+    var totalDue = 0.0;
+    for (final tx in transactions) {
+      final isPaymentOnly = tx.items.isEmpty && tx.amountPaid > 0;
+      if (isPaymentOnly) {
+        totalDue -= tx.amountPaid;
+      } else {
+        final paidAtSale = tx.amountPaid.clamp(0.0, tx.totalAmount).toDouble();
+        totalDue += (tx.totalAmount - paidAtSale);
+      }
+    }
+    return totalDue;
   }
 }

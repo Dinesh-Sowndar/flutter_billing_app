@@ -137,7 +137,18 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/customers',
-      builder: (context, state) => const CustomerListPage(),
+      builder: (context, state) {
+        var dueOnly = false;
+        final extra = state.extra;
+
+        if (extra is bool) {
+          dueOnly = extra;
+        } else if (extra is Map<String, dynamic>) {
+          dueOnly = extra['dueOnly'] == true;
+        }
+
+        return CustomerListPage(dueOnly: dueOnly);
+      },
       routes: [
         GoRoute(
           path: 'add',

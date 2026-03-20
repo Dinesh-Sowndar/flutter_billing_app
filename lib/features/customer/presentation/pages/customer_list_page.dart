@@ -13,7 +13,9 @@ import '../bloc/customer_event.dart';
 import '../bloc/customer_state.dart';
 
 class CustomerListPage extends StatefulWidget {
-  const CustomerListPage({super.key});
+  final bool dueOnly;
+
+  const CustomerListPage({super.key, this.dueOnly = false});
 
   @override
   State<CustomerListPage> createState() => _CustomerListPageState();
@@ -45,7 +47,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
-          'Customers',
+          widget.dueOnly ? 'Customers with Due' : 'Customers',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 24,
@@ -100,16 +102,18 @@ class _CustomerListPageState extends State<CustomerListPage> {
                       state.error ?? 'Something went wrong');
                 }
 
-                final filtered = _filtered(state.customers);
-
-                if (filtered.isEmpty) {
-                  return _buildEmptyState();
-                }
-
                 return ValueListenableBuilder(
                   valueListenable: HiveDatabase.transactionBox.listenable(),
                   builder: (context, Box<TransactionModel> txBox, _) {
-                    return _buildCustomerList(filtered, txBox.values.toList());
+                    final transactions = txBox.values.toList();
+                    final visibleCustomers =
+                        _applyDueFilter(_filtered(state.customers), transactions);
+
+                    if (visibleCustomers.isEmpty) {
+                      return _buildEmptyState();
+                    }
+
+                    return _buildCustomerList(visibleCustomers, transactions);
                   },
                 );
               },
@@ -193,7 +197,9 @@ class _CustomerListPageState extends State<CustomerListPage> {
           ),
           const SizedBox(height: 24),
           Text(
-            _searchQuery.isNotEmpty ? 'No customers found' : 'No Customers Yet',
+            _searchQuery.isNotEmpty
+                ? 'No customers found'
+                : (widget.dueOnly ? 'No Due Customers' : 'No Customers Yet'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -204,7 +210,9 @@ class _CustomerListPageState extends State<CustomerListPage> {
           Text(
             _searchQuery.isNotEmpty
                 ? 'Try a different search term'
-                : 'Add a customer to start tracking dues and purchases',
+                : (widget.dueOnly
+                    ? 'All customer balances are settled'
+                    : 'Add a customer to start tracking dues and purchases'),
             style: const TextStyle(
               color: Color(0xFF64748B),
               fontSize: 14,
@@ -214,6 +222,17 @@ class _CustomerListPageState extends State<CustomerListPage> {
         ],
       ),
     );
+  }
+
+  List<CustomerEntity> _applyDueFilter(
+      List<CustomerEntity> customers, List<TransactionModel> transactions) {
+    if (!widget.dueOnly) return customers;
+    return customers.where((customer) {
+      final customerTransactions =
+          transactions.where((t) => t.customerId == customer.id).toList()
+            ..sort((a, b) => a.date.compareTo(b.date));
+      return _calculateCurrentDue(customerTransactions) > 0;
+    }).toList();
   }
 
   Widget _buildErrorState(String message) {
