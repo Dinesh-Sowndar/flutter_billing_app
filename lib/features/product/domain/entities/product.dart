@@ -43,6 +43,7 @@ class Product extends Equatable {
   final double price;
   final int stock;
   final QuantityUnit unit;
+  final String? categoryId;
   /// True when the record needs to be pushed to Firestore.
   final bool pendingSync;
 
@@ -53,6 +54,7 @@ class Product extends Equatable {
     required this.price,
     this.stock = 0,
     this.unit = QuantityUnit.piece,
+    this.categoryId,
     this.pendingSync = false,
   });
 
@@ -63,6 +65,7 @@ class Product extends Equatable {
     double? price,
     int? stock,
     QuantityUnit? unit,
+    String? categoryId,
     bool? pendingSync,
   }) {
     return Product(
@@ -72,10 +75,11 @@ class Product extends Equatable {
       price: price ?? this.price,
       stock: stock ?? this.stock,
       unit: unit ?? this.unit,
+      categoryId: categoryId ?? this.categoryId,
       pendingSync: pendingSync ?? this.pendingSync,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, barcode, price, stock, unit, pendingSync];
+  List<Object?> get props => [id, name, barcode, price, stock, unit, categoryId, pendingSync];
 }

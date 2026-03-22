@@ -4,6 +4,7 @@ import '../../features/billing/presentation/pages/home_page.dart';
 import '../../features/product/presentation/pages/product_list_page.dart';
 import '../../features/product/presentation/pages/add_product_page.dart';
 import '../../features/product/presentation/pages/edit_product_page.dart';
+import '../../features/product/presentation/pages/manage_categories_page.dart';
 import '../../features/shop/presentation/pages/shop_details_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/billing/presentation/pages/scanner_page.dart';
@@ -13,6 +14,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
 import '../../features/billing/presentation/pages/transactions_page.dart';
 import '../../features/billing/presentation/pages/sales_dashboard_page.dart';
+import '../../features/billing/presentation/pages/product_search_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/customer/presentation/pages/customer_list_page.dart';
@@ -104,6 +106,10 @@ final router = GoRouter(
           path: 'sales-dashboard',
           builder: (context, state) => const SalesDashboardPage(),
         ),
+        GoRoute(
+          path: 'product-search',
+          builder: (context, state) => const ProductSearchPage(),
+        ),
       ],
     ),
     GoRoute(
@@ -130,6 +136,10 @@ final router = GoRouter(
           },
         ),
       ],
+    ),
+    GoRoute(
+      path: '/categories',
+      builder: (context, state) => const ManageCategoriesPage(),
     ),
     GoRoute(
       path: '/shop',

@@ -1,6 +1,6 @@
 // ignore_for_file: overridden_fields
 import 'package:hive/hive.dart';
-import '../../domain/entities/product.dart';
+import 'package:billing_app/features/product/domain/entities/product.dart';
 
 part 'product_model.g.dart'; // Hive generator
 
@@ -24,6 +24,8 @@ class ProductModel extends Product {
   /// Stored as int index of [QuantityUnit] enum (0=piece,1=kg,2=liter,3=box).
   @HiveField(5)
   final int unitIndex;
+  @HiveField(7)
+  final String? categoryId;
   /// Whether this record hasn't been synced to Firestore yet.
   @override
   @HiveField(6)
@@ -36,6 +38,7 @@ class ProductModel extends Product {
     required this.price,
     required this.stock,
     this.unitIndex = 0,
+    this.categoryId,
     this.pendingSync = false,
   }) : super(
           id: id,
@@ -44,6 +47,7 @@ class ProductModel extends Product {
           price: price,
           stock: stock,
           unit: QuantityUnit.values[unitIndex > 3 ? 0 : unitIndex],
+          categoryId: categoryId,
           pendingSync: pendingSync,
         );
 
@@ -55,6 +59,7 @@ class ProductModel extends Product {
       price: product.price,
       stock: product.stock,
       unitIndex: product.unit.index,
+      categoryId: product.categoryId,
       pendingSync: product.pendingSync,
     );
   }
@@ -67,6 +72,7 @@ class ProductModel extends Product {
       price: (map['price'] as num).toDouble(),
       stock: (map['stock'] as num? ?? 0).toInt(),
       unitIndex: (map['unitIndex'] as num? ?? 0).toInt(),
+      categoryId: map['categoryId'] as String?,
       pendingSync: false,
     );
   }
@@ -78,6 +84,7 @@ class ProductModel extends Product {
         'price': price,
         'stock': stock,
         'unitIndex': unitIndex,
+        'categoryId': categoryId,
         'userId': userId,
         'updatedAt': DateTime.now().toIso8601String(),
       };
@@ -90,6 +97,7 @@ class ProductModel extends Product {
       price: price,
       stock: stock,
       unit: QuantityUnit.values[unitIndex > 3 ? 0 : unitIndex],
+      categoryId: categoryId,
       pendingSync: pendingSync,
     );
   }

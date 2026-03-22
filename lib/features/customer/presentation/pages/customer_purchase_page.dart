@@ -169,98 +169,16 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     return text;
   }
 
-  Future<double?> _showManualQtyDialog(
-      ProductModel product, double currentQty) {
-    final controller = TextEditingController(text: _formatQty(currentQty));
-    return showDialog<double>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-          contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-          actionsPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          title: Text(
-            'Set Quantity (${product.unit.shortLabel})',
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 17,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(
-              color: Color(0xFF0F172A),
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: InputDecoration(
-              labelText: 'Quantity',
-              labelStyle: const TextStyle(
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w600,
-              ),
-              hintText: 'e.g. 1.25',
-              hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide:
-                    const BorderSide(color: AppTheme.primaryColor, width: 1.5),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF64748B),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () {
-                final value = double.tryParse(controller.text.trim());
-                Navigator.pop(context, value);
-              },
-              child: const Text(
-                'Apply',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  void _applyInlineQuantityAtIndex(int cartIdx, String rawValue) {
+    final qty = double.tryParse(rawValue.trim());
+    if (qty == null) return;
+    setState(() {
+      if (qty <= 0) {
+        _cart.removeAt(cartIdx);
+      } else {
+        _cart[cartIdx].quantity = qty;
+      }
+    });
   }
 
   double get _total => _cart.fold(0, (sum, item) => sum + item.total);
@@ -702,9 +620,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.qr_code_scanner_rounded, size: 18),
+                Icon(Icons.shopping_cart_rounded, size: 18),
                 SizedBox(width: 8),
-                Text('Scan Item'),
+                Text('Current Order'),
               ],
             ),
           ),
@@ -979,56 +897,40 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   Widget _buildScanTab() {
     return Column(
       children: [
-        // Section Title
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
           child: Row(
             children: [
-              Text('Scanned Items',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                      color: const Color(0xFF1E293B))),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: _scanFromAppBar,
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
-                label: const Text(
-                  'Scan',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+              const Text(
+                'Current Order',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  color: Color(0xFF1E293B),
                 ),
               ),
-              if (_cart.isNotEmpty)
-                Text('${_cart.length} item(s)',
-                    style: const TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600)),
+              const Spacer(),
+              Text(
+                '${_cart.length} item(s)',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
-        // Cart List View
         Expanded(
           child: _cart.isEmpty
               ? const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.qr_code_scanner_rounded,
-                          size: 48, color: Color(0xFFCBD5E1)),
-                      SizedBox(height: 12),
-                        Text('Scan products using the camera above',
-                          style: TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontWeight: FontWeight.w500)),
-                    ],
+                  child: Text(
+                    'No items in current order.\nAdd from Add Manual tab or scan above.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 )
               : _buildCartListView(),
@@ -1269,23 +1171,8 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             _buildQtyControls(cartIdx, product, qty)
           else
             GestureDetector(
-              onTap: () async {
+              onTap: () {
                 _addToCart(product);
-                if (_isWeightedUnit(product)) {
-                  final newIdx =
-                      _cart.indexWhere((c) => c.product.id == product.id);
-                  if (newIdx < 0) return;
-                  final q = await _showManualQtyDialog(
-                      product, _cart[newIdx].quantity);
-                  if (!mounted || q == null) return;
-                  setState(() {
-                    if (q <= 0) {
-                      _cart.removeAt(newIdx);
-                    } else {
-                      _cart[newIdx].quantity = q;
-                    }
-                  });
-                }
               },
               child: Container(
                 padding:
@@ -1393,16 +1280,37 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                 }
               ),
               SizedBox(
-                width: 48,
-                child: Text(
-                  _formatQty(qty),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
+                width: 56,
+                child: _isWeightedUnit(product)
+                    ? TextFormField(
+                        key: ValueKey('${product.id}-$qty'),
+                        initialValue: _formatQty(qty),
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: Color(0xFF0F172A),
+                        ),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onFieldSubmitted: (value) {
+                          _applyInlineQuantityAtIndex(cartIdx, value);
+                        },
+                      )
+                    : Text(
+                        _formatQty(qty),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
               ),
               _circularIconButton(
                 icon: Icons.add_rounded,
@@ -1416,34 +1324,6 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             ],
           ),
         ),
-        if (_isWeightedUnit(product)) ...[
-          const SizedBox(height: 6),
-          TextButton(
-            onPressed: () async {
-              final q = await _showManualQtyDialog(product, qty);
-              if (!mounted || q == null) return;
-              setState(() {
-                if (q <= 0) {
-                  _cart.removeAt(cartIdx);
-                } else {
-                  _cart[cartIdx].quantity = q;
-                }
-              });
-            },
-            style: TextButton.styleFrom(
-              minimumSize: Size.zero,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text(
-              'Edit qty',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

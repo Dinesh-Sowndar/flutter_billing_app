@@ -10,6 +10,8 @@ import '../bloc/product_bloc.dart';
 import '../../domain/entities/product.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/app_validators.dart';
+import '../../../../core/data/hive_database.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class EditProductPage extends StatefulWidget {
   final Product product;
@@ -25,6 +27,7 @@ class _EditProductPageState extends State<EditProductPage> {
   late double _price;
   late int _stock;
   late QuantityUnit _unit;
+  String? _categoryId;
 
   @override
   void initState() {
@@ -33,6 +36,7 @@ class _EditProductPageState extends State<EditProductPage> {
     _price = widget.product.price;
     _stock = widget.product.stock;
     _unit = widget.product.unit;
+    _categoryId = widget.product.categoryId;
   }
 
   void _submit() {
@@ -44,6 +48,7 @@ class _EditProductPageState extends State<EditProductPage> {
         price: _price,
         stock: _stock,
         unit: _unit,
+        categoryId: _categoryId,
       );
 
       context.read<ProductBloc>().add(UpdateProduct(updatedProduct));
@@ -229,6 +234,78 @@ class _EditProductPageState extends State<EditProductPage> {
                     },
                   );
                 }),
+
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const InputLabel(text: 'Category (Optional)'),
+                    TextButton.icon(
+                      onPressed: () => context.push('/categories'),
+                      icon: const Icon(Icons.settings_rounded, size: 16),
+                      label: const Text('Manage'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ValueListenableBuilder(
+                  valueListenable: HiveDatabase.categoryBox.listenable(),
+                  builder: (context, box, _) {
+                    final availableCategories = box.values.toList();
+                    
+                    // Safety check: if currently selected category was deleted, default to null.
+                    final effectiveCategoryId = (_categoryId != null && availableCategories.any((c) => c.id == _categoryId))
+                        ? _categoryId
+                        : null;
+                        
+                    // If it changed because of a deletion, update state silently
+                    if (effectiveCategoryId != _categoryId) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) setState(() => _categoryId = effectiveCategoryId);
+                      });
+                    }
+
+                    return DropdownButtonFormField<String?>(
+                      value: effectiveCategoryId,
+                      decoration: InputDecoration(
+                        hintText: 'Select Category',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('Uncategorized'),
+                        ),
+                        ...availableCategories.map(
+                          (c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(c.name),
+                          ),
+                        )
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          _categoryId = val;
+                        });
+                      },
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 48),
               ],
