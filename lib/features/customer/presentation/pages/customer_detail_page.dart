@@ -304,10 +304,10 @@ class CustomerDetailPage extends StatelessWidget {
                                   tx.items.isEmpty && tx.amountPaid > 0;
 
                               if (isPayment) {
-                                return _buildPaymentTile(tx);
+                                return _buildPaymentTile(context, tx);
                               }
 
-                              return _buildTransactionTile(tx);
+                              return _buildTransactionTile(context, tx);
                             },
                           ),
                   ),
@@ -398,7 +398,7 @@ class CustomerDetailPage extends StatelessWidget {
     return totalBilled - totalPaid;
   }
 
-  Widget _buildTransactionTile(TransactionModel tx) {
+  Widget _buildTransactionTile(BuildContext context, TransactionModel tx) {
     final dueForTx = tx.totalAmount - tx.amountPaid;
     final currencyFormat =
         NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
@@ -411,6 +411,7 @@ class CustomerDetailPage extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade100),
       ),
       child: ListTile(
+        onTap: () => _showTransactionDetail(context, tx),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           width: 48,
@@ -467,18 +468,19 @@ class CustomerDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentTile(TransactionModel tx) {
+  Widget _buildPaymentTile(BuildContext context, TransactionModel tx) {
     final currencyFormat =
         NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4), // Light green tint
+        color: const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFDCFCE7)),
       ),
       child: ListTile(
+        onTap: () => _showTransactionDetail(context, tx),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           width: 48,
@@ -510,6 +512,304 @@ class CustomerDetailPage extends StatelessWidget {
               color: Color(0xFF10B981)),
         ),
       ),
+    );
+  }
+
+  // ─── Transaction Detail Bottom Sheet ──────────────────────────────────────
+  void _showTransactionDetail(BuildContext context, TransactionModel tx) {
+    final currencyFormat =
+        NumberFormat.currency(symbol: 'Rs ', decimalDigits: 2);
+    final isPayment = tx.items.isEmpty && tx.amountPaid > 0;
+    final dueForTx = tx.totalAmount - tx.amountPaid;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: isPayment ? 0.4 : 0.75,
+        minChildSize: 0.35,
+        maxChildSize: 0.92,
+        expand: false,
+        builder: (_, scrollCtrl) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              // Header
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: isPayment
+                            ? const Color(0xFFD1FAE5)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        isPayment
+                            ? Icons.payments_rounded
+                            : Icons.receipt_long_rounded,
+                        color: isPayment
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isPayment ? 'Payment Receipt' : 'Bill Details',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 18,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          Text(
+                            DateFormat('MMM dd, yyyy  •  hh:mm a')
+                                .format(tx.date),
+                            style: const TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: Colors.grey.shade100),
+
+              // Body
+              Expanded(
+                child: ListView(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  children: [
+                    if (isPayment) ...
+                      [
+                        _detailRow(
+                          icon: Icons.payments_rounded,
+                          iconColor: const Color(0xFF10B981),
+                          label: 'Amount Paid',
+                          value: currencyFormat.format(tx.amountPaid),
+                          valueColor: const Color(0xFF10B981),
+                          bold: true,
+                        ),
+                        _detailRow(
+                          icon: Icons.info_outline_rounded,
+                          iconColor: const Color(0xFF94A3B8),
+                          label: 'Type',
+                          value: 'Due Payment',
+                        ),
+                      ]
+                    else ...
+                      [
+                        // Items
+                        const Text(
+                          'Items',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ...tx.items.map((item) => Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: Colors.grey.shade100, width: 1.2),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor
+                                          .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                        Icons.inventory_2_rounded,
+                                        size: 18,
+                                        color: AppTheme.primaryColor),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.productName,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Rs ${item.price.toStringAsFixed(2)}  ×  ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity}',
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF94A3B8),
+                                              fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    'Rs ${item.total.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )),
+                        const SizedBox(height: 8),
+                        // Summary section
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border:
+                                Border.all(color: Colors.grey.shade100, width: 1.2),
+                          ),
+                          child: Column(
+                            children: [
+                              _summaryRow('Total Amount',
+                                  currencyFormat.format(tx.totalAmount),
+                                  bold: true),
+                              const SizedBox(height: 8),
+                              _summaryRow('Amount Paid',
+                                  currencyFormat.format(tx.amountPaid),
+                                  valueColor: const Color(0xFF10B981)),
+                              if (dueForTx > 0) ...
+                                [
+                                  const SizedBox(height: 8),
+                                  _summaryRow('Due Amount',
+                                      currencyFormat.format(dueForTx),
+                                      valueColor: Colors.red),
+                                ],
+                              const SizedBox(height: 12),
+                              Divider(height: 1, color: Colors.grey.shade200),
+                              const SizedBox(height: 12),
+                              _detailRow(
+                                icon: _paymentIcon(tx.paymentMethod),
+                                iconColor: AppTheme.primaryColor,
+                                label: 'Payment Method',
+                                value: tx.paymentMethod.toUpperCase(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _paymentIcon(String method) {
+    switch (method.toLowerCase()) {
+      case 'upi':
+        return Icons.qr_code_rounded;
+      case 'card':
+        return Icons.credit_card_rounded;
+      default:
+        return Icons.money_rounded;
+    }
+  }
+
+  Widget _detailRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    Color? valueColor,
+    bool bold = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: iconColor),
+          const SizedBox(width: 10),
+          Text(label,
+              style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14)),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor ?? const Color(0xFF0F172A),
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value,
+      {Color? valueColor, bool bold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+                fontSize: 13)),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor ?? const Color(0xFF0F172A),
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 
