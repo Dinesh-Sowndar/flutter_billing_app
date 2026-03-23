@@ -22,6 +22,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String _paymentMethod = 'cash';
   bool _isInitialized = false;
   double _qrAmount = 0.0;
+  bool _isFinishing = false;
 
   @override
   void dispose() {
@@ -158,6 +159,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             const SizedBox(height: 24),
                             _buildPaymentOptionsCard(billingState.totalAmount,
                                 billingState.customerName),
+                          ] else ...[
+                            const SizedBox(height: 24),
+                            _buildGuestPaymentMethodSelector(),
                           ],
                           if (upiId.isNotEmpty && _paymentMethod == 'upi') ...[
                             const SizedBox(height: 24),
@@ -501,6 +505,51 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+  /// Payment method selector shown for guest (non-customer) checkout.
+  /// Tapping UPI reveals the QR code section.
+  Widget _buildGuestPaymentMethodSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Payment Method',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.grey.shade100, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _buildPaymentMethodPill('Cash', Icons.money_rounded, 'cash'),
+              const SizedBox(width: 10),
+              _buildPaymentMethodPill(
+                  'UPI', Icons.qr_code_scanner_rounded, 'upi'),
+              const SizedBox(width: 10),
+              _buildPaymentMethodPill(
+                  'Card', Icons.credit_card_rounded, 'card'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildPaymentMethodPill(String label, IconData icon, String value) {
     final isSelected = _paymentMethod == value;
     return Expanded(
@@ -637,15 +686,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {
-                  final paid = billingState.customerId.isNotEmpty
-                      ? _parseWillingToPay(billingState.totalAmount)
-                      : billingState.totalAmount;
-                  context.read<BillingBloc>().add(
-                        FinishTransactionEvent(
-                            amountPaid: paid, paymentMethod: _paymentMethod),
-                      );
-                },
+                onPressed: _isFinishing
+                    ? null
+                    : () {
+                        setState(() => _isFinishing = true);
+                        final paid = billingState.customerId.isNotEmpty
+                            ? _parseWillingToPay(billingState.totalAmount)
+                            : billingState.totalAmount;
+                        context.read<BillingBloc>().add(
+                              FinishTransactionEvent(
+                                  amountPaid: paid,
+                                  paymentMethod: _paymentMethod),
+                            );
+                      },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   side:
@@ -655,13 +708,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   backgroundColor:
                       AppTheme.primaryColor.withValues(alpha: 0.05),
                 ),
-                child: const Text(
-                  'Finish without Receipt',
-                  style: TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Finish without Receipt',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (_isFinishing) ...[
+                      const SizedBox(width: 12),
+                      const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryColor,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),

@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -14,6 +16,7 @@ import '../../../billing/presentation/bloc/billing_bloc.dart';
 import '../../../product/data/models/product_model.dart';
 import '../../../product/domain/entities/product.dart';
 import '../../domain/entities/customer_entity.dart';
+import 'customer_product_search_page.dart';
 
 class _CartItem {
   final ProductModel product;
@@ -48,8 +51,6 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
   final Map<String, DateTime> _lastScanTimes = {};
   final List<_CartItem> _cart = [];
-  String _productSearch = '';
-  final _searchCtrl = TextEditingController();
 
   MobileScannerController _createScannerController() {
     return MobileScannerController(
@@ -75,7 +76,6 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     _stopScannerSafe();
     _scanner.dispose();
     _tabController.dispose();
-    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -1031,77 +1031,114 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     );
   }
 
-  // â”€â”€â”€ Products Tab Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Products Tab Builder ────────────────────────────────────────────────────
   Widget _buildProductsTab() {
-    final all = HiveDatabase.productBox.values.toList();
-    final filtered = _productSearch.trim().isEmpty
-        ? all
-        : all
-            .where((p) =>
-                p.name.toLowerCase().contains(_productSearch.toLowerCase()) ||
-                p.barcode.contains(_productSearch))
-            .toList();
-
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: TextField(
-            controller: _searchCtrl,
-            onChanged: (v) => setState(() => _productSearch = v),
-            style: const TextStyle(fontWeight: FontWeight.w500),
-            decoration: InputDecoration(
-              hintText: 'Search products by name or barcode...',
-              hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-              prefixIcon:
-                  const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
-              suffixIcon: _productSearch.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear_rounded,
-                          color: Color(0xFF94A3B8)),
-                      onPressed: () {
-                        _searchCtrl.clear();
-                        setState(() => _productSearch = '');
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+        // Header w/ View All
+        Container(
+          color: const Color(0xFFF8FAFC),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Available Items',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+              TextButton.icon(
+                onPressed: _openProductSearchPage,
+                icon: const Icon(Icons.search_rounded, size: 18),
+                label: const Text('View All'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.primaryColor,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide:
-                    const BorderSide(color: AppTheme.primaryColor, width: 1.5),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
+            ],
           ),
         ),
+        // Product list
         Expanded(
-          child: filtered.isEmpty
-              ? const Center(
-                  child: Text('No products match your search.',
-                      style: TextStyle(color: Color(0xFF94A3B8))),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                  itemCount: filtered.length,
-                  itemBuilder: (ctx, i) {
-                    final product = filtered[i];
-                    final cartIdx =
-                        _cart.indexWhere((c) => c.product.id == product.id);
-                    return _buildProductListItem(product, cartIdx);
-                  },
-                ),
+          child: ValueListenableBuilder(
+            valueListenable: HiveDatabase.productBox.listenable(),
+            builder: (context, box, _) {
+              final allProducts = box.values.cast<ProductModel>().toList();
+              if (allProducts.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Icon(Icons.inventory_2_outlined,
+                            size: 34, color: Colors.grey.shade300),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text('No products found',
+                          style: TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                itemCount: allProducts.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (ctx, i) {
+                  final product = allProducts[i];
+                  final cartIdx =
+                      _cart.indexWhere((c) => c.product.id == product.id);
+                  return _buildProductListItem(product, cartIdx);
+                },
+              );
+            },
+          ),
         ),
       ],
+    );
+  }
+
+  /// Navigates to the full-screen customer product search page.
+  Future<void> _openProductSearchPage() async {
+    final snapshot = <String, double>{
+      for (final item in _cart) item.product.id: item.quantity,
+    };
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CustomerProductSearchPage(
+          cartSnapshot: snapshot,
+          onAddProduct: (product) {
+            _addToCart(product);
+          },
+          onRemoveProduct: (productId) {
+            setState(() {
+              _cart.removeWhere((c) => c.product.id == productId);
+            });
+          },
+          onUpdateQuantity: (productId, qty) {
+            setState(() {
+              final idx = _cart.indexWhere((c) => c.product.id == productId);
+              if (idx >= 0) _cart[idx].quantity = qty;
+            });
+          },
+        ),
+      ),
     );
   }
 
