@@ -4,6 +4,8 @@ import '../../features/product/data/models/category_model.dart';
 import '../../features/shop/data/models/shop_model.dart';
 import '../../features/billing/data/models/transaction_model.dart';
 import '../../features/customer/data/models/customer_model.dart';
+import '../../features/supplier/data/models/supplier_model.dart';
+import '../../features/supplier/data/models/supplier_purchase_model.dart';
 
 class HiveDatabase {
   static const String productBoxName = 'products';
@@ -12,6 +14,8 @@ class HiveDatabase {
   static const String settingsBoxName = 'settings';
   static const String transactionBoxName = 'transactions';
   static const String customerBoxName = 'customers';
+  static const String supplierBoxName = 'suppliers';
+  static const String supplierPurchaseBoxName = 'supplierPurchases';
 
   static Future<void> init() async {
     await Hive.initFlutter();
@@ -23,6 +27,9 @@ class HiveDatabase {
     Hive.registerAdapter(TransactionItemModelAdapter());
     Hive.registerAdapter(TransactionModelAdapter());
     Hive.registerAdapter(CustomerModelAdapter());
+    Hive.registerAdapter(SupplierModelAdapter());
+    Hive.registerAdapter(SupplierPurchaseItemModelAdapter());
+    Hive.registerAdapter(SupplierPurchaseModelAdapter());
 
     // Open Boxes
     await Hive.openBox<ProductModel>(productBoxName);
@@ -31,6 +38,8 @@ class HiveDatabase {
     await Hive.openBox(settingsBoxName);
     await Hive.openBox<TransactionModel>(transactionBoxName);
     await Hive.openBox<CustomerModel>(customerBoxName);
+    await Hive.openBox<SupplierModel>(supplierBoxName);
+    await Hive.openBox<SupplierPurchaseModel>(supplierPurchaseBoxName);
   }
 
   static Box<ProductModel> get productBox =>
@@ -43,6 +52,10 @@ class HiveDatabase {
       Hive.box<TransactionModel>(transactionBoxName);
   static Box<CustomerModel> get customerBox =>
       Hive.box<CustomerModel>(customerBoxName);
+  static Box<SupplierModel> get supplierBox =>
+      Hive.box<SupplierModel>(supplierBoxName);
+  static Box<SupplierPurchaseModel> get supplierPurchaseBox =>
+      Hive.box<SupplierPurchaseModel>(supplierPurchaseBoxName);
 
   static bool hasUnsyncedData() {
     final hasUnsyncedProducts =
@@ -53,12 +66,18 @@ class HiveDatabase {
         transactionBox.values.any((transaction) => transaction.pendingSync);
     final hasUnsyncedCustomers =
         customerBox.values.any((customer) => customer.pendingSync);
+    final hasUnsyncedSuppliers =
+        supplierBox.values.any((supplier) => supplier.pendingSync);
+    final hasUnsyncedSupplierPurchases =
+        supplierPurchaseBox.values.any((p) => p.pendingSync);
     final hasUnsyncedShop =
         settingsBox.get('pendingShopSync', defaultValue: false) == true;
     return hasUnsyncedProducts ||
         hasUnsyncedCategories ||
         hasUnsyncedTransactions ||
         hasUnsyncedCustomers ||
+        hasUnsyncedSuppliers ||
+        hasUnsyncedSupplierPurchases ||
         hasUnsyncedShop;
   }
 
@@ -69,5 +88,7 @@ class HiveDatabase {
     await settingsBox.clear();
     await transactionBox.clear();
     await customerBox.clear();
+    await supplierBox.clear();
+    await supplierPurchaseBox.clear();
   }
 }

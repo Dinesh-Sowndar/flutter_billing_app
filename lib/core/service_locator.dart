@@ -19,6 +19,14 @@ import '../../features/customer/data/repositories/customer_repository_impl.dart'
 import '../../features/customer/domain/repositories/customer_repository.dart';
 import '../../features/customer/domain/usecases/customer_usecases.dart';
 import '../../features/customer/presentation/bloc/customer_bloc.dart';
+import '../../features/supplier/data/repositories/supplier_repository_impl.dart';
+import '../../features/supplier/data/repositories/supplier_purchase_repository_impl.dart';
+import '../../features/supplier/domain/repositories/supplier_repository.dart';
+import '../../features/supplier/domain/repositories/supplier_purchase_repository.dart';
+import '../../features/supplier/domain/usecases/supplier_usecases.dart';
+import '../../features/supplier/domain/usecases/supplier_purchase_usecases.dart';
+import '../../features/supplier/presentation/bloc/supplier_bloc.dart';
+import '../../features/supplier/presentation/bloc/supplier_purchase_bloc.dart';
 import 'services/sync_service.dart';
 
 final sl = GetIt.instance;
@@ -107,5 +115,34 @@ Future<void> init() async {
         addCustomerUseCase: sl(),
         updateCustomerUseCase: sl(),
         deleteCustomerUseCase: sl(),
+      ));
+
+  // Features - Supplier
+  sl.registerLazySingleton<SupplierRepository>(
+    () => SupplierRepositoryImpl(syncService: sl()),
+  );
+  sl.registerLazySingleton(() => GetSuppliersUseCase(sl()));
+  sl.registerLazySingleton(() => GetSupplierByIdUseCase(sl()));
+  sl.registerLazySingleton(() => AddSupplierUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateSupplierUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteSupplierUseCase(sl()));
+  sl.registerFactory(() => SupplierBloc(
+        getSuppliersUseCase: sl(),
+        addSupplierUseCase: sl(),
+        updateSupplierUseCase: sl(),
+        deleteSupplierUseCase: sl(),
+      ));
+
+  // Features - SupplierPurchase
+  sl.registerLazySingleton<SupplierPurchaseRepository>(
+    () => SupplierPurchaseRepositoryImpl(syncService: sl()),
+  );
+  sl.registerLazySingleton(() => GetPurchasesBySupplierUseCase(sl()));
+  sl.registerLazySingleton(() => AddSupplierPurchaseUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteSupplierPurchaseUseCase(sl()));
+  sl.registerFactory(() => SupplierPurchaseBloc(
+        getPurchasesBySupplierUseCase: sl(),
+        addSupplierPurchaseUseCase: sl(),
+        deleteSupplierPurchaseUseCase: sl(),
       ));
 }

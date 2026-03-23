@@ -6,6 +6,8 @@ import '../../features/product/data/models/product_model.dart';
 import '../../features/billing/data/models/transaction_model.dart';
 import '../../features/shop/data/models/shop_model.dart';
 import '../../features/customer/data/models/customer_model.dart';
+import '../../features/supplier/data/models/supplier_model.dart';
+import '../../features/supplier/data/models/supplier_purchase_model.dart';
 import '../data/hive_database.dart';
 
 /// Syncs Hive (local) ↔ Firestore (cloud) whenever connectivity changes.
@@ -64,6 +66,10 @@ class SyncService {
         await pullShopFromFirestore();
         await pushPendingCustomers();
         await pullCustomersFromFirestore();
+        await pushPendingSuppliers();
+        await pullSuppliersFromFirestore();
+        await pushPendingSupplierPurchases();
+        await pullSupplierPurchasesFromFirestore();
         onSyncComplete.add(null);
       }
     });
@@ -80,6 +86,8 @@ class SyncService {
           await syncPendingShop();
           await pullShopFromFirestore();
           await pullCustomersFromFirestore();
+          await pullSuppliersFromFirestore();
+          await pullSupplierPurchasesFromFirestore();
         }
       }
       onSyncComplete.add(null);
@@ -108,6 +116,12 @@ class SyncService {
 
   CollectionReference<Map<String, dynamic>> get _customersCollection =>
       _firestore.collection('users').doc(_userId).collection('customers');
+
+  CollectionReference<Map<String, dynamic>> get _suppliersCollection =>
+      _firestore.collection('users').doc(_userId).collection('suppliers');
+
+  CollectionReference<Map<String, dynamic>> get _supplierPurchasesCollection =>
+      _firestore.collection('users').doc(_userId).collection('supplierPurchases');
 
   // ---------------------------------------------------------------------------
   // Push a single product to Firestore (used on every write when online).
@@ -455,6 +469,143 @@ class SyncService {
         await HiveDatabase.customerBox.put(model.id, model);
       }
     } catch (_) {}
+  }
+
+  // ---------------------------------------------------------------------------
+  // Push a single supplier to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushSupplier(SupplierModel model) async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      await _suppliersCollection
+          .doc(model.id)
+          .set(model.toFirestore(), SetOptions(merge: true));
+      final cleared = model.copyWith(pendingSync: false);
+      await HiveDatabase.supplierBox.put(cleared.id, cleared);
+    } catch (_) {
+      final pending = model.copyWith(pendingSync: true);
+      await HiveDatabase.supplierBox.put(pending.id, pending);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Delete a supplier on Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> deleteSupplier(String id) async {
+    if (_userId == null) return;
+    try {
+      if (_isOnline) {
+        await _suppliersCollection.doc(id).delete();
+      } else {
+        await _markAsDeletedLocally('suppliers', id);
+      }
+    } catch (_) {
+      await _markAsDeletedLocally('suppliers', id);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Push all locally-pending suppliers to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushPendingSuppliers() async {
+    final pending =
+        HiveDatabase.supplierBox.values.where((s) => s.pendingSync).toList();
+    for (final s in pending) {
+      await pushSupplier(s);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pull the current user's suppliers from Firestore into Hive.
+  // ---------------------------------------------------------------------------
+  Future<void> pullSuppliersFromFirestore() async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      final snapshot = await _suppliersCollection.get();
+      for (final doc in snapshot.docs) {
+        final model = SupplierModel.fromFirestore(doc.data());
+        await HiveDatabase.supplierBox.put(model.id, model);
+      }
+    } catch (_) {}
+  }
+
+  // ---------------------------------------------------------------------------
+  // Push a single supplier purchase to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushSupplierPurchase(SupplierPurchaseModel model) async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      await _supplierPurchasesCollection
+          .doc(model.id)
+          .set(model.toFirestore(), SetOptions(merge: true));
+      await HiveDatabase.supplierPurchaseBox
+          .put(model.id, model.copyWith(pendingSync: false));
+    } catch (_) {
+      await HiveDatabase.supplierPurchaseBox
+          .put(model.id, model.copyWith(pendingSync: true));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Delete a supplier purchase on Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> deleteSupplierPurchase(String id) async {
+    if (_userId == null) return;
+    try {
+      if (_isOnline) {
+        await _supplierPurchasesCollection.doc(id).delete();
+      } else {
+        await _markAsDeletedLocally('supplierPurchases', id);
+      }
+    } catch (_) {
+      await _markAsDeletedLocally('supplierPurchases', id);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Push all locally-pending supplier purchases to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushPendingSupplierPurchases() async {
+    final pending = HiveDatabase.supplierPurchaseBox.values
+        .where((p) => p.pendingSync)
+        .toList();
+    for (final p in pending) {
+      await pushSupplierPurchase(p);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pull the current user's supplier purchases from Firestore into Hive.
+  // ---------------------------------------------------------------------------
+  Future<void> pullSupplierPurchasesFromFirestore() async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      final snapshot = await _supplierPurchasesCollection.get();
+      for (final doc in snapshot.docs) {
+        final model = SupplierPurchaseModel.fromFirestore(doc.data());
+        final local = HiveDatabase.supplierPurchaseBox.get(model.id);
+        if (local == null || !local.pendingSync) {
+          await HiveDatabase.supplierPurchaseBox.put(model.id, model);
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Pushes every locally-pending record to Firestore (if online).
+  /// Call this before logout to ensure all data is synced.
+  Future<void> syncAllPending() async {
+    if (!_isOnline) return;
+    await processPendingDeletes();
+    await syncPendingProducts();
+    await pushPendingCustomers();
+    await pushPendingSuppliers();
+    await pushPendingSupplierPurchases();
+    await syncPendingShop();
+    await syncPendingTransactions();
   }
 
   void dispose() {

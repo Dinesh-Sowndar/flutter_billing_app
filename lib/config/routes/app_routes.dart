@@ -23,6 +23,11 @@ import '../../features/customer/presentation/pages/customer_purchase_page.dart';
 import '../../features/customer/presentation/pages/customer_detail_page.dart';
 import '../../features/customer/presentation/pages/edit_customer_page.dart';
 import '../../features/customer/domain/entities/customer_entity.dart';
+import '../../features/supplier/presentation/pages/supplier_list_page.dart';
+import '../../features/supplier/presentation/pages/add_supplier_page.dart';
+import '../../features/supplier/presentation/pages/supplier_detail_page.dart';
+import '../../features/supplier/presentation/pages/supplier_purchase_page.dart';
+import '../../features/supplier/domain/entities/supplier_entity.dart';
 import '../../core/data/hive_database.dart';
 import '../../core/service_locator.dart' as di;
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -186,6 +191,34 @@ final router = GoRouter(
                 final customer = state.extra as CustomerEntity?;
                 if (customer == null) return const SizedBox.shrink();
                 return CustomerPurchasePage(customer: customer);
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/suppliers',
+      builder: (context, state) => const SupplierListPage(),
+      routes: [
+        GoRoute(
+          path: 'add',
+          builder: (context, state) => const AddSupplierPage(),
+        ),
+        GoRoute(
+          path: ':id',
+          builder: (context, state) {
+            final supplier = state.extra as SupplierEntity?;
+            if (supplier == null) return const SizedBox.shrink();
+            return SupplierDetailPage(supplier: supplier);
+          },
+          routes: [
+            GoRoute(
+              path: 'purchase',
+              builder: (context, state) {
+                final supplier = state.extra as SupplierEntity?;
+                if (supplier == null) return const SizedBox.shrink();
+                return SupplierPurchasePage(supplier: supplier);
               },
             ),
           ],

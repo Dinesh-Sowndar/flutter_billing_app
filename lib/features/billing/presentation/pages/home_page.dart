@@ -13,6 +13,8 @@ import '../../../../core/theme/app_theme.dart';
 import 'package:billing_app/features/billing/domain/entities/cart_item.dart';
 import 'package:billing_app/features/product/domain/entities/product.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../../../core/service_locator.dart' as di;
+import '../../../../core/services/sync_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -364,14 +366,21 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA), // Elegant light background
       appBar: AppBar(
-        title: const Text(
-          'Quick Receipt',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
-            color: Color(0xFF0F172A),
-            letterSpacing: -0.5,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text(
+              'Quick Receipt',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.5,
+              ),
+            ),
+            SizedBox(width: 8),
+            _SyncDot(),
+          ],
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1446,3 +1455,101 @@ class _HomePageState extends State<HomePage>
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Animated sync status dot shown next to the AppBar title.
+// Self-contained: subscribes to Hive box changes + SyncService.onSyncComplete
+// so it updates both when offline (Hive write) and after online sync.
+// ---------------------------------------------------------------------------
+class _SyncDot extends StatefulWidget {
+  const _SyncDot();
+
+  @override
+  State<_SyncDot> createState() => _SyncDotState();
+}
+
+class _SyncDotState extends State<_SyncDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Listenable _hiveListenable;
+  StreamSubscription<void>? _syncSub;
+  bool _synced = true;
+
+  static const _green = Color(0xFF16A34A);
+  static const _amber = Color(0xFFF59E0B);
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Animation controller
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _scale = Tween<double>(begin: 0.7, end: 1.3).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+
+    // Listen to every relevant Hive box — fires on every read/write, offline or online
+    _hiveListenable = Listenable.merge([
+      HiveDatabase.transactionBox.listenable(),
+      HiveDatabase.productBox.listenable(),
+      HiveDatabase.supplierBox.listenable(),
+      HiveDatabase.supplierPurchaseBox.listenable(),
+      HiveDatabase.customerBox.listenable(),
+    ]);
+    _hiveListenable.addListener(_refresh);
+
+    // Also listen to SyncService.onSyncComplete (fires after online sync clears flags)
+    _syncSub = di.sl<SyncService>().onSyncComplete.stream.listen((_) => _refresh());
+
+    _refresh();
+  }
+
+  void _refresh() {
+    if (!mounted) return;
+    final synced = !HiveDatabase.hasUnsyncedData();
+    if (synced == _synced) return;
+    setState(() => _synced = synced);
+    if (_synced) {
+      _ctrl.stop();
+      _ctrl.value = 0;
+    } else {
+      _ctrl.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _hiveListenable.removeListener(_refresh);
+    _syncSub?.cancel();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _synced ? _green : _amber;
+    return ScaleTransition(
+      scale: _synced ? const AlwaysStoppedAnimation(1.0) : _scale,
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: _synced ? 0.35 : 0.6),
+              blurRadius: 6,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

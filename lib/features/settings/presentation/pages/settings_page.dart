@@ -7,6 +7,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../core/service_locator.dart' as di;
+import '../../../../core/services/sync_service.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/printer_bloc.dart';
 import '../bloc/printer_event.dart';
@@ -55,7 +57,12 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  void _showLogoutDialog(BuildContext context) {
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    // Force-push all pending records to Firestore (if online) BEFORE checking
+    // so users who are already synced don't see a false warning.
+    await di.sl<SyncService>().syncAllPending();
+
+    if (!mounted) return;
     final hasUnsynced = HiveDatabase.hasUnsyncedData();
     showDialog(
       context: context,
@@ -255,6 +262,15 @@ class _SettingsPageState extends State<SettingsPage> {
                     title: 'Shop Details',
                     subtitle: 'Business info & digital receipts',
                     onTap: () => context.push('/shop'),
+                    isCompact: isCompact,
+                  ),
+                  _buildDivider(),
+                  _buildListItem(
+                    icon: Icons.local_shipping_rounded,
+                    iconColor: const Color(0xFF8B5CF6),
+                    title: 'Manage Suppliers',
+                    subtitle: 'Track purchases & dues',
+                    onTap: () => context.push('/suppliers'),
                     isCompact: isCompact,
                   ),
                 ],
