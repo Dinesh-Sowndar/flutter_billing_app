@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
+import '../bloc/customer_state.dart';
 
 class AddCustomerPage extends StatefulWidget {
   const AddCustomerPage({super.key});
@@ -39,10 +40,29 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       phone: _phoneController.text.trim(),
     );
 
-    context.read<CustomerBloc>().add(AddCustomerEvent(customer));
-    await Future.delayed(const Duration(milliseconds: 300));
+    final bloc = context.read<CustomerBloc>();
+    bloc.add(AddCustomerEvent(customer));
 
-    if (mounted) context.pop();
+    // Wait for the bloc to emit a loaded or error state.
+    final resultState = await bloc.stream.firstWhere(
+      (s) => s.status == CustomerStatus.loaded || s.status == CustomerStatus.error,
+    );
+
+    if (!mounted) return;
+
+    if (resultState.status == CustomerStatus.error) {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(resultState.error ?? 'Failed to add customer'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } else {
+      context.pop();
+    }
   }
 
   @override

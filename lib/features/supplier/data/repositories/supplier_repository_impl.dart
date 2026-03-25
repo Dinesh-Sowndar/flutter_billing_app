@@ -29,6 +29,15 @@ class SupplierRepositoryImpl implements SupplierRepository {
   @override
   Future<void> addSupplier(SupplierEntity supplier) async {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    // Check for duplicate phone number among this user's suppliers
+    final existingWithSamePhone = HiveDatabase.supplierBox.values.any(
+      (s) => s.userId == userId && s.phone == supplier.phone,
+    );
+    if (existingWithSamePhone) {
+      throw Exception('A supplier with phone number ${supplier.phone} already exists.');
+    }
+
     final model = SupplierModel(
       id: supplier.id,
       name: supplier.name,

@@ -29,6 +29,15 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<void> addCustomer(CustomerEntity customer) async {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    // Check for duplicate phone number among this user's customers
+    final existingWithSamePhone = HiveDatabase.customerBox.values.any(
+      (c) => c.userId == userId && c.phone == customer.phone,
+    );
+    if (existingWithSamePhone) {
+      throw Exception('A customer with phone number ${customer.phone} already exists.');
+    }
+
     final model = CustomerModel(
       id: customer.id,
       name: customer.name,

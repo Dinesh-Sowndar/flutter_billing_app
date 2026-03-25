@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/supplier_entity.dart';
 import '../bloc/supplier_bloc.dart';
 import '../bloc/supplier_event.dart';
+import '../bloc/supplier_state.dart';
 import '../../../../core/service_locator.dart' as di;
 
 class AddSupplierPage extends StatefulWidget {
@@ -42,7 +43,27 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
     );
     // Dispatch directly on the bloc we created — avoids the context-scope issue.
     _bloc.add(AddSupplierEvent(supplier));
-    if (mounted) context.pop();
+
+    // Wait for the bloc to emit a loaded or error state.
+    final resultState = await _bloc.stream.firstWhere(
+      (s) => s.status == SupplierStatus.loaded || s.status == SupplierStatus.error,
+    );
+
+    if (!mounted) return;
+
+    if (resultState.status == SupplierStatus.error) {
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(resultState.error ?? 'Failed to add supplier'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } else {
+      context.pop();
+    }
   }
 
   @override
