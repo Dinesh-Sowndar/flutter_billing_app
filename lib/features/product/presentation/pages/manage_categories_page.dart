@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:billing_app/core/theme/app_theme.dart';
 import 'package:billing_app/core/data/hive_database.dart';
+import 'package:billing_app/core/services/sync_service.dart';
+import 'package:billing_app/core/service_locator.dart' as di;
 import 'package:billing_app/features/product/data/models/category_model.dart';
 import 'package:billing_app/features/product/data/models/product_model.dart';
 import 'package:uuid/uuid.dart';
@@ -29,6 +31,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
     if (name.isEmpty) return;
 
     final box = HiveDatabase.categoryBox;
+    String? savedId;
 
     if (_editingCategoryId != null) {
       // Edit
@@ -41,6 +44,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
           pendingSync: true,
         );
         await box.putAt(index, updated);
+        savedId = category.id;
       }
     } else {
       // Add
@@ -56,6 +60,16 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
         pendingSync: true,
       );
       await box.add(newCategory);
+      savedId = newCategory.id;
+    }
+
+    // Sync the saved category to Firestore if online.
+    final syncService = di.sl<SyncService>();
+    if (savedId != null) {
+      final saved = box.values.where((c) => c.id == savedId).firstOrNull;
+      if (saved != null && syncService.isOnline) {
+        await syncService.pushCategory(saved);
+      }
     }
 
     _controller.clear();
@@ -86,6 +100,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
         }
       }
       await box.deleteAt(index);
+      // Delete from Firestore as well.
+      await di.sl<SyncService>().deleteCategory(category.id);
     }
   }
 

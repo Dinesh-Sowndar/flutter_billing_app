@@ -1496,6 +1496,7 @@ class _SyncDotState extends State<_SyncDot>
     _hiveListenable = Listenable.merge([
       HiveDatabase.transactionBox.listenable(),
       HiveDatabase.productBox.listenable(),
+      HiveDatabase.categoryBox.listenable(),
       HiveDatabase.supplierBox.listenable(),
       HiveDatabase.supplierPurchaseBox.listenable(),
       HiveDatabase.customerBox.listenable(),

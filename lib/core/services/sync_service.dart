@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../features/product/data/models/product_model.dart';
+import '../../features/product/data/models/category_model.dart';
 import '../../features/billing/data/models/transaction_model.dart';
 import '../../features/shop/data/models/shop_model.dart';
 import '../../features/customer/data/models/customer_model.dart';
@@ -58,6 +59,8 @@ class SyncService {
       _isOnline = _resultsHaveConnection(results);
       if (!wasOnline && _isOnline) {
         await processPendingDeletes();
+        await pushPendingCategories();
+        await pullCategoriesFromFirestore();
         await syncPendingProducts();
         await pullProductsFromFirestore();
         await syncPendingTransactions();
@@ -81,6 +84,7 @@ class SyncService {
       if (user != null) {
         if (_isOnline) {
           await processPendingDeletes();
+          await pullCategoriesFromFirestore();
           await pullProductsFromFirestore();
           await pullTransactionsFromFirestore();
           await syncPendingShop();
@@ -122,6 +126,9 @@ class SyncService {
 
   CollectionReference<Map<String, dynamic>> get _supplierPurchasesCollection =>
       _firestore.collection('users').doc(_userId).collection('supplierPurchases');
+
+  CollectionReference<Map<String, dynamic>> get _categoriesCollection =>
+      _firestore.collection('users').doc(_userId).collection('categories');
 
   // ---------------------------------------------------------------------------
   // Push a single product to Firestore (used on every write when online).
@@ -595,11 +602,100 @@ class SyncService {
     } catch (_) {}
   }
 
+  // ---------------------------------------------------------------------------
+  // Push a single category to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushCategory(CategoryModel model) async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      await _categoriesCollection
+          .doc(model.id)
+          .set(model.toFirestore(uid), SetOptions(merge: true));
+      // Clear pendingSync flag locally. Categories are stored by auto-int key,
+      // so we look up the matching entry.
+      final box = HiveDatabase.categoryBox;
+      for (var i = 0; i < box.length; i++) {
+        final entry = box.getAt(i);
+        if (entry != null && entry.id == model.id) {
+          await box.putAt(
+            i,
+            CategoryModel(id: model.id, name: model.name, pendingSync: false),
+          );
+          break;
+        }
+      }
+    } catch (_) {
+      // Leave as pending; will be retried on next sync.
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Delete a category on Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> deleteCategory(String id) async {
+    if (_userId == null) return;
+    try {
+      if (_isOnline) {
+        await _categoriesCollection.doc(id).delete();
+      } else {
+        await _markAsDeletedLocally('categories', id);
+      }
+    } catch (_) {
+      await _markAsDeletedLocally('categories', id);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Push all locally-pending categories to Firestore.
+  // ---------------------------------------------------------------------------
+  Future<void> pushPendingCategories() async {
+    final pending =
+        HiveDatabase.categoryBox.values.where((c) => c.pendingSync).toList();
+    for (final c in pending) {
+      await pushCategory(c);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pull the current user's categories from Firestore into Hive.
+  // ---------------------------------------------------------------------------
+  Future<void> pullCategoriesFromFirestore() async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      final snapshot = await _categoriesCollection.get();
+      final box = HiveDatabase.categoryBox;
+
+      // Build a set of remote IDs for cleanup later.
+      final remoteIds = <String>{};
+      for (final doc in snapshot.docs) {
+        final model = CategoryModel.fromFirestore(doc.data());
+        remoteIds.add(model.id);
+
+        // Check if it already exists locally.
+        final localIndex =
+            box.values.toList().indexWhere((c) => c.id == model.id);
+        if (localIndex == -1) {
+          // New from Firestore – add.
+          await box.add(model);
+        } else {
+          final local = box.getAt(localIndex);
+          // Only overwrite if local is not pending upload.
+          if (local == null || !local.pendingSync) {
+            await box.putAt(localIndex, model);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   /// Pushes every locally-pending record to Firestore (if online).
   /// Call this before logout to ensure all data is synced.
   Future<void> syncAllPending() async {
     if (!_isOnline) return;
     await processPendingDeletes();
+    await pushPendingCategories();
     await syncPendingProducts();
     await pushPendingCustomers();
     await pushPendingSuppliers();
