@@ -546,7 +546,10 @@ class _ProductListPageState extends State<ProductListPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       'Rs ${product.price.toStringAsFixed(0)}',
@@ -556,7 +559,6 @@ class _ProductListPageState extends State<ProductListPage> {
                         color: AppTheme.primaryColor,
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
@@ -573,7 +575,6 @@ class _ProductListPageState extends State<ProductListPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
@@ -594,8 +595,7 @@ class _ProductListPageState extends State<ProductListPage> {
                         ),
                       ),
                     ),
-                    if (product.stock > 0 && product.stock <= 5) ...[
-                      const SizedBox(width: 8),
+                    if (product.stock > 0 && product.stock <= 5)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
@@ -612,7 +612,43 @@ class _ProductListPageState extends State<ProductListPage> {
                           ),
                         ),
                       ),
-                    ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: product.pendingSync
+                            ? Colors.orange.withValues(alpha: 0.1)
+                            : Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            product.pendingSync
+                                ? Icons.cloud_upload_outlined
+                                : Icons.cloud_done_outlined,
+                            size: 11,
+                            color: product.pendingSync
+                                ? Colors.orange.shade700
+                                : Colors.green.shade700,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            product.pendingSync
+                                ? 'Not Synced'
+                                : 'Synced',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: product.pendingSync
+                                  ? Colors.orange.shade700
+                                  : Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -621,13 +657,16 @@ class _ProductListPageState extends State<ProductListPage> {
                     const Icon(Icons.qr_code_2_rounded,
                         size: 12, color: Color(0xFF94A3B8)),
                     const SizedBox(width: 4),
-                    Text(
-                      product.barcode,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        product.barcode,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
