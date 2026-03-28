@@ -298,6 +298,60 @@ class _CustomerProductSearchPageState
           ),
         ],
       ),
+      bottomNavigationBar: _cart.isNotEmpty
+          ? Builder(
+              builder: (context) {
+                final itemCount = _cart.length;
+                double total = 0;
+                for (final entry in _cart.entries) {
+                  final product = HiveDatabase.productBox.get(entry.key);
+                  if (product != null) {
+                    total += product.price * entry.value;
+                  }
+                }
+                return Container(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, -5),
+                      )
+                    ],
+                  ),
+                  child: SizedBox(
+                    height: 46,
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.check_rounded, size: 18),
+                      label: Text(
+                        'Done   •   $itemCount ${itemCount == 1 ? 'item' : 'items'}   •   ₹${total.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 6,
+                        shadowColor:
+                            AppTheme.primaryColor.withValues(alpha: 0.35),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            )
+          : null,
     );
   }
 

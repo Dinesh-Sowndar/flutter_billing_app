@@ -10,16 +10,20 @@ class BillingRepository {
 
   String? get _userId => FirebaseAuth.instance.currentUser?.uid;
 
-  /// Saves to Hive first (offline-first), then pushes to Firestore if online.
+  /// Saves to Hive first (offline-first), then pushes to Firestore in the
+  /// background so the UI is never blocked by a network call.
   Future<void> saveTransaction(TransactionModel transaction) async {
     final uid = _userId ?? '';
+    // Always save with pendingSync: true first for instant local persistence.
     final model = transaction.copyWith(
       userId: uid,
-      pendingSync: !syncService.isOnline,
+      pendingSync: true,
     );
     await HiveDatabase.transactionBox.put(model.id, model);
+
+    // Fire-and-forget: push to Firestore in the background.
     if (syncService.isOnline && uid.isNotEmpty) {
-      await syncService.pushTransaction(model);
+      syncService.pushTransaction(model); // no await — non-blocking
     }
   }
 

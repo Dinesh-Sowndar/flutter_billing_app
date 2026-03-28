@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 
@@ -257,6 +258,51 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: BlocBuilder<BillingBloc, BillingState>(
+        builder: (context, state) {
+          if (state.cartItems.isEmpty) return const SizedBox.shrink();
+
+          return Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                )
+              ],
+            ),
+            child: SizedBox(
+              height: 46,
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => context.push('/checkout'),
+                icon: const Icon(Icons.payments_rounded, size: 18),
+                label: Text(
+                  'Review Order   •   ${state.cartItems.length} ${state.cartItems.length == 1 ? 'item' : 'items'}   •   ₹${state.totalAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 6,
+                  shadowColor: AppTheme.primaryColor.withValues(alpha: 0.35),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

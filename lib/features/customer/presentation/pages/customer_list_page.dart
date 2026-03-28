@@ -340,15 +340,27 @@ class _CustomerListPageState extends State<CustomerListPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            customer.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: Color(0xFF0F172A),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  customer.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (customer.pendingSync) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.cloud_upload_outlined,
+                                    size: 16, color: Colors.orange),
+                              ]
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Row(
@@ -365,44 +377,6 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: customer.pendingSync
-                                  ? Colors.orange.withValues(alpha: 0.1)
-                                  : Colors.green.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  customer.pendingSync
-                                      ? Icons.cloud_upload_outlined
-                                      : Icons.cloud_done_outlined,
-                                  size: 13,
-                                  color: customer.pendingSync
-                                      ? Colors.orange.shade700
-                                      : Colors.green.shade700,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  customer.pendingSync
-                                      ? 'Not Synced'
-                                      : 'Synced',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: customer.pendingSync
-                                        ? Colors.orange.shade700
-                                        : Colors.green.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
                         ],
                       ),
