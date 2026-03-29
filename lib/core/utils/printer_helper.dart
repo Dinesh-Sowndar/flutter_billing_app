@@ -109,8 +109,11 @@ class PrinterHelper {
     required String address2,
     required String phone,
     required List<Map<String, dynamic>> items, // Name, Qty, Price, Total
-    required double total,
+    required double total,      // subtotal (cart items only)
+    required double prevDue,    // previous outstanding balance
+    required double amountPaid, // amount the customer paid now
     required String footer,
+    String customerName = '',
   }) async {
     if (!_isConnected) return;
 
@@ -175,13 +178,85 @@ class PrinterHelper {
     bytes += _textToBytes('--------------------------------');
     bytes += EscPos.lineFeed;
 
-    // Total (Align Right)
-    bytes += EscPos.alignRight;
-    bytes += EscPos.boldOn;
-    bytes += _textToBytes('TOTAL: $total');
-    bytes += EscPos.lineFeed;
-    bytes += EscPos.boldOff;
-    bytes += EscPos.lineFeed;
+    // Show full breakdown only when there is prev due OR remaining balance.
+    // If customer paid in full with no prev due, just print "TOTAL" (cleaner receipt).
+    final _balance = ((total + prevDue) - amountPaid).clamp(0.0, total + prevDue);
+    final bool isCustomerBill = prevDue > 0 || _balance > 0;
+
+    if (isCustomerBill) {
+      // ── Full breakdown for customer bills ────────────────────────────
+      final grandTotal = total + prevDue;
+      final balance = (grandTotal - amountPaid).clamp(0.0, grandTotal);
+      final hasPrevDue = prevDue > 0;
+
+      bytes += EscPos.alignLeft;
+
+      // Customer name
+      if (customerName.isNotEmpty) {
+        bytes += EscPos.boldOn;
+        bytes += _textToBytes('Customer: $customerName');
+        bytes += EscPos.boldOff;
+        bytes += EscPos.lineFeed;
+      }
+
+      // Sub Total
+      String subTotalLine = 'Sub Total:'.padRight(20) +
+          'Rs ${total.toStringAsFixed(2)}'.padLeft(12);
+      bytes += _textToBytes(subTotalLine);
+      bytes += EscPos.lineFeed;
+
+      // Previous Due (only if > 0)
+      if (hasPrevDue) {
+        String prevDueLine = 'Prev. Due:'.padRight(20) +
+            'Rs ${prevDue.toStringAsFixed(2)}'.padLeft(12);
+        bytes += _textToBytes(prevDueLine);
+        bytes += EscPos.lineFeed;
+        bytes += _textToBytes('--------------------------------');
+        bytes += EscPos.lineFeed;
+      }
+
+      // Grand Total (bold, right-aligned)
+      bytes += EscPos.alignRight;
+      bytes += EscPos.boldOn;
+      String grandTotalLabel = hasPrevDue ? 'GRAND TOTAL:' : 'TOTAL:';
+      bytes += _textToBytes('$grandTotalLabel Rs ${grandTotal.toStringAsFixed(2)}');
+      bytes += EscPos.boldOff;
+      bytes += EscPos.lineFeed;
+
+      // Amount Received
+      bytes += EscPos.alignLeft;
+      bytes += EscPos.textNormal;
+      String receivedLine = 'Amt Received:'.padRight(20) +
+          'Rs ${amountPaid.toStringAsFixed(2)}'.padLeft(12);
+      bytes += _textToBytes(receivedLine);
+      bytes += EscPos.lineFeed;
+
+      // Balance Due
+      if (balance > 0) {
+        bytes += EscPos.boldOn;
+        String balanceLine = 'Balance Due:'.padRight(20) +
+            'Rs ${balance.toStringAsFixed(2)}'.padLeft(12);
+        bytes += _textToBytes(balanceLine);
+        bytes += EscPos.boldOff;
+        bytes += EscPos.lineFeed;
+      } else {
+        bytes += _textToBytes('Balance Due:'.padRight(20) + 'Rs 0.00'.padLeft(12));
+        bytes += EscPos.lineFeed;
+      }
+
+      bytes += EscPos.lineFeed;
+      // ─────────────────────────────────────────────────────────────────
+    } else {
+      // ── Simple total for walk-in / guest bills ───────────────────────
+      bytes += EscPos.alignRight;
+      bytes += EscPos.boldOn;
+      bytes += _textToBytes('TOTAL: Rs ${total.toStringAsFixed(2)}');
+      bytes += EscPos.boldOff;
+      bytes += EscPos.lineFeed;
+      bytes += EscPos.lineFeed;
+      // ─────────────────────────────────────────────────────────────────
+    }
+
 
     // Footer (Center)
     bytes += EscPos.alignCenter;

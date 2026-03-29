@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../billing/data/models/transaction_model.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
@@ -103,17 +102,21 @@ class _CustomerListPageState extends State<CustomerListPage> {
                 }
 
                 return ValueListenableBuilder(
-                  valueListenable: HiveDatabase.transactionBox.listenable(),
-                  builder: (context, Box<TransactionModel> txBox, _) {
-                    final transactions = txBox.values.toList();
-                    final visibleCustomers =
-                        _applyDueFilter(_filtered(state.customers), transactions);
+                  valueListenable: HiveDatabase.customerBox.listenable(),
+                  builder: (context, customerBox, _) {
+                    final freshCustomers = state.customers.map((c) {
+                      final model = customerBox.get(c.id);
+                      return model?.toEntity() ?? c;
+                    }).toList();
+
+                    final visibleCustomers = _applyDueFilter(
+                        _filtered(freshCustomers));
 
                     if (visibleCustomers.isEmpty) {
                       return _buildEmptyState();
                     }
 
-                    return _buildCustomerList(visibleCustomers, transactions);
+                    return _buildCustomerList(visibleCustomers);
                   },
                 );
               },
@@ -224,15 +227,9 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
-  List<CustomerEntity> _applyDueFilter(
-      List<CustomerEntity> customers, List<TransactionModel> transactions) {
+  List<CustomerEntity> _applyDueFilter(List<CustomerEntity> customers) {
     if (!widget.dueOnly) return customers;
-    return customers.where((customer) {
-      final customerTransactions =
-          transactions.where((t) => t.customerId == customer.id).toList()
-            ..sort((a, b) => a.date.compareTo(b.date));
-      return _calculateCurrentDue(customerTransactions) > 0;
-    }).toList();
+    return customers.where((c) => c.balance > 0).toList();
   }
 
   Widget _buildErrorState(String message) {
@@ -258,8 +255,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
-  Widget _buildCustomerList(
-      List<CustomerEntity> customers, List<TransactionModel> transactions) {
+  Widget _buildCustomerList(List<CustomerEntity> customers) {
     final currencyFormat =
         NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
 
@@ -268,11 +264,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
       itemCount: customers.length,
       itemBuilder: (context, index) {
         final customer = customers[index];
-        final customerTransactions = transactions
-            .where((t) => t.customerId == customer.id)
-            .toList()
-          ..sort((a, b) => a.date.compareTo(b.date));
-        final currentDue = _calculateCurrentDue(customerTransactions);
+        final currentDue = customer.balance;
         final bool hasDue = currentDue > 0;
 
         return Padding(
@@ -522,19 +514,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
-  double _calculateCurrentDue(List<TransactionModel> transactions) {
-    double totalDue = 0.0;
-    for (final tx in transactions) {
-      final isPaymentOnly = tx.items.isEmpty && tx.amountPaid > 0;
-      if (isPaymentOnly) {
-        totalDue -= tx.amountPaid;
-      } else {
-        final paidAtSale = tx.amountPaid.clamp(0.0, tx.totalAmount).toDouble();
-        totalDue += (tx.totalAmount - paidAtSale);
-      }
-    }
-    return totalDue;
-  }
+
 
   void _confirmDelete(BuildContext context, CustomerEntity customer) {
     showDialog(

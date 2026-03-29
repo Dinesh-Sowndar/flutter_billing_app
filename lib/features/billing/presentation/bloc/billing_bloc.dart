@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import 'package:billing_app/features/billing/domain/entities/cart_item.dart';
 import 'package:billing_app/features/product/domain/entities/product.dart';
 import 'package:billing_app/features/product/domain/usecases/product_usecases.dart';
@@ -105,6 +106,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     emit(state.copyWith(
       customerId: event.customerId,
       customerName: event.customerName,
+      customerDue: event.customerDue,
     ));
   }
 
@@ -112,8 +114,10 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       FinishTransactionEvent event, Emitter<BillingState> emit) async {
     emit(state.copyWith(clearError: true));
     try {
+      final grandTotal =
+          (state.totalAmount + state.customerDue).toDouble();
       final normalizedAmountPaid =
-          event.amountPaid.clamp(0.0, state.totalAmount).toDouble();
+          event.amountPaid.clamp(0.0, grandTotal).toDouble();
       final transaction = TransactionModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         date: DateTime.now(),
@@ -148,17 +152,15 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
 
       // Update customer balance if applicable
       if (state.customerId.isNotEmpty) {
-        final dueAmount = (state.totalAmount - normalizedAmountPaid)
-            .clamp(0.0, state.totalAmount)
-            .toDouble();
-        if (dueAmount > 0) {
-          final customer =
-              await customerRepository.getCustomerById(state.customerId);
-          if (customer != null) {
-            final updatedCustomer =
-                customer.copyWith(balance: customer.balance + dueAmount);
-            await customerRepository.updateCustomer(updatedCustomer);
-          }
+        final newBalance =
+            (grandTotal - normalizedAmountPaid).clamp(0.0, grandTotal).toDouble();
+        // Direct Hive update — no entity roundtrip, no userId lookup
+        final existingModel = HiveDatabase.customerBox.get(state.customerId);
+        if (existingModel != null) {
+          await HiveDatabase.customerBox.put(
+            state.customerId,
+            existingModel.copyWith(balance: newBalance),
+          );
         }
       }
 
@@ -173,31 +175,114 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       PrintReceiptEvent event, Emitter<BillingState> emit) async {
     final printerHelper = PrinterHelper();
 
+    // ── Ensure printer is connected (with retry) ─────────────────────────
     if (!printerHelper.isConnected) {
-      final savedMac = HiveDatabase.settingsBox.get('printer_mac');
-      if (savedMac != null) {
-        final connected = await printerHelper.connect(savedMac);
-        if (!connected) {
+      // Check if BT link is actually still alive (singleton flag can be stale)
+      final btStatus = await PrintBluetoothThermal.connectionStatus;
+      if (!btStatus) {
+        final savedMac = HiveDatabase.settingsBox.get('printer_mac');
+        if (savedMac == null) {
           emit(state.copyWith(
-              error: 'Failed to auto-connect to printer!', clearError: false));
+              error: 'No printer saved. Go to Settings → Printer to pair one.',
+              clearError: false));
           emit(state.copyWith(clearError: true));
           return;
         }
-      } else {
-        emit(state.copyWith(
-            error: 'Printer not connected & no saved printer found!',
-            clearError: false));
-        emit(state.copyWith(clearError: true));
-        return;
+
+        // Retry up to 3 times with 800 ms gap
+        bool connected = false;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+          connected = await printerHelper.connect(savedMac);
+          if (connected) break;
+          if (attempt < 3) {
+            await Future.delayed(const Duration(milliseconds: 800));
+          }
+        }
+
+        if (!connected) {
+          emit(state.copyWith(
+              error:
+                  'Could not connect to printer after 3 attempts. Make sure it is on and paired.',
+              clearError: false));
+          emit(state.copyWith(clearError: true));
+          return;
+        }
       }
     }
+    // ─────────────────────────────────────────────────────────────────────
+
 
     emit(state.copyWith(
         isPrinting: true, printSuccess: false, clearError: true));
 
     try {
+      final grandTotal =
+          (state.totalAmount + state.customerDue).toDouble();
       final normalizedAmountPaid =
-          event.amountPaid.clamp(0.0, state.totalAmount).toDouble();
+          event.amountPaid.clamp(0.0, grandTotal).toDouble();
+
+      // ── 1. Save transaction ─────────────────────────────────────────
+      final transaction = TransactionModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        date: DateTime.now(),
+        totalAmount: state.totalAmount,
+        customerId: state.customerId,
+        customerName: state.customerName,
+        amountPaid: normalizedAmountPaid,
+        paymentMethod: event.paymentMethod,
+        items: state.cartItems
+            .map((item) => TransactionItemModel(
+                  productId: item.product.id,
+                  productName: item.product.name,
+                  price: item.product.price,
+                  quantity: item.quantity,
+                  total: item.total,
+                ))
+            .toList(),
+      );
+      await billingRepository.saveTransaction(transaction);
+
+      // ── 2. Decrease stock ───────────────────────────────────────────
+      for (final item in state.cartItems) {
+        final stockDelta = item.product.unit == QuantityUnit.piece ||
+                item.product.unit == QuantityUnit.box
+            ? item.quantity.round()
+            : item.quantity.floor();
+        final newStock = item.product.stock - stockDelta;
+        await updateProductUseCase(
+          item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
+        );
+      }
+
+      // ── 3. Update customer balance ──────────────────────────────────
+      if (state.customerId.isNotEmpty) {
+        final newBalance =
+            (grandTotal - normalizedAmountPaid).clamp(0.0, grandTotal).toDouble();
+        // Direct Hive update — no entity roundtrip, no userId lookup
+        final existingModel = HiveDatabase.customerBox.get(state.customerId);
+        if (existingModel != null) {
+          await HiveDatabase.customerBox.put(
+            state.customerId,
+            existingModel.copyWith(balance: newBalance),
+          );
+        }
+      }
+
+      // ── 4. Print receipt ────────────────────────────────────────────
+      //  Verify BT link is still alive right before sending bytes
+      final btAlive = await PrintBluetoothThermal.connectionStatus;
+      if (!btAlive) {
+        // Transaction is already saved — just surface the print failure
+        emit(state.copyWith(
+            isPrinting: false,
+            printSuccess: true, // transaction done
+            error: 'Transaction saved but printer disconnected. '
+                'Reconnect in Settings and reprint if needed.',
+            clearError: false));
+        emit(state.copyWith(clearError: true));
+        return;
+      }
+
       final items = state.cartItems
           .map((item) => {
                 'name': item.product.name,
@@ -214,55 +299,11 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           phone: event.phone,
           items: items,
           total: state.totalAmount,
+          prevDue: state.customerDue,
+          amountPaid: normalizedAmountPaid,
+          customerName: state.customerName,
           footer: event.footer);
-
-      final transaction = TransactionModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        date: DateTime.now(),
-        totalAmount: state.totalAmount,
-        customerId: state.customerId,
-        customerName: state.customerName,
-        amountPaid: normalizedAmountPaid,
-        paymentMethod: event.paymentMethod,
-        items: state.cartItems
-            .map((item) => TransactionItemModel(
-                  productId: item.product.id,
-                  productName: item.product.name,
-                  price: item.product.price,
-                  quantity: item.quantity,
-                  total: item.total,
-                ))
-            .toList(),
-      );
-      await billingRepository.saveTransaction(transaction);
-
-      // Decrease stock for each item sold
-      for (final item in state.cartItems) {
-        final stockDelta = item.product.unit == QuantityUnit.piece ||
-                item.product.unit == QuantityUnit.box
-            ? item.quantity.round()
-            : item.quantity.floor();
-        final newStock = item.product.stock - stockDelta;
-        await updateProductUseCase(
-          item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
-        );
-      }
-
-      // Update customer balance if applicable
-      if (state.customerId.isNotEmpty) {
-        final dueAmount = (state.totalAmount - normalizedAmountPaid)
-            .clamp(0.0, state.totalAmount)
-            .toDouble();
-        if (dueAmount > 0) {
-          final customer =
-              await customerRepository.getCustomerById(state.customerId);
-          if (customer != null) {
-            final updatedCustomer =
-                customer.copyWith(balance: customer.balance + dueAmount);
-            await customerRepository.updateCustomer(updatedCustomer);
-          }
-        }
-      }
+      // ───────────────────────────────────────────────────────────────
 
       emit(state.copyWith(isPrinting: false, printSuccess: true));
     } catch (e) {

@@ -7,6 +7,7 @@ class BillingState extends Equatable {
   final bool printSuccess;
   final String customerId;
   final String customerName;
+  final double customerDue; // Previous outstanding balance
 
   const BillingState({
     this.cartItems = const [],
@@ -15,6 +16,7 @@ class BillingState extends Equatable {
     this.printSuccess = false,
     this.customerId = '',
     this.customerName = '',
+    this.customerDue = 0.0,
   });
 
   double get totalAmount => cartItems.fold(0, (sum, item) => sum + item.total);
@@ -27,6 +29,7 @@ class BillingState extends Equatable {
     bool? printSuccess,
     String? customerId,
     String? customerName,
+    double? customerDue,
   }) {
     return BillingState(
       cartItems: cartItems ?? this.cartItems,
@@ -35,10 +38,11 @@ class BillingState extends Equatable {
       printSuccess: printSuccess ?? this.printSuccess,
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
+      customerDue: customerDue ?? this.customerDue,
     );
   }
 
   @override
   List<Object?> get props =>
-      [cartItems, error, isPrinting, printSuccess, customerId, customerName];
+      [cartItems, error, isPrinting, printSuccess, customerId, customerName, customerDue];
 }

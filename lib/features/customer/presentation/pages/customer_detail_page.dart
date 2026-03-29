@@ -59,7 +59,7 @@ class CustomerDetailPage extends StatelessWidget {
                 .where((t) => t.customerId == currentCustomer.id)
                 .toList()
               ..sort((a, b) => b.date.compareTo(a.date));
-            final ledgerDue = _calculateCurrentDue(transactions);
+            final ledgerDue = currentCustomer.balance;
 
             final totalSpent = transactions.fold(0.0,
                 (sum, t) => sum + (t.items.isNotEmpty ? t.totalAmount : 0));
@@ -383,23 +383,12 @@ class CustomerDetailPage extends StatelessWidget {
     );
   }
 
-  double _calculateCurrentDue(List<TransactionModel> transactions) {
-    double totalBilled = 0;
-    double totalPaid = 0;
-
-    for (var tx in transactions) {
-      if (tx.items.isNotEmpty) {
-        totalBilled += tx.totalAmount;
-        totalPaid += tx.amountPaid;
-      } else {
-        totalPaid += tx.amountPaid;
-      }
-    }
-    return totalBilled - totalPaid;
-  }
 
   Widget _buildTransactionTile(BuildContext context, TransactionModel tx) {
-    final dueForTx = tx.totalAmount - tx.amountPaid;
+    // dueForTx: how much of THIS bill's subtotal was unpaid
+    final billDue = (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount));
+    final isPaid = billDue <= 0;
+    final isPartial = billDue > 0 && tx.amountPaid > 0;
     final currencyFormat =
         NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
 
@@ -430,7 +419,7 @@ class CustomerDetailPage extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
-            '${tx.items.length} items',
+            '${tx.items.length} items  •  Bill: ${currencyFormat.format(tx.totalAmount)}',
             style: const TextStyle(
                 color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
           ),
@@ -440,28 +429,32 @@ class CustomerDetailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              currencyFormat.format(tx.totalAmount),
+              'Paid ${currencyFormat.format(tx.amountPaid)}',
               style: const TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  color: Color(0xFF0F172A)),
+                  fontSize: 14,
+                  color: Color(0xFF10B981)),
             ),
-            if (dueForTx > 0)
+            if (!isPaid && !isPartial)
+              const Text('Unpaid',
+                  style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold))
+            else if (isPartial)
               Text(
-                'Due ${currencyFormat.format(dueForTx)}',
+                'Due ${currencyFormat.format(billDue)}',
                 style: const TextStyle(
-                    color: Colors.red,
+                    color: Colors.orange,
                     fontSize: 12,
                     fontWeight: FontWeight.bold),
               )
-            else if (tx.amountPaid > 0)
-              const Text(
-                'Paid',
-                style: TextStyle(
-                    color: Color(0xFF10B981),
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold),
-              ),
+            else
+              const Text('Settled',
+                  style: TextStyle(
+                      color: Color(0xFF10B981),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -520,7 +513,6 @@ class CustomerDetailPage extends StatelessWidget {
     final currencyFormat =
         NumberFormat.currency(symbol: 'Rs ', decimalDigits: 2);
     final isPayment = tx.items.isEmpty && tx.amountPaid > 0;
-    final dueForTx = tx.totalAmount - tx.amountPaid;
 
     showModalBottomSheet(
       context: context,
@@ -710,20 +702,33 @@ class CustomerDetailPage extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              _summaryRow('Total Amount',
+                              _summaryRow('Bill Amount',
                                   currencyFormat.format(tx.totalAmount),
                                   bold: true),
                               const SizedBox(height: 8),
+                              // If amountPaid > totalAmount, the extra covered prev due
+                              if (tx.amountPaid > tx.totalAmount) ...[
+                                _summaryRow(
+                                  'Prev Due Covered',
+                                  '+ ${currencyFormat.format(tx.amountPaid - tx.totalAmount)}',
+                                  valueColor: const Color(0xFFF59E0B),
+                                ),
+                                const SizedBox(height: 4),
+                                Divider(height: 1, color: Colors.grey.shade200),
+                                const SizedBox(height: 8),
+                              ],
                               _summaryRow('Amount Paid',
                                   currencyFormat.format(tx.amountPaid),
-                                  valueColor: const Color(0xFF10B981)),
-                              if (dueForTx > 0) ...
-                                [
-                                  const SizedBox(height: 8),
-                                  _summaryRow('Due Amount',
-                                      currencyFormat.format(dueForTx),
-                                      valueColor: Colors.red),
-                                ],
+                                  valueColor: const Color(0xFF10B981),
+                                  bold: tx.amountPaid >= tx.totalAmount),
+                              if (tx.totalAmount - tx.amountPaid > 0) ...[
+                                const SizedBox(height: 8),
+                                _summaryRow(
+                                    'Due Amount',
+                                    currencyFormat.format(
+                                        tx.totalAmount - tx.amountPaid),
+                                    valueColor: Colors.red),
+                              ],
                               const SizedBox(height: 12),
                               Divider(height: 1, color: Colors.grey.shade200),
                               const SizedBox(height: 12),
@@ -890,6 +895,20 @@ class CustomerDetailPage extends StatelessWidget {
 
                         await sl<BillingRepository>()
                             .saveTransaction(paymentTx);
+
+                        // ── Deduct from customer balance ──
+                        final existingModel =
+                            HiveDatabase.customerBox.get(customer.id);
+                        if (existingModel != null) {
+                          final newBalance =
+                              (existingModel.balance - amount)
+                                  .clamp(0.0, double.infinity);
+                          await HiveDatabase.customerBox.put(
+                            customer.id,
+                            existingModel.copyWith(balance: newBalance),
+                          );
+                        }
+
                         if (ctx.mounted) {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(ctx).showSnackBar(

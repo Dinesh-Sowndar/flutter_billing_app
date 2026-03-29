@@ -214,9 +214,16 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
     final billingBloc = context.read<BillingBloc>();
     billingBloc.add(ClearCartEvent());
+
+    // Always read balance from Hive directly so it's never stale
+    final freshModel = HiveDatabase.customerBox.get(widget.customer.id);
+    final freshBalance =
+        freshModel?.balance ?? widget.customer.balance;
+
     billingBloc.add(SetCustomerEvent(
       customerId: widget.customer.id,
       customerName: widget.customer.name,
+      customerDue: freshBalance,
     ));
     for (final item in _cart) {
       billingBloc.add(AddProductToCartEvent(item.product));
@@ -823,7 +830,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     );
   }
 
-  // â”€â”€â”€ Floating Checkout Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Floating Checkout Bar ──────────────────────────────────────────────────
   Widget _buildFloatingCheckoutBar() {
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -850,14 +857,15 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                 Text(
                   'Total Amount',
                   style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500),
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Rs ${_total.toStringAsFixed(2)}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.w700,

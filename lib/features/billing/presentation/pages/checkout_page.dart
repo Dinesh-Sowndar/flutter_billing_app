@@ -19,14 +19,17 @@ class CheckoutPage extends StatefulWidget {
 
 class _CheckoutPageState extends State<CheckoutPage> {
   final TextEditingController _amountPaidController = TextEditingController();
+  final FocusNode _amountFocusNode = FocusNode();
   String _paymentMethod = 'cash';
   bool _isInitialized = false;
   double _qrAmount = 0.0;
   bool _isFinishing = false;
+  bool _isPrinting = false;
 
   @override
   void dispose() {
     _amountPaidController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -74,6 +77,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           title: const Text(
             'Checkout',
@@ -126,10 +130,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
             }
           },
           builder: (context, billingState) {
-            if (!_isInitialized && billingState.totalAmount > 0) {
-              _amountPaidController.text =
-                  billingState.totalAmount.toStringAsFixed(2);
-              _qrAmount = billingState.totalAmount;
+            final grandTotal = billingState.totalAmount +
+                (billingState.customerId.isNotEmpty
+                    ? billingState.customerDue
+                    : 0.0);
+            if (!_isInitialized && grandTotal > 0) {
+              _amountPaidController.text = grandTotal.toStringAsFixed(2);
+              _qrAmount = grandTotal;
               _isInitialized = true;
             }
 
@@ -146,7 +153,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 return Stack(
                   children: [
                     SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 180),
+                      padding: EdgeInsets.fromLTRB(
+                          20,
+                          10,
+                          20,
+                          180 +
+                              MediaQuery.of(context).viewInsets.bottom +
+                              MediaQuery.of(context).padding.bottom),
                       physics: const BouncingScrollPhysics(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +170,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           _buildReceiptCard(billingState),
                           if (billingState.customerId.isNotEmpty) ...[
                             const SizedBox(height: 24),
-                            _buildPaymentOptionsCard(billingState.totalAmount,
+                            _buildPaymentOptionsCard(grandTotal,
                                 billingState.customerName),
                           ] else ...[
                             const SizedBox(height: 24),
@@ -173,7 +186,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: _buildBottomActions(billingState,
-                          shopState is ShopLoaded ? shopState.shop : null),
+                          shopState is ShopLoaded ? shopState.shop : null,
+                          grandTotal),
                     ),
                   ],
                 );
@@ -342,31 +356,115 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'TOTAL AMOUNT',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF64748B),
-                    fontSize: 13,
-                    letterSpacing: 0.5,
+          // ── Amount summary ───────────────────────────────────────────
+          Builder(builder: (context) {
+            final subTotal = billingState.totalAmount;
+            final prevDue = billingState.customerDue;
+            final hasDue =
+                billingState.customerId.isNotEmpty && prevDue > 0;
+            final grandTotal = subTotal + (hasDue ? prevDue : 0);
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
+                children: [
+                  // Sub Total row — only shown when there is a previous due
+                  if (hasDue) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'SUB TOTAL',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF94A3B8),
+                          fontSize: 12,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        'Rs ${subTotal.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                Text(
-                  'Rs ${billingState.totalAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primaryColor,
-                    fontSize: 24,
+                  ],
+                  // Previous due row — only for customer bills with existing due
+                  if (hasDue) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.warning_amber_rounded,
+                                  size: 16, color: Color(0xFFD97706)),
+                              SizedBox(width: 6),
+                              Text(
+                                'PREV. DUE',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFD97706),
+                                  fontSize: 12,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '+ Rs ${prevDue.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFFD97706),
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  ],
+                  const SizedBox(height: 10),
+                  // Grand Total / Total Amount
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        hasDue ? 'GRAND TOTAL' : 'TOTAL AMOUNT',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF64748B),
+                          fontSize: 13,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        'Rs ${grandTotal.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.primaryColor,
+                          fontSize: 24,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -413,8 +511,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
               const SizedBox(height: 8),
               TextField(
                 controller: _amountPaidController,
+                focusNode: _amountFocusNode,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
+                autofillHints: const [],
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 20,
@@ -663,7 +763,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _buildBottomActions(BillingState billingState, dynamic shop) {
+  Widget _buildBottomActions(
+      BillingState billingState, dynamic shop, double grandTotal) {
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
@@ -691,7 +792,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     : () {
                         setState(() => _isFinishing = true);
                         final paid = billingState.customerId.isNotEmpty
-                            ? _parseWillingToPay(billingState.totalAmount)
+                            ? _parseWillingToPay(grandTotal)
                             : billingState.totalAmount;
                         context.read<BillingBloc>().add(
                               FinishTransactionEvent(
@@ -738,28 +839,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  if (shop != null) {
-                    final paid = billingState.customerId.isNotEmpty
-                        ? _parseWillingToPay(billingState.totalAmount)
-                        : billingState.totalAmount;
-                    context.read<BillingBloc>().add(PrintReceiptEvent(
-                          shopName: shop.name,
-                          address1: shop.addressLine1,
-                          address2: shop.addressLine2,
-                          phone: shop.phoneNumber,
-                          footer: shop.footerText,
-                          amountPaid: paid,
-                          paymentMethod: _paymentMethod,
-                        ));
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Shop details not loaded'),
-                          backgroundColor: Colors.red),
-                    );
-                  }
-                },
+                onPressed: (_isPrinting || billingState.isPrinting)
+                    ? null
+                    : () {
+                        if (shop != null) {
+                          setState(() => _isPrinting = true);
+                          final paid = billingState.customerId.isNotEmpty
+                              ? _parseWillingToPay(grandTotal)
+                              : billingState.totalAmount;
+                          context.read<BillingBloc>().add(PrintReceiptEvent(
+                                shopName: shop.name,
+                                address1: shop.addressLine1,
+                                address2: shop.addressLine2,
+                                phone: shop.phoneNumber,
+                                footer: shop.footerText,
+                                amountPaid: paid,
+                                paymentMethod: _paymentMethod,
+                              ));
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Shop details not loaded'),
+                                backgroundColor: Colors.red),
+                          );
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
