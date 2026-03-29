@@ -721,16 +721,9 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
     List<CustomerModel> customers,
     List<TransactionModel> transactions,
   ) {
-    var count = 0;
-    for (final customer in customers) {
-      final customerTransactions =
-          transactions.where((t) => t.customerId == customer.id).toList()
-            ..sort((a, b) => a.date.compareTo(b.date));
-      if (_calculateCurrentDue(customerTransactions) > 0) {
-        count++;
-      }
-    }
-    return count;
+    // Use customer.balance (Hive source of truth) instead of computing from
+    // transactions, which can diverge when payments cover prior dues.
+    return customers.where((c) => c.balance > 0).length;
   }
 
   double _totalDueAmount(
@@ -739,26 +732,8 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
   ) {
     var totalDue = 0.0;
     for (final customer in customers) {
-      final customerTransactions =
-          transactions.where((t) => t.customerId == customer.id).toList()
-            ..sort((a, b) => a.date.compareTo(b.date));
-      final due = _calculateCurrentDue(customerTransactions);
-      if (due > 0) {
-        totalDue += due;
-      }
-    }
-    return totalDue;
-  }
-
-  double _calculateCurrentDue(List<TransactionModel> transactions) {
-    var totalDue = 0.0;
-    for (final tx in transactions) {
-      final isPaymentOnly = tx.items.isEmpty && tx.amountPaid > 0;
-      if (isPaymentOnly) {
-        totalDue -= tx.amountPaid;
-      } else {
-        final paidAtSale = tx.amountPaid.clamp(0.0, tx.totalAmount).toDouble();
-        totalDue += (tx.totalAmount - paidAtSale);
+      if (customer.balance > 0) {
+        totalDue += customer.balance;
       }
     }
     return totalDue;
