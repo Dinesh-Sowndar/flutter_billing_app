@@ -1,21 +1,2 @@
-﻿Analyzing checkout_page.dart...                                 
-
-   info - Use 'const' with the constructor to improve performance - lib\features\billing\presentation\pages\checkout_page.dart:491:27 - prefer_const_constructors
-
-flutter : 1 issue found. 
-(ran in 1.2s)
-At line:1 char:1
-+ flutter analyze lib/featu
-res/billing/presentation/pa
-ges/checkout_page ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~
-    + CategoryInfo         
-     : NotSpecified: (1 i  
-  ssue found. (ran in 1.   
- 2s):String) [], Remote    
-Exception
-    + FullyQualifiedErrorI 
-   d : NativeCommandError
- 
+﻿Analyzing 2 items...                                            
+No issues found! (ran in 2.1s)
