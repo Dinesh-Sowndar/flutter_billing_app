@@ -6,6 +6,9 @@ import 'package:pretty_qr_code/pretty_qr_code.dart';
 import '../../../customer/presentation/bloc/customer_bloc.dart';
 import '../../../customer/presentation/bloc/customer_event.dart';
 import '../../../product/domain/entities/product.dart';
+import '../../../settings/presentation/bloc/printer_bloc.dart';
+import '../../../settings/presentation/bloc/printer_event.dart';
+import '../../../settings/presentation/bloc/printer_state.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/billing_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -25,6 +28,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
   double _qrAmount = 0.0;
   bool _isFinishing = false;
   bool _isPrinting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Verify printer connection status when entering checkout
+    context.read<PrinterBloc>().add(CheckConnectionEvent());
+  }
 
   @override
   void dispose() {
@@ -107,6 +117,77 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
             ),
           ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: BlocBuilder<PrinterBloc, PrinterState>(
+                builder: (context, printerState) {
+                  final isConnected = printerState.isLiveConnected;
+                  final isBusy = printerState.isBusy;
+
+                  return Material(
+                    color: isConnected
+                        ? const Color(0xFFD1FAE5)
+                        : const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: isBusy
+                          ? null
+                          : isConnected
+                              ? null
+                              : () => context
+                                  .read<PrinterBloc>()
+                                  .add(RefreshPrinterEvent()),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isBusy)
+                              const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 1.5))
+                            else
+                              Icon(
+                                Icons.print_rounded,
+                                size: 16,
+                                color: isConnected
+                                    ? const Color(0xFF059669)
+                                    : const Color(0xFFDC2626),
+                              ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isBusy
+                                  ? 'Connecting…'
+                                  : isConnected
+                                      ? 'Printer On'
+                                      : 'Printer Off',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: isConnected
+                                    ? const Color(0xFF059669)
+                                    : const Color(0xFFDC2626),
+                              ),
+                            ),
+                            if (!isConnected && !isBusy) ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.refresh_rounded,
+                                  size: 14, color: Color(0xFFDC2626)),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
         body: BlocConsumer<BillingBloc, BillingState>(
           listener: (context, state) {
