@@ -13,6 +13,8 @@ class RefreshPrinterEvent extends PrinterEvent {}
 
 class ScanPrintersEvent extends PrinterEvent {}
 
+class CheckConnectionEvent extends PrinterEvent {}
+
 class ConnectPrinterEvent extends PrinterEvent {
   final String mac;
   final String name;

@@ -1,29 +1,105 @@
-﻿Analyzing customer_detail_page.dart...                          
+﻿Analyzing lib...                                                
 
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:70:24 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:72:26 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:157:36 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:170:40 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:246:19 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:249:28 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:251:30 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:253:32 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:287:33 - prefer_const_constructors
-   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:288:44 - prefer_const_constructors
+   info - The local variable '_balance' starts with an underscore - lib\core\utils\printer_helper.dart:225:11 - no_leading_underscores_for_local_identifiers
+   info - Use 'const' with the constructor to improve performance - lib\features\auth\presentation\pages\login_page.dart:108:25 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\auth\presentation\pages\login_page.dart:118:25 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\auth\presentation\pages\login_page.dart:227:29 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\auth\presentation\pages\login_page.dart:238:38 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\auth\presentation\pages\signup_page.dart:120:25 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\auth\presentation\pages\signup_page.dart:130:25 - prefer_const_constructors
+warning - The declaration '_isWeightedUnit' isn't referenced - lib\features\billing\presentation\bloc\billing_bloc.dart:38:8 - unused_element
+   info - Use 'const' with the constructor to improve performance - lib\features\billing\presentation\pages\checkout_page.dart:410:27 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\billing\presentation\pages\home_page.dart:369:16 - prefer_const_constructors
+   info - Don't use 'BuildContext's across async gaps - lib\features\billing\presentation\pages\home_page.dart:395:21 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\billing\presentation\pages\home_page.dart:405:21 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\billing\presentation\pages\home_page.dart:415:21 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\billing\presentation\pages\home_page.dart:425:21 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\billing\presentation\pages\home_page.dart:479:25 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\billing\presentation\pages\home_page.dart:1089:29 - use_build_context_synchronously
+   info - Statements in a while should be enclosed in a block - lib\features\billing\presentation\pages\product_search_page.dart:49:32 - curly_braces_in_flow_control_structures
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\add_customer_page.dart:73:16 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\add_customer_page.dart:75:18 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\add_customer_page.dart:135:21 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\add_customer_page.dart:137:30 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:72:24 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:74:26 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:159:36 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:172:40 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:248:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:251:28 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:253:30 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:255:32 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:289:33 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_detail_page.dart:290:44 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_list_page.dart:50:18 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_list_page.dart:206:20 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_list_page.dart:321:32 - prefer_const_constructors
+   info - Use 'const' for final variables initialized to a constant value - lib\features\customer\presentation\pages\customer_product_search_page.dart:92:5 - prefer_const_declarations
+   info - The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\features\customer\presentation\pages\customer_purchase_page.dart:5:8 - unnecessary_import
+   info - Don't use 'BuildContext's across async gaps - lib\features\customer\presentation\pages\customer_purchase_page.dart:215:25 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\customer\presentation\pages\customer_purchase_page.dart:235:11 - use_build_context_synchronously
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:399:16 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:401:18 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:457:26 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:542:22 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:565:26 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:622:21 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:624:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:888:22 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\features\customer\presentation\pages\customer_purchase_page.dart:889:27 - prefer_const_literals_to_create_immutables
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:890:19 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:892:27 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:1196:26 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\customer_purchase_page.dart:1271:30 - prefer_const_constructors
+   info - Use 'const' for final variables initialized to a constant value - lib\features\customer\presentation\pages\customer_review_page.dart:101:5 - prefer_const_declarations
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\edit_customer_page.dart:59:16 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\edit_customer_page.dart:61:18 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\edit_customer_page.dart:121:21 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\customer\presentation\pages\edit_customer_page.dart:123:30 - prefer_const_constructors
+   info - Statements in an if should be enclosed in a block - lib\features\customer\presentation\pages\edit_customer_page.dart:160:21 - curly_braces_in_flow_control_structures
+   info - Use 'const' with the constructor to improve performance - lib\features\onboarding\presentation\pages\onboarding_page.dart:98:21 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\onboarding\presentation\pages\onboarding_page.dart:100:30 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\onboarding\presentation\pages\onboarding_page.dart:166:36 - prefer_const_constructors
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\features\product\data\models\category_model.dart:19:3 - prefer_const_constructors_in_immutables
+   info - The member 'categoryId' overrides an inherited member but isn't annotated with '@override' - lib\features\product\data\models\product_model.dart:28:17 - annotate_overrides
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\product\presentation\pages\add_product_page.dart:294:25 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\product\presentation\pages\edit_product_page.dart:275:23 - deprecated_member_use
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\manage_categories_page.dart:175:41 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\manage_categories_page.dart:235:47 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:341:14 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:341:28 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:383:14 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:384:16 - prefer_const_constructors
+   info - Use 'const' literals as arguments to constructors of '@immutable' classes - lib\features\product\presentation\pages\product_list_page.dart:386:21 - prefer_const_literals_to_create_immutables
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:387:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:387:61 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:388:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:389:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:391:22 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:394:26 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:396:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:397:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:399:22 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\product\presentation\pages\product_list_page.dart:400:26 - prefer_const_constructors
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\settings\presentation\pages\settings_page.dart:68:7 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\supplier\presentation\pages\supplier_detail_page.dart:473:19 - use_build_context_synchronously
+warning - A value for optional parameter 'productId' isn't ever given - lib\features\supplier\presentation\pages\supplier_purchase_page.dart:25:10 - unused_element_parameter
+warning - A value for optional parameter 'productName' isn't ever given - lib\features\supplier\presentation\pages\supplier_purchase_page.dart:26:10 - unused_element_parameter
+warning - A value for optional parameter 'quantity' isn't ever given - lib\features\supplier\presentation\pages\supplier_purchase_page.dart:27:10 - unused_element_parameter
+warning - A value for optional parameter 'unit' isn't ever given - lib\features\supplier\presentation\pages\supplier_purchase_page.dart:28:10 - unused_element_parameter
+warning - A value for optional parameter 'price' isn't ever given - lib\features\supplier\presentation\pages\supplier_purchase_page.dart:29:10 - unused_element_parameter
 
-flutter : 10 issues found. 
-(ran in 1.2s)
+flutter : 88 issues found. 
+(ran in 3.8s)
 At line:1 char:1
-+ flutter analyze lib/featu
-res/customer/presentation/p
-ages/customer_det ...
++ flutter analyze lib/ 
+2>&1 | Out-File -FilePath 
+analysis_output.txt -E ...
 + ~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~
     + CategoryInfo         
-     : NotSpecified: (10   
+     : NotSpecified: (88   
   issues found. (ran in    
- 1.2s):String) [], Remo    
+ 3.8s):String) [], Remo    
 teException
     + FullyQualifiedErrorI 
    d : NativeCommandError

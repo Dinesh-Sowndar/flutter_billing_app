@@ -302,6 +302,8 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           prevDue: state.customerDue,
           amountPaid: normalizedAmountPaid,
           customerName: state.customerName,
+          paymentMethod: event.paymentMethod,
+          upiId: event.upiId,
           footer: event.footer);
       // ───────────────────────────────────────────────────────────────
 

@@ -12,6 +12,36 @@ class EscPos {
   static const List<int> textNormal = [0x1D, 0x21, 0x00];
   static const List<int> textLarge = [0x1D, 0x21, 0x11];
   static const List<int> lineFeed = [0x0A];
+
+  /// Generate ESC/POS bytes for a QR code using native GS ( k commands.
+  /// Works on most 58mm / 80mm thermal printers.
+  static List<int> qrCode(String data, {int moduleSize = 6, int errorCorrection = 49}) {
+    final List<int> bytes = [];
+    final dataBytes = data.codeUnits;
+    final store = dataBytes.length + 3; // pL pH includes cn + fn + data
+
+    // 1. Set QR model to Model 2
+    bytes.addAll([0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]);
+
+    // 2. Set module size (dot size of each QR module)
+    bytes.addAll([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, moduleSize]);
+
+    // 3. Set error correction level (48=L, 49=M, 50=Q, 51=H)
+    bytes.addAll([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, errorCorrection]);
+
+    // 4. Store QR data  GS ( k pL pH cn fn data
+    bytes.addAll([
+      0x1D, 0x28, 0x6B,
+      store & 0xFF, (store >> 8) & 0xFF,  // pL, pH
+      0x31, 0x50, 0x30,                   // cn=49, fn=80, m=48
+    ]);
+    bytes.addAll(dataBytes);
+
+    // 5. Print the stored QR code
+    bytes.addAll([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]);
+
+    return bytes;
+  }
 }
 
 class PrinterHelper {
@@ -22,6 +52,12 @@ class PrinterHelper {
 
   bool _isConnected = false;
   bool get isConnected => _isConnected;
+
+  /// Sync the internal flag with the actual BT connection status.
+  /// Call this after verifying connection externally (e.g. in bloc init).
+  Future<void> syncConnectionStatus() async {
+    _isConnected = await PrintBluetoothThermal.connectionStatus;
+  }
 
   Future<bool> checkPermission() async {
     // Request Bluetooth and Location permissions
@@ -72,7 +108,9 @@ class PrinterHelper {
   }
 
   Future<void> printText(String text) async {
-    if (!_isConnected) return;
+    final bool alive = await PrintBluetoothThermal.connectionStatus;
+    if (!alive) return;
+    _isConnected = true;
 
     // Simple text printing
     // We can use bytes for advanced formatting
@@ -114,8 +152,12 @@ class PrinterHelper {
     required double amountPaid, // amount the customer paid now
     required String footer,
     String customerName = '',
+    String paymentMethod = 'cash',
+    String upiId = '',
   }) async {
-    if (!_isConnected) return;
+    final bool alive = await PrintBluetoothThermal.connectionStatus;
+    if (!alive) return;
+    _isConnected = true;
 
     // Construct ESC/POS bytes manually or using helper
     List<int> bytes = [];
@@ -183,6 +225,15 @@ class PrinterHelper {
     final _balance = ((total + prevDue) - amountPaid).clamp(0.0, total + prevDue);
     final bool isCustomerBill = prevDue > 0 || _balance > 0;
 
+    // Print customer name on every customer bill (regardless of due)
+    if (customerName.isNotEmpty) {
+      bytes += EscPos.alignLeft;
+      bytes += EscPos.boldOn;
+      bytes += _textToBytes('Customer: $customerName');
+      bytes += EscPos.boldOff;
+      bytes += EscPos.lineFeed;
+    }
+
     if (isCustomerBill) {
       // ── Full breakdown for customer bills ────────────────────────────
       final grandTotal = total + prevDue;
@@ -190,14 +241,6 @@ class PrinterHelper {
       final hasPrevDue = prevDue > 0;
 
       bytes += EscPos.alignLeft;
-
-      // Customer name
-      if (customerName.isNotEmpty) {
-        bytes += EscPos.boldOn;
-        bytes += _textToBytes('Customer: $customerName');
-        bytes += EscPos.boldOff;
-        bytes += EscPos.lineFeed;
-      }
 
       // Sub Total
       String subTotalLine = 'Sub Total:'.padRight(20) +
@@ -257,6 +300,28 @@ class PrinterHelper {
       // ─────────────────────────────────────────────────────────────────
     }
 
+
+    // ── UPI QR Code (only when payment method is UPI and upiId exists) ──
+    if (paymentMethod.toLowerCase() == 'upi' && upiId.isNotEmpty) {
+      final amountToPay = isCustomerBill
+          ? (total + prevDue).toStringAsFixed(2)
+          : total.toStringAsFixed(2);
+      final upiUri =
+          'upi://pay?pa=$upiId&pn=${Uri.encodeComponent(shopName)}&am=$amountToPay&cu=INR';
+
+      bytes += EscPos.alignCenter;
+      bytes += _textToBytes('--------------------------------');
+      bytes += EscPos.lineFeed;
+      bytes += EscPos.boldOn;
+      bytes += _textToBytes('Scan to Pay via UPI');
+      bytes += EscPos.boldOff;
+      bytes += EscPos.lineFeed;
+      bytes += EscPos.lineFeed;
+      bytes += EscPos.qrCode(upiUri);
+      bytes += EscPos.lineFeed;
+      bytes += _textToBytes(upiId);
+      bytes += EscPos.lineFeed;
+    }
 
     // Footer (Center)
     bytes += EscPos.alignCenter;

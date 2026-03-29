@@ -855,6 +855,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 footer: shop.footerText,
                                 amountPaid: paid,
                                 paymentMethod: _paymentMethod,
+                                upiId: shop.upiId,
                               ));
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(

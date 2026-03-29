@@ -8,8 +8,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/service_locator.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/printer_helper.dart';
 import '../../../billing/data/models/transaction_model.dart';
 import '../../../billing/domain/repositories/billing_repository.dart';
+import '../../../shop/data/models/shop_model.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../../data/models/customer_model.dart';
 
@@ -745,11 +747,119 @@ class CustomerDetailPage extends StatelessWidget {
                   ],
                 ),
               ),
+
+              // ── Print button ──
+              if (!isPayment) ...[
+                Divider(height: 1, color: Colors.grey.shade100),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _printTransaction(context, tx),
+                        icon: const Icon(Icons.print_rounded, size: 20),
+                        label: const Text('Print Bill'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          textStyle: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 15),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _printTransaction(
+      BuildContext context, TransactionModel tx) async {
+    final printerHelper = PrinterHelper();
+
+    // Get shop info from Hive
+    final shopBox = HiveDatabase.shopBox;
+    final ShopModel? shop = shopBox.values.isNotEmpty
+        ? shopBox.values.first
+        : null;
+
+    final shopName = shop?.name ?? 'Shop';
+    final address1 = shop?.addressLine1 ?? '';
+    final address2 = shop?.addressLine2 ?? '';
+    final phone = shop?.phoneNumber ?? '';
+    final footer = shop?.footerText ?? 'Thank you!';
+
+    final items = tx.items
+        .map((item) => {
+              'name': item.productName,
+              'qty': item.quantity,
+              'price': item.price,
+              'total': item.total,
+            })
+        .toList();
+
+    try {
+      await printerHelper.printReceipt(
+        shopName: shopName,
+        address1: address1,
+        address2: address2,
+        phone: phone,
+        items: items,
+        total: tx.totalAmount,
+        prevDue: 0.0,
+        amountPaid: tx.amountPaid,
+        customerName: tx.customerName,
+        paymentMethod: tx.paymentMethod,
+        upiId: shop?.upiId ?? '',
+        footer: footer,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Bill printed successfully'),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Print failed: $e')),
+              ],
+            ),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+          ),
+        );
+      }
+    }
   }
 
   IconData _paymentIcon(String method) {

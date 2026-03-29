@@ -441,21 +441,21 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildPrinterSection({required bool isCompact}) {
     return BlocConsumer<PrinterBloc, PrinterState>(
+      listenWhen: (prev, curr) =>
+          curr.status == PrinterStatus.connected &&
+          (prev.status == PrinterStatus.scanning ||
+              prev.status == PrinterStatus.connecting),
       listener: (context, state) {
-        if (state.errorMessage != null) {
+        if (state.status == PrinterStatus.connected) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(state.errorMessage!),
-              backgroundColor: AppTheme.errorColor,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16))));
-        } else if (state.status == PrinterStatus.connected) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: const Row(
+              content: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Connected to printer'),
+                  const Icon(Icons.check_circle_rounded, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                        'Connected to ${state.connectedName ?? 'printer'}'),
+                  ),
                 ],
               ),
               backgroundColor: const Color(0xFF10B981),
@@ -465,104 +465,326 @@ class _SettingsPageState extends State<SettingsPage> {
         }
       },
       builder: (context, state) {
-        return Column(
-          children: [
-            _buildListGroup(
-              isCompact: isCompact,
-              children: [
-                _buildListItem(
-                  icon: Icons.print_rounded,
-                  iconColor: AppTheme.primaryColor,
-                  title: 'Thermal Printer',
-                  isCompact: isCompact,
-                  subtitleWidget: Row(
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade100, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // ── Header row: icon + title + status badge ──
+              Padding(
+                padding: EdgeInsets.all(isCompact ? 14 : 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: isCompact ? 42 : 46,
+                      height: isCompact ? 42 : 46,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(Icons.print_rounded,
+                          color: AppTheme.primaryColor,
+                          size: isCompact ? 20 : 22),
+                    ),
+                    SizedBox(width: isCompact ? 12 : 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Thermal Printer',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: isCompact ? 15 : 16,
+                                  color: const Color(0xFF1E293B))),
+                          const SizedBox(height: 4),
+                          _printerStatusLine(state),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Error banner ──
+              if (state.errorMessage != null &&
+                  state.errorMessage!.isNotEmpty) ...[
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    border: Border(
+                      top: BorderSide(
+                          color: Colors.red.shade100, width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Icon(Icons.error_outline_rounded,
+                          size: 16, color: Color(0xFFDC2626)),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          state.connectedMac != null
-                              ? (state.connectedName ?? 'Connected')
-                              : 'No printer connected',
+                          state.errorMessage!,
                           style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF64748B),
-                              fontWeight: FontWeight.w500),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                            fontSize: 12,
+                            color: Color(0xFFDC2626),
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      if (state.connectedMac != null) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                              color: const Color(0xFFD1FAE5),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: const Text('ON',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                  color: Color(0xFF047857))),
-                        ),
-                      ]
-                    ],
-                  ),
-                  trailingWidget: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (state.status == PrinterStatus.scanning ||
-                          state.status == PrinterStatus.connecting)
-                        const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2.5))
-                      else
-                        IconButton(
-                          icon: const Icon(Icons.refresh_rounded),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () => context
-                              .read<PrinterBloc>()
-                              .add(RefreshPrinterEvent()),
-                          color: AppTheme.primaryColor,
-                        ),
-                      const SizedBox(width: 16),
-                      IconButton(
-                        icon: const Icon(Icons.bluetooth_rounded),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          AppSettings.openAppSettings(
-                              type: AppSettingsType.bluetooth);
-                        },
-                        color: const Color(0xFF94A3B8),
                       ),
                     ],
                   ),
                 ),
               ],
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                isCompact ? 24 : 36,
-                16,
-                isCompact ? 24 : 36,
-                0,
+
+              // ── Action area — changes based on state ──
+              Divider(height: 1, color: Colors.grey.shade100),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: _printerActions(context, state),
               ),
-              child: const Text(
-                "Tap the Bluetooth icon to pair a new device in your phone's settings, then return here and hit refresh.",
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF94A3B8),
-                    height: 1.5,
-                    fontWeight: FontWeight.w500),
-                textAlign: TextAlign.center,
+
+              // ── Bluetooth settings link ──
+              Divider(height: 1, color: Colors.grey.shade100),
+              InkWell(
+                onTap: () {
+                  AppSettings.openAppSettings(
+                      type: AppSettingsType.bluetooth);
+                },
+                borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20)),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.bluetooth_rounded,
+                          size: 16, color: Colors.grey.shade500),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Open Bluetooth Settings',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
+    );
+  }
+
+  // ── Printer status line (subtitle under title) ───────────────────────
+
+  Widget _printerStatusLine(PrinterState state) {
+    if (state.isLiveConnected) {
+      return Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: Color(0xFF10B981),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              state.connectedName ?? 'Connected',
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF059669),
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (state.isBusy) {
+      String label;
+      switch (state.status) {
+        case PrinterStatus.scanning:
+          label = 'Scanning for printers…';
+          break;
+        case PrinterStatus.connecting:
+          label = 'Connecting…';
+          break;
+        case PrinterStatus.checking:
+          label = 'Verifying connection…';
+          break;
+        case PrinterStatus.testPrinting:
+          label = 'Sending test page…';
+          break;
+        default:
+          label = 'Please wait…';
+      }
+      return Row(
+        children: [
+          const SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(strokeWidth: 1.5)),
+          const SizedBox(width: 8),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFB45309),
+                  fontWeight: FontWeight.w600)),
+        ],
+      );
+    }
+
+    if (state.hasSavedPrinter) {
+      return Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEF4444),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '${state.connectedName ?? 'Saved printer'} – offline',
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFFEF4444),
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return const Text(
+      'No printer paired',
+      style: TextStyle(
+        fontSize: 13,
+        color: Color(0xFF94A3B8),
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  // ── Printer action buttons based on state ────────────────────────────
+
+  Widget _printerActions(BuildContext context, PrinterState state) {
+    // ── Busy: show nothing, the status line already has a spinner ──
+    if (state.isBusy) {
+      return const SizedBox.shrink();
+    }
+
+    // ── Connected: Test Print  |  Disconnect ──
+    if (state.isLiveConnected) {
+      return Row(
+        children: [
+          Expanded(
+            child: _actionButton(
+              icon: Icons.receipt_long_rounded,
+              label: 'Test Print',
+              color: AppTheme.primaryColor,
+              borderColor: const Color(0xFFE2E8F0),
+              onTap: () {
+                String shopName = 'Shop';
+                final shopState = context.read<ShopBloc>().state;
+                if (shopState is ShopLoaded) {
+                  shopName = shopState.shop.name;
+                }
+                context.read<PrinterBloc>().add(TestPrintEvent(shopName));
+              },
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _actionButton(
+              icon: Icons.link_off_rounded,
+              label: 'Disconnect',
+              color: const Color(0xFFDC2626),
+              borderColor: const Color(0xFFFECACA),
+              onTap: () =>
+                  context.read<PrinterBloc>().add(DisconnectPrinterEvent()),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ── Disconnected / Failed: single prominent Connect button ──
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () =>
+            context.read<PrinterBloc>().add(RefreshPrinterEvent()),
+        icon: const Icon(Icons.print_rounded, size: 20),
+        label: Text(
+          state.hasSavedPrinter ? 'Reconnect Printer' : 'Connect Printer',
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14)),
+          textStyle:
+              const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+      ),
+    );
+  }
+
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color borderColor,
+    required VoidCallback onTap,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        side: BorderSide(color: borderColor),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+      ),
     );
   }
 
