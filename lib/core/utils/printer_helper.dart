@@ -15,7 +15,8 @@ class EscPos {
 
   /// Generate ESC/POS bytes for a QR code using native GS ( k commands.
   /// Works on most 58mm / 80mm thermal printers.
-  static List<int> qrCode(String data, {int moduleSize = 6, int errorCorrection = 49}) {
+  static List<int> qrCode(String data,
+      {int moduleSize = 6, int errorCorrection = 49}) {
     final List<int> bytes = [];
     final dataBytes = data.codeUnits;
     final store = dataBytes.length + 3; // pL pH includes cn + fn + data
@@ -32,8 +33,8 @@ class EscPos {
     // 4. Store QR data  GS ( k pL pH cn fn data
     bytes.addAll([
       0x1D, 0x28, 0x6B,
-      store & 0xFF, (store >> 8) & 0xFF,  // pL, pH
-      0x31, 0x50, 0x30,                   // cn=49, fn=80, m=48
+      store & 0xFF, (store >> 8) & 0xFF, // pL, pH
+      0x31, 0x50, 0x30, // cn=49, fn=80, m=48
     ]);
     bytes.addAll(dataBytes);
 
@@ -147,11 +148,12 @@ class PrinterHelper {
     required String address2,
     required String phone,
     required List<Map<String, dynamic>> items, // Name, Qty, Price, Total
-    required double total,      // subtotal (cart items only)
-    required double prevDue,    // previous outstanding balance
+    required double total, // subtotal (cart items only)
+    required double prevDue, // previous outstanding balance
     required double amountPaid, // amount the customer paid now
     required String footer,
     String customerName = '',
+    String partyLabel = 'Customer',
     String paymentMethod = 'cash',
     String upiId = '',
     double gstRate = 0.0,
@@ -268,14 +270,15 @@ class PrinterHelper {
 
     // Show full breakdown only when there is prev due OR remaining balance.
     // If customer paid in full with no prev due, just print "TOTAL" (cleaner receipt).
-    final _balance = ((total + prevDue) - amountPaid).clamp(0.0, total + prevDue);
+    final _balance =
+        ((total + prevDue) - amountPaid).clamp(0.0, total + prevDue);
     final bool isCustomerBill = prevDue > 0 || _balance > 0;
 
-    // Print customer name on every customer bill (regardless of due)
+    // Print party name on every bill (customer/supplier) when provided.
     if (customerName.isNotEmpty) {
       bytes += EscPos.alignLeft;
       bytes += EscPos.boldOn;
-      bytes += _textToBytes('Customer: $customerName');
+      bytes += _textToBytes('$partyLabel: $customerName');
       bytes += EscPos.boldOff;
       bytes += EscPos.lineFeed;
     }
@@ -308,14 +311,15 @@ class PrinterHelper {
       bytes += EscPos.alignRight;
       bytes += EscPos.boldOn;
       String grandTotalLabel = hasPrevDue ? 'GRAND TOTAL:' : 'TOTAL:';
-      bytes += _textToBytes('$grandTotalLabel Rs ${grandTotal.toStringAsFixed(2)}');
+      bytes +=
+          _textToBytes('$grandTotalLabel Rs ${grandTotal.toStringAsFixed(2)}');
       bytes += EscPos.boldOff;
       bytes += EscPos.lineFeed;
 
-      // Amount Received
+      // Amount Paid
       bytes += EscPos.alignLeft;
       bytes += EscPos.textNormal;
-      String receivedLine = 'Amt Received:'.padRight(20) +
+      String receivedLine = 'Amount Paid:'.padRight(20) +
           'Rs ${amountPaid.toStringAsFixed(2)}'.padLeft(12);
       bytes += _textToBytes(receivedLine);
       bytes += EscPos.lineFeed;
@@ -329,7 +333,8 @@ class PrinterHelper {
         bytes += EscPos.boldOff;
         bytes += EscPos.lineFeed;
       } else {
-        bytes += _textToBytes('Balance Due:'.padRight(20) + 'Rs 0.00'.padLeft(12));
+        bytes +=
+            _textToBytes('Balance Due:'.padRight(20) + 'Rs 0.00'.padLeft(12));
         bytes += EscPos.lineFeed;
       }
 
@@ -345,7 +350,6 @@ class PrinterHelper {
       bytes += EscPos.lineFeed;
       // ─────────────────────────────────────────────────────────────────
     }
-
 
     // ── UPI QR Code (only when payment method is UPI and upiId exists) ──
     if (paymentMethod.toLowerCase() == 'upi' && upiId.isNotEmpty) {

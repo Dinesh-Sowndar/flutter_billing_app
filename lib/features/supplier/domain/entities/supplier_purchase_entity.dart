@@ -39,7 +39,11 @@ class SupplierPurchaseEntity {
     this.pendingSync = false,
   });
 
-  double get dueAmount => totalAmount - amountPaid;
+  bool get isPaymentTransaction =>
+      items.isEmpty && totalAmount == 0 && amountPaid > 0;
+
+  double get dueAmount =>
+      (totalAmount - amountPaid).clamp(0.0, double.infinity);
 
   SupplierPurchaseEntity copyWith({
     String? id,

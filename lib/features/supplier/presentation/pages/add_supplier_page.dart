@@ -17,6 +17,10 @@ class AddSupplierPage extends StatefulWidget {
 }
 
 class _AddSupplierPageState extends State<AddSupplierPage> {
+  static const Color _primary = Color(0xFF0F766E);
+  static const Color _primaryDark = Color(0xFF115E59);
+  static const Color _surface = Color(0xFFF1F5F9);
+
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -46,7 +50,8 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
 
     // Wait for the bloc to emit a loaded or error state.
     final resultState = await _bloc.stream.firstWhere(
-      (s) => s.status == SupplierStatus.loaded || s.status == SupplierStatus.error,
+      (s) =>
+          s.status == SupplierStatus.loaded || s.status == SupplierStatus.error,
     );
 
     if (!mounted) return;
@@ -58,7 +63,8 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
           content: Text(resultState.error ?? 'Failed to add supplier'),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     } else {
@@ -71,25 +77,15 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
     return BlocProvider.value(
       value: _bloc,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: _surface,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: _surface,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 12),
-            child: Center(
-              child: Material(
-                color: Colors.white,
-                shape: const CircleBorder(),
-                elevation: 2,
-                shadowColor: Colors.black12,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                  color: const Color(0xFF0F172A),
-                  onPressed: () => context.pop(),
-                ),
-              ),
-            ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            color: const Color(0xFF0F172A),
+            onPressed: () => context.pop(),
           ),
           title: const Text(
             'Add Supplier',
@@ -99,14 +95,63 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
               color: Color(0xFF0F172A),
             ),
           ),
-          centerTitle: false,
-          titleSpacing: 8,
         ),
         body: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [_primary, _primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.storefront_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Create Supplier Profile',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'Add basic details now. You can start recording purchases immediately.',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
               _buildCard(
                 children: [
                   _buildField(
@@ -114,8 +159,9 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
                     label: 'Supplier Name',
                     hint: 'e.g. ABC Wholesale',
                     icon: Icons.business_rounded,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Name is required'
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   _buildField(
@@ -124,19 +170,37 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
                     hint: 'e.g. 9876543210',
                     icon: Icons.phone_rounded,
                     keyboardType: TextInputType.phone,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Phone is required' : null,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Phone is required';
+                      }
+                      if (v.trim().length != 10) {
+                        return 'Phone number must be exactly 10 digits';
+                      }
+                      return null;
+                    },
                   ),
                 ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 12),
+              const Text(
+                'Tip: Phone number helps avoid duplicate supplier entries.',
+                style: TextStyle(
+                  color: Color(0xFF475569),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 24),
               SizedBox(
                 height: 56,
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B5CF6),
+                    backgroundColor: _primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -209,9 +273,9 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: const Color(0xFF8B5CF6), size: 20),
-        labelStyle:
-            const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+        prefixIcon: Icon(icon, color: _primary, size: 20),
+        labelStyle: const TextStyle(
+            color: Color(0xFF64748B), fontWeight: FontWeight.w600),
         filled: true,
         fillColor: const Color(0xFFF8FAFC),
         border: OutlineInputBorder(
@@ -224,8 +288,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: Color(0xFF8B5CF6), width: 2),
+          borderSide: const BorderSide(color: _primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

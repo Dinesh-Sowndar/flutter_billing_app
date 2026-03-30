@@ -19,42 +19,69 @@ class SupplierListPage extends StatelessWidget {
   }
 }
 
-class _SupplierListView extends StatelessWidget {
+class _SupplierListView extends StatefulWidget {
   const _SupplierListView();
+
+  @override
+  State<_SupplierListView> createState() => _SupplierListViewState();
+}
+
+enum _SupplierFilter { all, dueOnly, clearOnly }
+
+class _SupplierListViewState extends State<_SupplierListView> {
+  static const Color _primary = Color(0xFF0F766E);
+  static const Color _primaryDark = Color(0xFF115E59);
+  static const Color _surface = Color(0xFFF1F5F9);
+  static const Color _textPrimary = Color(0xFF0F172A);
+
+  final TextEditingController _searchController = TextEditingController();
+  _SupplierFilter _activeFilter = _SupplierFilter.all;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<SupplierEntity> _applyFilters(List<SupplierEntity> suppliers) {
+    final query = _searchController.text.trim().toLowerCase();
+
+    return suppliers.where((supplier) {
+      final matchesQuery = query.isEmpty ||
+          supplier.name.toLowerCase().contains(query) ||
+          supplier.phone.toLowerCase().contains(query);
+
+      final matchesStatus = switch (_activeFilter) {
+        _SupplierFilter.all => true,
+        _SupplierFilter.dueOnly => supplier.balance > 0,
+        _SupplierFilter.clearOnly => supplier.balance <= 0,
+      };
+
+      return matchesQuery && matchesStatus;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: _surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _surface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-              shape: const CircleBorder(),
-              elevation: 2,
-              shadowColor: Colors.black12,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                color: const Color(0xFF0F172A),
-                onPressed: () => context.pop(),
-              ),
-            ),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          color: _textPrimary,
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Suppliers',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 22,
-            color: Color(0xFF0F172A),
+            fontSize: 23,
+            color: _textPrimary,
           ),
         ),
-        centerTitle: false,
-        titleSpacing: 8,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -63,12 +90,12 @@ class _SupplierListView extends StatelessWidget {
             context.read<SupplierBloc>().add(const LoadSuppliersEvent());
           }
         },
-        icon: const Icon(Icons.add_rounded),
+        icon: const Icon(Icons.person_add_alt_1_rounded),
         label: const Text(
           'Add Supplier',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: _primary,
         foregroundColor: Colors.white,
       ),
       body: BlocBuilder<SupplierBloc, SupplierState>(
@@ -76,61 +103,92 @@ class _SupplierListView extends StatelessWidget {
           if (state.status == SupplierStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (state.suppliers.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.local_shipping_rounded,
-                      size: 36,
-                      color: Color(0xFF8B5CF6),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'No suppliers yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Tap "+ Add Supplier" to get started',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+
+          final filteredSuppliers = _applyFilters(state.suppliers);
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+                child: _SummaryCard(suppliers: state.suppliers),
               ),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-            itemCount: state.suppliers.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final supplier = state.suppliers[index];
-              return _SupplierCard(
-                supplier: supplier,
-                onDeleted: () {
-                  context
-                      .read<SupplierBloc>()
-                      .add(DeleteSupplierEvent(supplier.id));
-                },
-              );
-            },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Search by supplier name or phone',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _searchController.text.isEmpty
+                        ? null
+                        : IconButton(
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      selected: _activeFilter == _SupplierFilter.all,
+                      label: 'All',
+                      onTap: () =>
+                          setState(() => _activeFilter = _SupplierFilter.all),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      selected: _activeFilter == _SupplierFilter.dueOnly,
+                      label: 'With Due',
+                      onTap: () => setState(
+                          () => _activeFilter = _SupplierFilter.dueOnly),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      selected: _activeFilter == _SupplierFilter.clearOnly,
+                      label: 'Cleared',
+                      onTap: () => setState(
+                          () => _activeFilter = _SupplierFilter.clearOnly),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: state.suppliers.isEmpty
+                    ? const _EmptyState()
+                    : filteredSuppliers.isEmpty
+                        ? const _NoResultsState()
+                        : RefreshIndicator(
+                            onRefresh: () async {
+                              context
+                                  .read<SupplierBloc>()
+                                  .add(const LoadSuppliersEvent());
+                            },
+                            child: ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                              itemCount: filteredSuppliers.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final supplier = filteredSuppliers[index];
+                                return _SupplierCard(supplier: supplier);
+                              },
+                            ),
+                          ),
+              ),
+            ],
           );
         },
       ),
@@ -138,15 +196,79 @@ class _SupplierListView extends StatelessWidget {
   }
 }
 
+class _SummaryCard extends StatelessWidget {
+  final List<SupplierEntity> suppliers;
+
+  const _SummaryCard({required this.suppliers});
+
+  @override
+  Widget build(BuildContext context) {
+    const primary = Color(0xFF0F766E);
+    const primaryDark = Color(0xFF115E59);
+
+    final dueCount = suppliers.where((s) => s.balance > 0).length;
+    final totalDue = suppliers.fold<double>(0.0, (sum, s) => sum + s.balance);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primary, primaryDark],
+        ),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${suppliers.length} supplier${suppliers.length == 1 ? '' : 's'}',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Outstanding: Rs ${totalDue.toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              '$dueCount with pending due',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SupplierCard extends StatelessWidget {
   final SupplierEntity supplier;
-  final VoidCallback onDeleted;
 
-  const _SupplierCard({required this.supplier, required this.onDeleted});
+  const _SupplierCard({required this.supplier});
 
   @override
   Widget build(BuildContext context) {
     final hasDue = supplier.balance > 0;
+
     return InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: () async {
@@ -156,146 +278,197 @@ class _SupplierCard extends StatelessWidget {
         }
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.grey.shade100, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: Row(
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  supplier.name.isNotEmpty
-                      ? supplier.name[0].toUpperCase()
-                      : 'S',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF8B5CF6),
-                  ),
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: const Color(0xFFCCFBF1),
+              child: Text(
+                supplier.name.isEmpty ? 'S' : supplier.name[0].toUpperCase(),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F766E),
+                  fontSize: 18,
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     supplier.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: Color(0xFF1E293B),
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    supplier.phone.isEmpty ? 'No phone' : supplier.phone,
+                    supplier.phone.isEmpty ? 'Phone not added' : supplier.phone,
                     style: const TextStyle(
-                      fontSize: 13,
                       color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 7),
                   Row(
                     children: [
                       Container(
                         width: 7,
                         height: 7,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
                           color: supplier.pendingSync
-                              ? const Color(0xFFF59E0B) // amber — not synced
-                              : const Color(0xFF10B981), // green — synced
+                              ? const Color(0xFFD97706)
+                              : const Color(0xFF059669),
+                          shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 6),
                       Text(
-                        supplier.pendingSync ? 'Not Synced' : 'Synced',
+                        supplier.pendingSync ? 'Not synced' : 'Synced',
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.w600,
                           color: supplier.pendingSync
-                              ? const Color(0xFFF59E0B)
-                              : const Color(0xFF10B981),
+                              ? const Color(0xFFD97706)
+                              : const Color(0xFF059669),
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
-                  ),
+                  )
                 ],
               ),
             ),
+            const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (hasDue)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '₹${supplier.balance.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFEF4444),
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'Cleared',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF16A34A),
-                      ),
-                    ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: hasDue
+                        ? const Color(0xFFFEF2F2)
+                        : const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                const SizedBox(height: 4),
-                if (hasDue)
-                  const Text(
-                    'Due',
+                  child: Text(
+                    hasDue
+                        ? 'Rs ${supplier.balance.toStringAsFixed(2)}'
+                        : 'Cleared',
                     style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
+                      color: hasDue
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFF059669),
                     ),
                   ),
+                ),
+                const SizedBox(height: 8),
+                const Icon(Icons.chevron_right_rounded,
+                    color: Color(0xFF94A3B8)),
               ],
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right_rounded,
-                color: Color(0xFFCBD5E1), size: 22),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF134E4A) : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? const Color(0xFF134E4A) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : const Color(0xFF334155),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.groups_rounded, size: 54, color: Color(0xFF94A3B8)),
+          SizedBox(height: 10),
+          Text(
+            'No suppliers yet',
+            style: TextStyle(
+              fontSize: 16,
+              color: Color(0xFF334155),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoResultsState extends StatelessWidget {
+  const _NoResultsState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.search_off_rounded, size: 54, color: Color(0xFF94A3B8)),
+          SizedBox(height: 10),
+          Text(
+            'No suppliers match this filter',
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF475569),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

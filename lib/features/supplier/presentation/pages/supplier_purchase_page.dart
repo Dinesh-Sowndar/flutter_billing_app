@@ -44,6 +44,10 @@ class SupplierPurchasePage extends StatefulWidget {
 }
 
 class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
+  static const Color _primary = Color(0xFF0F766E);
+  static const Color _primaryDark = Color(0xFF115E59);
+  static const Color _surface = Color(0xFFF1F5F9);
+
   final List<_PurchaseItem> _items = [_PurchaseItem()];
   final _amountPaidCtrl = TextEditingController();
 
@@ -56,6 +60,8 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
   }
 
   double get _subtotal => _items.fold(0, (sum, i) => sum + i.total);
+  double get _previousDue => widget.supplier.balance;
+  double get _grandTotal => _subtotal + _previousDue;
 
   void _addItem() => setState(() => _items.add(_PurchaseItem()));
 
@@ -79,6 +85,19 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
     setState(() => _isSubmitting = true);
 
     final amountPaid = double.tryParse(_amountPaidCtrl.text) ?? 0;
+    if (amountPaid > _grandTotal) {
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Amount paid cannot exceed grand total (Rs ${_grandTotal.toStringAsFixed(2)})',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final purchase = SupplierPurchaseEntity(
       id: const Uuid().v4(),
       supplierId: widget.supplier.id,
@@ -112,121 +131,155 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: _surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _surface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-                shape: const CircleBorder(),
-                elevation: 2,
-                shadowColor: Colors.black12,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                  color: const Color(0xFF0F172A),
-                  onPressed: () => context.pop(),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          color: const Color(0xFF0F172A),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Record Purchase',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+      ),
+      body: BlocBuilder<ProductBloc, ProductState>(
+        builder: (context, productState) {
+          final allProducts = productState.products;
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [_primary, _primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.inventory_2_rounded,
+                          color: Colors.white),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.supplier.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'Add inventory purchase items and split paid/due amount.',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+              const SizedBox(height: 12),
               const Text(
-                'Record Purchase',
+                'Items',
                 style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    color: Color(0xFF0F172A)),
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF334155),
+                ),
               ),
-              Text(
-                widget.supplier.name,
-                style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w500),
+              const SizedBox(height: 8),
+              ...List.generate(_items.length, (idx) {
+                // Exclude products already chosen in other rows
+                final usedIds = _items
+                    .asMap()
+                    .entries
+                    .where((e) => e.key != idx && e.value.productId.isNotEmpty)
+                    .map((e) => e.value.productId)
+                    .toSet();
+                final available =
+                    allProducts.where((p) => !usedIds.contains(p.id)).toList();
+
+                return _ItemRow(
+                  key: ValueKey(idx),
+                  index: idx,
+                  item: _items[idx],
+                  availableProducts: available,
+                  onChanged: () => setState(() {}),
+                  onRemove: () => _removeItem(idx),
+                  canRemove: _items.length > 1,
+                );
+              }),
+              TextButton.icon(
+                onPressed: _addItem,
+                icon: const Icon(Icons.add_circle_outline_rounded,
+                    color: _primary),
+                label: const Text(
+                  'Add Another Item',
+                  style:
+                      TextStyle(color: _primary, fontWeight: FontWeight.w700),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _SummaryCard(
+                subtotal: _subtotal,
+                previousDue: _previousDue,
+                amountPaidCtrl: _amountPaidCtrl,
+                onChanged: () => setState(() {}),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18)),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2.5),
+                        )
+                      : const Text('Save Purchase Entry',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
               ),
             ],
-          ),
-          centerTitle: false,
-          titleSpacing: 8,
-        ),
-        body: BlocBuilder<ProductBloc, ProductState>(
-          builder: (context, productState) {
-            final allProducts = productState.products;
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-              children: [
-                ...List.generate(_items.length, (idx) {
-                  // Exclude products already chosen in other rows
-                  final usedIds = _items
-                      .asMap()
-                      .entries
-                      .where((e) => e.key != idx && e.value.productId.isNotEmpty)
-                      .map((e) => e.value.productId)
-                      .toSet();
-                  final available = allProducts
-                      .where((p) => !usedIds.contains(p.id))
-                      .toList();
-
-                  return _ItemRow(
-                    key: ValueKey(idx),
-                    index: idx,
-                    item: _items[idx],
-                    availableProducts: available,
-                    onChanged: () => setState(() {}),
-                    onRemove: () => _removeItem(idx),
-                    canRemove: _items.length > 1,
-                  );
-                }),
-                TextButton.icon(
-                  onPressed: _addItem,
-                  icon: const Icon(Icons.add_circle_outline_rounded,
-                      color: Color(0xFF8B5CF6)),
-                  label: const Text(
-                    'Add Another Item',
-                    style: TextStyle(
-                        color: Color(0xFF8B5CF6), fontWeight: FontWeight.w700),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _SummaryCard(
-                  subtotal: _subtotal,
-                  amountPaidCtrl: _amountPaidCtrl,
-                  onChanged: () => setState(() {}),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B5CF6),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18)),
-                    ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2.5),
-                          )
-                        : const Text('Save Purchase',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w700)),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      );
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -266,8 +319,10 @@ class _ItemRowState extends State<_ItemRow> {
   @override
   void initState() {
     super.initState();
-    _qtyCtrl.text = widget.item.quantity == 1 ? '' : widget.item.quantity.toString();
-    _priceCtrl.text = widget.item.price == 0 ? '' : widget.item.price.toString();
+    _qtyCtrl.text =
+        widget.item.quantity == 1 ? '' : widget.item.quantity.toString();
+    _priceCtrl.text =
+        widget.item.price == 0 ? '' : widget.item.price.toString();
     if (widget.item.productName.isNotEmpty) {
       _searchCtrl.text = widget.item.productName;
     }
@@ -334,7 +389,7 @@ class _ItemRowState extends State<_ItemRow> {
             borderSide: BorderSide(color: Colors.grey.shade200)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 2)),
+            borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2)),
       );
 
   @override
@@ -392,7 +447,7 @@ class _ItemRowState extends State<_ItemRow> {
                 decoration: _fieldDecor('Select Item').copyWith(
                   hintText: 'Search inventory...',
                   prefixIcon: const Icon(Icons.search_rounded,
-                      color: Color(0xFF8B5CF6), size: 20),
+                      color: Color(0xFF0F766E), size: 20),
                   suffixIcon: _hasSelection
                       ? IconButton(
                           icon: const Icon(Icons.close_rounded,
@@ -412,7 +467,7 @@ class _ItemRowState extends State<_ItemRow> {
                             _searchFocus.requestFocus();
                           },
                           child: const Icon(Icons.arrow_drop_down,
-                              color: Color(0xFF8B5CF6)),
+                              color: Color(0xFF0F766E)),
                         ),
                 ),
                 onChanged: (v) {
@@ -542,9 +597,9 @@ class _ItemRowState extends State<_ItemRow> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF1E293B)),
-                  decoration: _fieldDecor('Purchase Price / Unit',
-                          prefixText: '₹ ')
-                      .copyWith(hintText: '0.00'),
+                  decoration:
+                      _fieldDecor('Purchase Price / Unit', prefixText: '₹ ')
+                          .copyWith(hintText: '0.00'),
                   onChanged: (v) {
                     widget.item.price = double.tryParse(v) ?? 0;
                     widget.onChanged();
@@ -557,9 +612,9 @@ class _ItemRowState extends State<_ItemRow> {
                 child: Container(
                   padding: const EdgeInsets.all(13),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F3FF),
+                    color: const Color(0xFFF0FDFA),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFDDD6FE)),
+                    border: Border.all(color: const Color(0xFF99F6E4)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,7 +622,7 @@ class _ItemRowState extends State<_ItemRow> {
                       const Text('Row Total',
                           style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF7C3AED),
+                              color: Color(0xFF0F766E),
                               fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
                       Text(
@@ -575,7 +630,7 @@ class _ItemRowState extends State<_ItemRow> {
                         style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF7C3AED)),
+                            color: Color(0xFF0F766E)),
                       ),
                     ],
                   ),
@@ -594,11 +649,13 @@ class _ItemRowState extends State<_ItemRow> {
 // ---------------------------------------------------------------------------
 class _SummaryCard extends StatelessWidget {
   final double subtotal;
+  final double previousDue;
   final TextEditingController amountPaidCtrl;
   final VoidCallback onChanged;
 
   const _SummaryCard({
     required this.subtotal,
+    required this.previousDue,
     required this.amountPaidCtrl,
     required this.onChanged,
   });
@@ -606,7 +663,9 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final paid = double.tryParse(amountPaidCtrl.text) ?? 0;
-    final due = (subtotal - paid).clamp(0.0, double.infinity);
+    final grandTotal = subtotal + previousDue;
+    final due = (grandTotal - paid).clamp(0.0, grandTotal);
+    final overpay = paid > grandTotal;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -627,6 +686,24 @@ class _SummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              const Text('Previous Due',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Color(0xFF64748B))),
+              Text('₹${previousDue.toStringAsFixed(2)}',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: previousDue > 0
+                          ? const Color(0xFFD97706)
+                          : const Color(0xFF16A34A))),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               const Text('Subtotal',
                   style: TextStyle(
                       fontWeight: FontWeight.w600,
@@ -639,18 +716,35 @@ class _SummaryCard extends StatelessWidget {
                       color: Color(0xFF1E293B))),
             ],
           ),
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Grand Total',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      color: Color(0xFF334155))),
+              Text('₹${grandTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: Color(0xFF0F766E))),
+            ],
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: amountPaidCtrl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
             ],
             onChanged: (_) => onChanged(),
             decoration: InputDecoration(
               labelText: 'Amount Paid',
-              hintText: 'Leave blank → full amount on credit',
+              hintText: 'Enter payment against grand total',
               prefixText: '₹ ',
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
@@ -659,15 +753,16 @@ class _SummaryCard extends StatelessWidget {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide:
-                    const BorderSide(color: Color(0xFF8B5CF6), width: 2),
+                    const BorderSide(color: Color(0xFF0F766E), width: 2),
               ),
+              errorText: overpay ? 'Amount cannot exceed grand total' : null,
             ),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Due Amount',
+              const Text('Total Balance Due',
                   style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
