@@ -677,36 +677,42 @@ class _ProductListPageState extends State<ProductListPage> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  onPressed: () => context.push('/products/edit/${product.id}',
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => context.push('/products/edit/${product.id}',
                       extra: product),
-                  icon: const Icon(Icons.edit_rounded, size: 20),
-                  color: AppTheme.primaryColor,
-                  splashRadius: 24,
-                  padding: const EdgeInsets.all(8),
-                  constraints: const BoxConstraints(),
-                  tooltip: 'Edit Product',
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(Icons.edit_rounded,
+                        size: 15, color: AppTheme.primaryColor),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE11D48).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  onPressed: () => _confirmDelete(context, product),
-                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                  color: const Color(0xFFE11D48),
-                  splashRadius: 24,
-                  padding: const EdgeInsets.all(8),
-                  constraints: const BoxConstraints(),
-                  tooltip: 'Delete Product',
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _confirmDelete(context, product),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE11D48).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        size: 15, color: Color(0xFFE11D48)),
+                  ),
                 ),
               ),
             ],

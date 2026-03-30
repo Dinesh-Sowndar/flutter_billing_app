@@ -280,25 +280,25 @@ class _SettingsPageState extends State<SettingsPage> {
             _buildReveal(
               index: 3,
               child: _buildSectionHeader(
-                'Billing',
-                isCompact: isCompact,
-              ),
-            ),
-            _buildReveal(
-              index: 4,
-              child: _buildGstSection(isCompact: isCompact),
-            ),
-            SizedBox(height: isCompact ? 22 : 28),
-            _buildReveal(
-              index: 5,
-              child: _buildSectionHeader(
                 'Hardware Connections',
                 isCompact: isCompact,
               ),
             ),
             _buildReveal(
-              index: 6,
+              index: 4,
               child: _buildPrinterSection(isCompact: isCompact),
+            ),
+            SizedBox(height: isCompact ? 22 : 28),
+            _buildReveal(
+              index: 5,
+              child: _buildSectionHeader(
+                'Billing',
+                isCompact: isCompact,
+              ),
+            ),
+            _buildReveal(
+              index: 6,
+              child: _buildGstSection(isCompact: isCompact),
             ),
             SizedBox(height: isCompact ? 22 : 28),
             _buildReveal(
