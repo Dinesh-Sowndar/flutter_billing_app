@@ -118,6 +118,29 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           (state.totalAmount + state.customerDue).toDouble();
       final normalizedAmountPaid =
           event.amountPaid.clamp(0.0, grandTotal).toDouble();
+      // ── GST computation ────────────────────────────────────────────
+      final settingsBox = HiveDatabase.settingsBox;
+      final gstEnabled = settingsBox.get('gst_enabled', defaultValue: false) as bool;
+      final gstRate = gstEnabled
+          ? (settingsBox.get('gst_rate', defaultValue: 0.0) as num).toDouble()
+          : 0.0;
+      double cgstAmount = 0.0;
+      double sgstAmount = 0.0;
+      String gstNumber = '';
+      if (gstEnabled && gstRate > 0) {
+        // Back-calculate tax from inclusive price
+        final taxableAmount = state.totalAmount / (1 + gstRate / 100);
+        final totalTax = state.totalAmount - taxableAmount;
+        cgstAmount = double.parse((totalTax / 2).toStringAsFixed(2));
+        sgstAmount = double.parse((totalTax / 2).toStringAsFixed(2));
+        // Read GSTIN from shop
+        final shopModel = HiveDatabase.shopBox.values.isNotEmpty
+            ? HiveDatabase.shopBox.values.first
+            : null;
+        gstNumber = shopModel?.gstNumber ?? '';
+      }
+      // ───────────────────────────────────────────────────────────────
+
       final transaction = TransactionModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         date: DateTime.now(),
@@ -126,6 +149,10 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         customerName: state.customerName,
         amountPaid: normalizedAmountPaid,
         paymentMethod: event.paymentMethod,
+        gstRate: gstRate,
+        cgstAmount: cgstAmount,
+        sgstAmount: sgstAmount,
+        gstNumber: gstNumber,
         items: state.cartItems
             .map((item) => TransactionItemModel(
                   productId: item.product.id,
@@ -221,6 +248,27 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       final normalizedAmountPaid =
           event.amountPaid.clamp(0.0, grandTotal).toDouble();
 
+      // ── GST computation ────────────────────────────────────────────
+      final settingsBox = HiveDatabase.settingsBox;
+      final gstEnabled = settingsBox.get('gst_enabled', defaultValue: false) as bool;
+      final gstRate = gstEnabled
+          ? (settingsBox.get('gst_rate', defaultValue: 0.0) as num).toDouble()
+          : 0.0;
+      double cgstAmount = 0.0;
+      double sgstAmount = 0.0;
+      String gstNumber = '';
+      if (gstEnabled && gstRate > 0) {
+        final taxableAmount = state.totalAmount / (1 + gstRate / 100);
+        final totalTax = state.totalAmount - taxableAmount;
+        cgstAmount = double.parse((totalTax / 2).toStringAsFixed(2));
+        sgstAmount = double.parse((totalTax / 2).toStringAsFixed(2));
+        final shopModel = HiveDatabase.shopBox.values.isNotEmpty
+            ? HiveDatabase.shopBox.values.first
+            : null;
+        gstNumber = shopModel?.gstNumber ?? '';
+      }
+      // ───────────────────────────────────────────────────────────────
+
       // ── 1. Save transaction ─────────────────────────────────────────
       final transaction = TransactionModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -230,6 +278,10 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
         customerName: state.customerName,
         amountPaid: normalizedAmountPaid,
         paymentMethod: event.paymentMethod,
+        gstRate: gstRate,
+        cgstAmount: cgstAmount,
+        sgstAmount: sgstAmount,
+        gstNumber: gstNumber,
         items: state.cartItems
             .map((item) => TransactionItemModel(
                   productId: item.product.id,
@@ -304,7 +356,11 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           customerName: state.customerName,
           paymentMethod: event.paymentMethod,
           upiId: event.upiId,
-          footer: event.footer);
+          footer: event.footer,
+          gstRate: gstRate,
+          cgstAmount: cgstAmount,
+          sgstAmount: sgstAmount,
+          gstNumber: gstNumber);
       // ───────────────────────────────────────────────────────────────
 
       emit(state.copyWith(isPrinting: false, printSuccess: true));

@@ -280,24 +280,36 @@ class _SettingsPageState extends State<SettingsPage> {
             _buildReveal(
               index: 3,
               child: _buildSectionHeader(
-                'Hardware Connections',
+                'Billing',
                 isCompact: isCompact,
               ),
             ),
             _buildReveal(
               index: 4,
-              child: _buildPrinterSection(isCompact: isCompact),
+              child: _buildGstSection(isCompact: isCompact),
             ),
             SizedBox(height: isCompact ? 22 : 28),
             _buildReveal(
               index: 5,
+              child: _buildSectionHeader(
+                'Hardware Connections',
+                isCompact: isCompact,
+              ),
+            ),
+            _buildReveal(
+              index: 6,
+              child: _buildPrinterSection(isCompact: isCompact),
+            ),
+            SizedBox(height: isCompact ? 22 : 28),
+            _buildReveal(
+              index: 7,
               child: _buildSectionHeader(
                 'Account',
                 isCompact: isCompact,
               ),
             ),
             _buildReveal(
-              index: 6,
+              index: 8,
               child: _buildListGroup(
                 isCompact: isCompact,
                 children: [
@@ -436,6 +448,196 @@ class _SettingsPageState extends State<SettingsPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildGstSection({required bool isCompact}) {
+    final settingsBox = HiveDatabase.settingsBox;
+    bool gstEnabled = settingsBox.get('gst_enabled', defaultValue: false) as bool;
+    double gstRate = (settingsBox.get('gst_rate', defaultValue: 0.0) as num).toDouble();
+
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade100, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // ── GST Toggle ──
+              Padding(
+                padding: EdgeInsets.all(isCompact ? 14 : 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: isCompact ? 42 : 46,
+                      height: isCompact ? 42 : 46,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(Icons.receipt_long_rounded,
+                          color: const Color(0xFF10B981),
+                          size: isCompact ? 20 : 22),
+                    ),
+                    SizedBox(width: isCompact ? 12 : 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('GST Billing',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: isCompact ? 15 : 16,
+                                  color: const Color(0xFF1E293B))),
+                          const SizedBox(height: 4),
+                          Text(
+                            gstEnabled
+                                ? 'GST breakdown will appear on receipts'
+                                : 'Enable for tax-compliant invoices',
+                            style: TextStyle(
+                                fontSize: isCompact ? 12 : 13,
+                                color: const Color(0xFF64748B),
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: gstEnabled,
+                      activeColor: const Color(0xFF10B981),
+                      onChanged: (val) {
+                        setLocalState(() {
+                          gstEnabled = val;
+                          settingsBox.put('gst_enabled', val);
+                          if (!val) {
+                            gstRate = 0.0;
+                            settingsBox.put('gst_rate', 0.0);
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── GST Rate Selector (visible when enabled) ──
+              if (gstEnabled) ...[
+                Divider(height: 1, color: Colors.grey.shade100),
+                Padding(
+                  padding: EdgeInsets.all(isCompact ? 14 : 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'GST Rate',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [5.0, 12.0, 18.0, 28.0].map((rate) {
+                          final isSelected = gstRate == rate;
+                          return GestureDetector(
+                            onTap: () {
+                              setLocalState(() {
+                                gstRate = rate;
+                                settingsBox.put('gst_rate', rate);
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF10B981)
+                                      : Colors.grey.shade200,
+                                  width: 1.5,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFF10B981)
+                                              .withValues(alpha: 0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Text(
+                                '${rate.toStringAsFixed(0)}%',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : const Color(0xFF334155),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      if (gstRate > 0) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(12),
+                            border:
+                                Border.all(color: const Color(0xFFBBF7D0)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline_rounded,
+                                  size: 16, color: Color(0xFF16A34A)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'CGST: ${(gstRate / 2).toStringAsFixed(1)}% + SGST: ${(gstRate / 2).toStringAsFixed(1)}% = ${gstRate.toStringAsFixed(0)}%\nPrices are treated as GST-inclusive.',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF15803D),
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 

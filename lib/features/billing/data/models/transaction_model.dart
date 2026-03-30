@@ -67,6 +67,22 @@ class TransactionModel {
   @HiveField(9, defaultValue: 'cash')
   final String paymentMethod;
 
+  /// GST rate applied to this transaction (0 = no GST).
+  @HiveField(10, defaultValue: 0.0)
+  final double gstRate;
+
+  /// CGST amount (Central GST — half of total GST).
+  @HiveField(11, defaultValue: 0.0)
+  final double cgstAmount;
+
+  /// SGST amount (State GST — half of total GST).
+  @HiveField(12, defaultValue: 0.0)
+  final double sgstAmount;
+
+  /// GSTIN of the shop at the time of transaction.
+  @HiveField(13, defaultValue: '')
+  final String gstNumber;
+
   TransactionModel({
     required this.id,
     required this.date,
@@ -78,6 +94,10 @@ class TransactionModel {
     this.customerName = '',
     this.amountPaid = 0.0,
     this.paymentMethod = 'cash',
+    this.gstRate = 0.0,
+    this.cgstAmount = 0.0,
+    this.sgstAmount = 0.0,
+    this.gstNumber = '',
   });
 
   factory TransactionModel.fromFirestore(Map<String, dynamic> map) {
@@ -94,6 +114,10 @@ class TransactionModel {
           (map['totalAmount'] as num?)?.toDouble() ??
           0.0,
       paymentMethod: map['paymentMethod'] as String? ?? 'cash',
+      gstRate: (map['gstRate'] as num?)?.toDouble() ?? 0.0,
+      cgstAmount: (map['cgstAmount'] as num?)?.toDouble() ?? 0.0,
+      sgstAmount: (map['sgstAmount'] as num?)?.toDouble() ?? 0.0,
+      gstNumber: map['gstNumber'] as String? ?? '',
       items: rawItems
           .map((i) => TransactionItemModel(
                 productId: i['productId'] as String? ?? '',
@@ -115,6 +139,10 @@ class TransactionModel {
         'customerName': customerName,
         'amountPaid': amountPaid,
         'paymentMethod': paymentMethod,
+        'gstRate': gstRate,
+        'cgstAmount': cgstAmount,
+        'sgstAmount': sgstAmount,
+        'gstNumber': gstNumber,
         'items': items
             .map((i) => {
                   'productId': i.productId,
@@ -137,6 +165,10 @@ class TransactionModel {
     String? customerName,
     double? amountPaid,
     String? paymentMethod,
+    double? gstRate,
+    double? cgstAmount,
+    double? sgstAmount,
+    String? gstNumber,
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -149,6 +181,10 @@ class TransactionModel {
       customerName: customerName ?? this.customerName,
       amountPaid: amountPaid ?? this.amountPaid,
       paymentMethod: paymentMethod ?? this.paymentMethod,
+      gstRate: gstRate ?? this.gstRate,
+      cgstAmount: cgstAmount ?? this.cgstAmount,
+      sgstAmount: sgstAmount ?? this.sgstAmount,
+      gstNumber: gstNumber ?? this.gstNumber,
     );
   }
 }

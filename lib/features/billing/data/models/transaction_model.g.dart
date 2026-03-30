@@ -73,13 +73,17 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       customerName: fields[7] as String,
       amountPaid: fields[8] == null ? 0.0 : fields[8] as double,
       paymentMethod: fields[9] == null ? 'cash' : fields[9] as String,
+      gstRate: fields[10] == null ? 0.0 : fields[10] as double,
+      cgstAmount: fields[11] == null ? 0.0 : fields[11] as double,
+      sgstAmount: fields[12] == null ? 0.0 : fields[12] as double,
+      gstNumber: fields[13] == null ? '' : fields[13] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, TransactionModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -99,7 +103,15 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       ..writeByte(8)
       ..write(obj.amountPaid)
       ..writeByte(9)
-      ..write(obj.paymentMethod);
+      ..write(obj.paymentMethod)
+      ..writeByte(10)
+      ..write(obj.gstRate)
+      ..writeByte(11)
+      ..write(obj.cgstAmount)
+      ..writeByte(12)
+      ..write(obj.sgstAmount)
+      ..writeByte(13)
+      ..write(obj.gstNumber);
   }
 
   @override

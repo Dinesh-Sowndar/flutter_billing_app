@@ -604,6 +604,67 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       ),
                     ],
                     const Divider(height: 32),
+                    // GST breakdown (only for GST transactions)
+                    if (t.gstRate > 0) ...[
+                      Builder(builder: (_) {
+                        final taxable = t.totalAmount / (1 + t.gstRate / 100);
+                        final halfRate = t.gstRate / 2;
+                        return Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Taxable Amount',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w600)),
+                                Text('₹${taxable.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('CGST @ ${halfRate.toStringAsFixed(1)}%',
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w600)),
+                                Text('₹${t.cgstAmount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('SGST @ ${halfRate.toStringAsFixed(1)}%',
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w600)),
+                                Text('₹${t.sgstAmount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            const SizedBox(height: 12),
+                          ],
+                        );
+                      }),
+                    ],
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -726,6 +787,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
         paymentMethod: t.paymentMethod,
         upiId: upiId,
         footer: footer,
+        gstRate: t.gstRate,
+        cgstAmount: t.cgstAmount,
+        sgstAmount: t.sgstAmount,
+        gstNumber: t.gstNumber,
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

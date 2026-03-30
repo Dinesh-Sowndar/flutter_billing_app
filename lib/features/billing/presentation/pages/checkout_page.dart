@@ -12,6 +12,7 @@ import '../../../settings/presentation/bloc/printer_state.dart';
 import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/billing_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/data/hive_database.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -445,10 +446,97 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 billingState.customerId.isNotEmpty && prevDue > 0;
             final grandTotal = subTotal + (hasDue ? prevDue : 0);
 
+            // GST info
+            final settingsBox = HiveDatabase.settingsBox;
+            final gstEnabled = settingsBox.get('gst_enabled', defaultValue: false) as bool;
+            final gstRate = gstEnabled
+                ? (settingsBox.get('gst_rate', defaultValue: 0.0) as num).toDouble()
+                : 0.0;
+            final bool showGst = gstEnabled && gstRate > 0;
+            final taxableAmount = showGst ? subTotal / (1 + gstRate / 100) : 0.0;
+            final totalTax = showGst ? subTotal - taxableAmount : 0.0;
+            final halfRate = gstRate / 2;
+            final cgst = totalTax / 2;
+            final sgst = totalTax / 2;
+
             return Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
               child: Column(
                 children: [
+                  // GST breakdown rows
+                  if (showGst) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'TAXABLE AMOUNT',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          'Rs ${taxableAmount.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'CGST @ ${halfRate.toStringAsFixed(1)}%',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          'Rs ${cgst.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'SGST @ ${halfRate.toStringAsFixed(1)}%',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF94A3B8),
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          'Rs ${sgst.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    const SizedBox(height: 8),
+                  ],
                   // Sub Total row — only shown when there is a previous due
                   if (hasDue) ...[
                   Row(
@@ -542,6 +630,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       ),
                     ],
                   ),
+                  // GST inclusive note
+                  if (showGst) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Incl. GST ${gstRate.toStringAsFixed(0)}%',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF16A34A),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             );

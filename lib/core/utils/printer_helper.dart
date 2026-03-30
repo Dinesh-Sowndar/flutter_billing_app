@@ -154,6 +154,10 @@ class PrinterHelper {
     String customerName = '',
     String paymentMethod = 'cash',
     String upiId = '',
+    double gstRate = 0.0,
+    double cgstAmount = 0.0,
+    double sgstAmount = 0.0,
+    String gstNumber = '',
   }) async {
     final bool alive = await PrintBluetoothThermal.connectionStatus;
     if (!alive) return;
@@ -186,11 +190,27 @@ class PrinterHelper {
     bytes += _textToBytes(phone);
     bytes += EscPos.lineFeed;
 
+    // GSTIN (if available)
+    if (gstNumber.isNotEmpty) {
+      bytes += EscPos.boldOn;
+      bytes += _textToBytes('GSTIN: $gstNumber');
+      bytes += EscPos.boldOff;
+      bytes += EscPos.lineFeed;
+    }
+
     // Date and Time
     String formattedDate =
         DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
     bytes += _textToBytes(formattedDate);
     bytes += EscPos.lineFeed;
+
+    // Invoice type label when GST is enabled
+    if (gstRate > 0) {
+      bytes += EscPos.boldOn;
+      bytes += _textToBytes('TAX INVOICE');
+      bytes += EscPos.boldOff;
+      bytes += EscPos.lineFeed;
+    }
 
     bytes += _textToBytes('--------------------------------');
     bytes += EscPos.lineFeed;
@@ -219,6 +239,32 @@ class PrinterHelper {
 
     bytes += _textToBytes('--------------------------------');
     bytes += EscPos.lineFeed;
+
+    // ── GST Breakdown (if enabled) ────────────────────────────────────
+    if (gstRate > 0) {
+      final taxableAmount = total / (1 + gstRate / 100);
+      final halfRate = gstRate / 2;
+
+      bytes += EscPos.alignLeft;
+      String taxableLine = 'Taxable Amt:'.padRight(20) +
+          'Rs ${taxableAmount.toStringAsFixed(2)}'.padLeft(12);
+      bytes += _textToBytes(taxableLine);
+      bytes += EscPos.lineFeed;
+
+      String cgstLine = 'CGST @ ${halfRate.toStringAsFixed(1)}%:'.padRight(20) +
+          'Rs ${cgstAmount.toStringAsFixed(2)}'.padLeft(12);
+      bytes += _textToBytes(cgstLine);
+      bytes += EscPos.lineFeed;
+
+      String sgstLine = 'SGST @ ${halfRate.toStringAsFixed(1)}%:'.padRight(20) +
+          'Rs ${sgstAmount.toStringAsFixed(2)}'.padLeft(12);
+      bytes += _textToBytes(sgstLine);
+      bytes += EscPos.lineFeed;
+
+      bytes += _textToBytes('--------------------------------');
+      bytes += EscPos.lineFeed;
+    }
+    // ─────────────────────────────────────────────────────────────────
 
     // Show full breakdown only when there is prev due OR remaining balance.
     // If customer paid in full with no prev due, just print "TOTAL" (cleaner receipt).

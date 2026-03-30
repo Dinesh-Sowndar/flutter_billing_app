@@ -703,6 +703,33 @@ class CustomerDetailPage extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
+                            // GST breakdown (only for GST transactions)
+                            if (tx.gstRate > 0) ...[
+                              Builder(builder: (_) {
+                                final taxable = tx.totalAmount / (1 + tx.gstRate / 100);
+                                final halfRate = tx.gstRate / 2;
+                                return Column(
+                                  children: [
+                                    _summaryRow('Taxable Amount',
+                                        currencyFormat.format(taxable),
+                                        valueColor: const Color(0xFF64748B)),
+                                    const SizedBox(height: 6),
+                                    _summaryRow(
+                                        'CGST @ ${halfRate.toStringAsFixed(1)}%',
+                                        currencyFormat.format(tx.cgstAmount),
+                                        valueColor: const Color(0xFF64748B)),
+                                    const SizedBox(height: 6),
+                                    _summaryRow(
+                                        'SGST @ ${halfRate.toStringAsFixed(1)}%',
+                                        currencyFormat.format(tx.sgstAmount),
+                                        valueColor: const Color(0xFF64748B)),
+                                    const SizedBox(height: 8),
+                                    Divider(height: 1, color: Colors.grey.shade200),
+                                    const SizedBox(height: 8),
+                                  ],
+                                );
+                              }),
+                            ],
                             _summaryRow('Bill Amount',
                                 currencyFormat.format(tx.totalAmount),
                                 bold: true),
@@ -820,6 +847,10 @@ class CustomerDetailPage extends StatelessWidget {
         paymentMethod: tx.paymentMethod,
         upiId: shop?.upiId ?? '',
         footer: footer,
+        gstRate: tx.gstRate,
+        cgstAmount: tx.cgstAmount,
+        sgstAmount: tx.sgstAmount,
+        gstNumber: tx.gstNumber,
       );
 
       if (context.mounted) {
