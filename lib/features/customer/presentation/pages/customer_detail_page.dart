@@ -7,7 +7,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/service_locator.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/printer_helper.dart';
 import '../../../billing/data/models/transaction_model.dart';
 import '../../../billing/domain/repositories/billing_repository.dart';
@@ -15,12 +14,20 @@ import '../../../shop/data/models/shop_model.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../../data/models/customer_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'edit_customer_page.dart';
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
 
 class CustomerDetailPage extends StatelessWidget {
   final CustomerEntity customer;
   const CustomerDetailPage({super.key, required this.customer});
+
+  static const Color _accent = Color(0xFF1E3A8A);
+  static const Color _accentDark = Color(0xFF312E81);
+  static const Color _surface = Color(0xFFF8FAFC);
+  static const Color _ink = Color(0xFF1F2937);
+  static const Color _accentSoft = Color(0xFFEEF2FF);
+  static const Color _accentSoftAlt = Color(0xFFE0E7FF);
 
   Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
     final Uri launchUri = Uri(
@@ -70,43 +77,58 @@ class CustomerDetailPage extends StatelessWidget {
                 (sum, t) => sum + (t.items.isNotEmpty ? t.totalAmount : 0));
 
             return Scaffold(
-              backgroundColor: const Color(0xFFF8FAFC),
+              backgroundColor: _surface,
               appBar: AppBar(
                 title: Text(
                   'Customer Details',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 22,
-                    color: const Color(0xFF0F172A),
+                    color: _ink,
                   ),
                 ),
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: false,
-                iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+                iconTheme: const IconThemeData(color: _ink),
                 actions: [
                   if (ledgerDue > 0)
-                    TextButton.icon(
+                    FilledButton.icon(
                       onPressed: () => _showPaymentDialog(
                           context, currentCustomer, ledgerDue),
-                      icon: const Icon(Icons.payments_rounded,
-                          color: Color(0xFF10B981)),
-                      label: const Text('Pay Due',
-                          style: TextStyle(
-                              color: Color(0xFF10B981),
-                              fontWeight: FontWeight.w700)),
+                      icon: const Icon(Icons.payments_rounded, size: 18),
+                      label: const Text(
+                        'Pay Due',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _accent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   const SizedBox(width: 8),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF0F172A)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    icon: const Icon(Icons.more_vert_rounded, color: _ink),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     color: Colors.white,
                     elevation: 4,
                     offset: const Offset(0, 40),
                     padding: EdgeInsets.zero,
                     onSelected: (value) {
                       if (value == 'edit') {
-                        context.push('/customers/${currentCustomer.id}/edit', extra: currentCustomer);
+                        EditCustomerPage.showSheet(context, currentCustomer)
+                            .then((_) {
+                          if (context.mounted) {
+                            context
+                                .read<CustomerBloc>()
+                                .add(LoadCustomersEvent());
+                          }
+                        });
                       } else if (value == 'delete') {
                         _confirmDelete(context, currentCustomer);
                       }
@@ -122,15 +144,19 @@ class CustomerDetailPage extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: _accentSoft,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.edit_rounded, size: 16, color: Color(0xFF64748B)),
+                              child: const Icon(Icons.edit_rounded,
+                                  size: 16, color: _accent),
                             ),
                             const SizedBox(width: 8),
                             const Text(
                               'Edit',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF334155)),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: Color(0xFF334155)),
                             ),
                           ],
                         ),
@@ -149,12 +175,16 @@ class CustomerDetailPage extends StatelessWidget {
                                 color: Colors.red.shade50,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.red.shade400),
+                              child: Icon(Icons.delete_sweep_rounded,
+                                  size: 16, color: Colors.red.shade400),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               'Delete',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.red.shade600),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: Colors.red.shade600),
                             ),
                           ],
                         ),
@@ -175,7 +205,7 @@ class CustomerDetailPage extends StatelessWidget {
                   style: TextStyle(
                       fontWeight: FontWeight.w700, letterSpacing: 0.5),
                 ),
-                backgroundColor: const Color(0xFF10B981),
+                backgroundColor: _accent,
                 foregroundColor: Colors.white,
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -183,16 +213,15 @@ class CustomerDetailPage extends StatelessWidget {
               ),
               body: Column(
                 children: [
-                  // Modern Header Banner
                   Container(
                     margin:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [
-                          AppTheme.primaryColor.withValues(alpha: 0.9),
-                          AppTheme.primaryColor,
+                          _accent,
+                          _accentDark,
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -200,7 +229,7 @@ class CustomerDetailPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                          color: _accent.withValues(alpha: 0.25),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -271,6 +300,52 @@ class CustomerDetailPage extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      '${transactions.length} transaction${transactions.length == 1 ? '' : 's'}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: ledgerDue > 0
+                                          ? _accentSoftAlt
+                                          : _accentSoft,
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      ledgerDue > 0
+                                          ? 'Due Rs ${ledgerDue.toStringAsFixed(0)}'
+                                          : 'All Cleared',
+                                      style: TextStyle(
+                                        color: ledgerDue > 0
+                                            ? _accentDark
+                                            : _accent,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
@@ -278,7 +353,6 @@ class CustomerDetailPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Stats Row
                   Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -286,7 +360,7 @@ class CustomerDetailPage extends StatelessWidget {
                       children: [
                         Expanded(
                             child: _buildStatCard('Total Spent', totalSpent,
-                                Icons.shopping_bag_rounded, Colors.purple)),
+                                Icons.shopping_bag_rounded, Colors.indigo)),
                         const SizedBox(width: 12),
                         Expanded(
                             child: _buildStatCard(
@@ -302,14 +376,40 @@ class CustomerDetailPage extends StatelessWidget {
                   Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Transaction History',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: _ink,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${transactions.length} entries',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Transaction History',
+                        'Bills and due payments are shown newest first.',
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E293B),
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -346,7 +446,8 @@ class CustomerDetailPage extends StatelessWidget {
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF94A3B8))),
                                 const SizedBox(height: 6),
-                                const Text('Tap "Add Bill" to start',
+                                const Text(
+                                    'Tap "Add Bill" to create first entry',
                                     style: TextStyle(color: Color(0xFF94A3B8))),
                               ],
                             ),
@@ -439,7 +540,6 @@ class CustomerDetailPage extends StatelessWidget {
     );
   }
 
-
   Widget _buildTransactionTile(BuildContext context, TransactionModel tx) {
     // dueForTx: how much of THIS bill's subtotal was unpaid
     final billDue = (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount));
@@ -462,11 +562,10 @@ class CustomerDetailPage extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
+            color: _accentSoft,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.shopping_cart_outlined,
-              color: Color(0xFF64748B)),
+          child: const Icon(Icons.shopping_cart_outlined, color: _accent),
         ),
         title: Text(
           DateFormat('MMM dd, yyyy - hh:mm a').format(tx.date),
@@ -491,26 +590,18 @@ class CustomerDetailPage extends StatelessWidget {
                   fontSize: 14,
                   color: Color(0xFF10B981)),
             ),
+            const SizedBox(height: 4),
             if (!isPaid && !isPartial)
-              const Text('Unpaid',
-                  style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold))
+              _statusPill('Unpaid', Colors.red.shade50, Colors.red.shade700)
             else if (isPartial)
-              Text(
+              _statusPill(
                 'Due ${currencyFormat.format(billDue)}',
-                style: const TextStyle(
-                    color: Colors.orange,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold),
+                const Color(0xFFFFF7ED),
+                const Color(0xFFC2410C),
               )
             else
-              const Text('Settled',
-                  style: TextStyle(
-                      color: Color(0xFF10B981),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold)),
+              _statusPill(
+                  'Settled', const Color(0xFFECFDF5), const Color(0xFF15803D)),
           ],
         ),
       ),
@@ -524,9 +615,9 @@ class CustomerDetailPage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: _accentSoft,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCFCE7)),
+        border: Border.all(color: _accentSoftAlt),
       ),
       child: ListTile(
         onTap: () => _showTransactionDetail(context, tx),
@@ -535,30 +626,43 @@ class CustomerDetailPage extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: const Color(0xFFD1FAE5),
+            color: _accentSoftAlt,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.payments_rounded, color: Color(0xFF10B981)),
+          child: const Icon(Icons.payments_rounded, color: _accent),
         ),
-        title: const Text('Due Amount Kept',
+        title: const Text('Due Payment',
             style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-                color: Color(0xFF065F46))),
+                fontWeight: FontWeight.w700, fontSize: 14, color: _accentDark)),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             DateFormat('MMM dd, yyyy - hh:mm a').format(tx.date),
-            style: const TextStyle(
-                color: Color(0xFF059669), fontWeight: FontWeight.w500),
+            style: const TextStyle(color: _accent, fontWeight: FontWeight.w500),
           ),
         ),
         trailing: Text(
           '+ ${currencyFormat.format(tx.amountPaid)}',
           style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-              color: Color(0xFF10B981)),
+              fontWeight: FontWeight.w800, fontSize: 16, color: _accent),
+        ),
+      ),
+    );
+  }
+
+  Widget _statusPill(String text, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: fg,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -597,8 +701,7 @@ class CustomerDetailPage extends StatelessWidget {
             ),
             // Header
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 children: [
                   Container(
@@ -629,7 +732,7 @@ class CustomerDetailPage extends StatelessWidget {
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 18,
-                            color: Color(0xFF0F172A),
+                            color: _ink,
                           ),
                         ),
                         Text(
@@ -654,176 +757,171 @@ class CustomerDetailPage extends StatelessWidget {
                 shrinkWrap: true,
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                 children: [
-                  if (isPayment) ...
-                    [
-                      _detailRow(
-                        icon: Icons.payments_rounded,
-                        iconColor: const Color(0xFF10B981),
-                        label: 'Amount Paid',
-                        value: currencyFormat.format(tx.amountPaid),
-                        valueColor: const Color(0xFF10B981),
-                        bold: true,
+                  if (isPayment) ...[
+                    _detailRow(
+                      icon: Icons.payments_rounded,
+                      iconColor: const Color(0xFF10B981),
+                      label: 'Amount Paid',
+                      value: currencyFormat.format(tx.amountPaid),
+                      valueColor: const Color(0xFF10B981),
+                      bold: true,
+                    ),
+                    _detailRow(
+                      icon: Icons.info_outline_rounded,
+                      iconColor: const Color(0xFF94A3B8),
+                      label: 'Type',
+                      value: 'Due Payment',
+                    ),
+                  ] else ...[
+                    // Items
+                    const Text(
+                      'Items',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: Color(0xFF0F172A),
                       ),
-                      _detailRow(
-                        icon: Icons.info_outline_rounded,
-                        iconColor: const Color(0xFF94A3B8),
-                        label: 'Type',
-                        value: 'Due Payment',
-                      ),
-                    ]
-                  else ...
-                    [
-                      // Items
-                      const Text(
-                        'Items',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      ...tx.items.map((item) => Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                  color: Colors.grey.shade100, width: 1.2),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor
-                                        .withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                      Icons.inventory_2_rounded,
-                                      size: 18,
-                                      color: AppTheme.primaryColor),
+                    ),
+                    const SizedBox(height: 10),
+                    ...tx.items.map((item) => Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: Colors.grey.shade100, width: 1.2),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: _accent.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.productName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
-                                          color: Color(0xFF1E293B),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Rs ${item.price.toStringAsFixed(2)}  ×  ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity}',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF94A3B8),
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  'Rs ${item.total.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )),
-                      const SizedBox(height: 8),
-                      // Summary section
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(16),
-                          border:
-                              Border.all(color: Colors.grey.shade100, width: 1.2),
-                        ),
-                        child: Column(
-                          children: [
-                            // GST breakdown (only for GST transactions)
-                            if (tx.gstRate > 0) ...[
-                              Builder(builder: (_) {
-                                final taxable = tx.totalAmount / (1 + tx.gstRate / 100);
-                                final halfRate = tx.gstRate / 2;
-                                return Column(
-                                  children: [
-                                    _summaryRow('Taxable Amount',
-                                        currencyFormat.format(taxable),
-                                        valueColor: const Color(0xFF64748B)),
-                                    const SizedBox(height: 6),
-                                    _summaryRow(
-                                        'CGST @ ${halfRate.toStringAsFixed(1)}%',
-                                        currencyFormat.format(tx.cgstAmount),
-                                        valueColor: const Color(0xFF64748B)),
-                                    const SizedBox(height: 6),
-                                    _summaryRow(
-                                        'SGST @ ${halfRate.toStringAsFixed(1)}%',
-                                        currencyFormat.format(tx.sgstAmount),
-                                        valueColor: const Color(0xFF64748B)),
-                                    const SizedBox(height: 8),
-                                    Divider(height: 1, color: Colors.grey.shade200),
-                                    const SizedBox(height: 8),
-                                  ],
-                                );
-                              }),
-                            ],
-                            _summaryRow('Bill Amount',
-                                currencyFormat.format(tx.totalAmount),
-                                bold: true),
-                            const SizedBox(height: 8),
-                            // If amountPaid > totalAmount, the extra covered prev due
-                            if (tx.amountPaid > tx.totalAmount) ...[
-                              _summaryRow(
-                                'Prev Due Covered',
-                                '+ ${currencyFormat.format(tx.amountPaid - tx.totalAmount)}',
-                                valueColor: const Color(0xFFF59E0B),
+                                child: const Icon(Icons.inventory_2_rounded,
+                                    size: 18, color: _accent),
                               ),
-                              const SizedBox(height: 4),
-                              Divider(height: 1, color: Colors.grey.shade200),
-                              const SizedBox(height: 8),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.productName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                        color: _ink,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Rs ${item.price.toStringAsFixed(2)}  ×  ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity}',
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF94A3B8),
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                'Rs ${item.total.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                  color: _ink,
+                                ),
+                              ),
                             ],
-                            _summaryRow('Amount Paid',
-                                currencyFormat.format(tx.amountPaid),
-                                valueColor: const Color(0xFF10B981),
-                                bold: tx.amountPaid >= tx.totalAmount),
-                            if (tx.totalAmount - tx.amountPaid > 0) ...[
-                              const SizedBox(height: 8),
-                              _summaryRow(
-                                  'Due Amount',
-                                  currencyFormat.format(
-                                      tx.totalAmount - tx.amountPaid),
-                                  valueColor: Colors.red),
-                            ],
-                            const SizedBox(height: 12),
-                            Divider(height: 1, color: Colors.grey.shade200),
-                            const SizedBox(height: 12),
-                            _detailRow(
-                              icon: _paymentIcon(tx.paymentMethod),
-                              iconColor: AppTheme.primaryColor,
-                              label: 'Payment Method',
-                              value: tx.paymentMethod.toUpperCase(),
-                            ),
-                          ],
-                        ),
+                          ),
+                        )),
+                    const SizedBox(height: 8),
+                    // Summary section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(16),
+                        border:
+                            Border.all(color: Colors.grey.shade100, width: 1.2),
                       ),
-                    ],
+                      child: Column(
+                        children: [
+                          // GST breakdown (only for GST transactions)
+                          if (tx.gstRate > 0) ...[
+                            Builder(builder: (_) {
+                              final taxable =
+                                  tx.totalAmount / (1 + tx.gstRate / 100);
+                              final halfRate = tx.gstRate / 2;
+                              return Column(
+                                children: [
+                                  _summaryRow('Taxable Amount',
+                                      currencyFormat.format(taxable),
+                                      valueColor: const Color(0xFF64748B)),
+                                  const SizedBox(height: 6),
+                                  _summaryRow(
+                                      'CGST @ ${halfRate.toStringAsFixed(1)}%',
+                                      currencyFormat.format(tx.cgstAmount),
+                                      valueColor: const Color(0xFF64748B)),
+                                  const SizedBox(height: 6),
+                                  _summaryRow(
+                                      'SGST @ ${halfRate.toStringAsFixed(1)}%',
+                                      currencyFormat.format(tx.sgstAmount),
+                                      valueColor: const Color(0xFF64748B)),
+                                  const SizedBox(height: 8),
+                                  Divider(
+                                      height: 1, color: Colors.grey.shade200),
+                                  const SizedBox(height: 8),
+                                ],
+                              );
+                            }),
+                          ],
+                          _summaryRow('Bill Amount',
+                              currencyFormat.format(tx.totalAmount),
+                              bold: true),
+                          const SizedBox(height: 8),
+                          // If amountPaid > totalAmount, the extra covered prev due
+                          if (tx.amountPaid > tx.totalAmount) ...[
+                            _summaryRow(
+                              'Prev Due Covered',
+                              '+ ${currencyFormat.format(tx.amountPaid - tx.totalAmount)}',
+                              valueColor: const Color(0xFFF59E0B),
+                            ),
+                            const SizedBox(height: 4),
+                            Divider(height: 1, color: Colors.grey.shade200),
+                            const SizedBox(height: 8),
+                          ],
+                          _summaryRow('Amount Paid',
+                              currencyFormat.format(tx.amountPaid),
+                              valueColor: const Color(0xFF10B981),
+                              bold: tx.amountPaid >= tx.totalAmount),
+                          if (tx.totalAmount - tx.amountPaid > 0) ...[
+                            const SizedBox(height: 8),
+                            _summaryRow(
+                                'Due Amount',
+                                currencyFormat
+                                    .format(tx.totalAmount - tx.amountPaid),
+                                valueColor: Colors.red),
+                          ],
+                          const SizedBox(height: 12),
+                          Divider(height: 1, color: Colors.grey.shade200),
+                          const SizedBox(height: 12),
+                          _detailRow(
+                            icon: _paymentIcon(tx.paymentMethod),
+                            iconColor: _accent,
+                            label: 'Payment Method',
+                            value: tx.paymentMethod.toUpperCase(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -842,7 +940,7 @@ class CustomerDetailPage extends StatelessWidget {
                       icon: const Icon(Icons.print_rounded, size: 20),
                       label: const Text('Print Bill'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
+                        backgroundColor: _accent,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -868,9 +966,8 @@ class CustomerDetailPage extends StatelessWidget {
 
     // Get shop info from Hive
     final shopBox = HiveDatabase.shopBox;
-    final ShopModel? shop = shopBox.values.isNotEmpty
-        ? shopBox.values.first
-        : null;
+    final ShopModel? shop =
+        shopBox.values.isNotEmpty ? shopBox.values.first : null;
 
     final shopName = shop?.name ?? 'Shop';
     final address1 = shop?.addressLine1 ?? '';
@@ -919,8 +1016,8 @@ class CustomerDetailPage extends StatelessWidget {
             ),
             backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         );
       }
@@ -937,8 +1034,8 @@ class CustomerDetailPage extends StatelessWidget {
             ),
             backgroundColor: const Color(0xFFDC2626),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         );
       }
@@ -979,7 +1076,7 @@ class CustomerDetailPage extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: valueColor ?? const Color(0xFF0F172A),
+              color: valueColor ?? _ink,
               fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
               fontSize: 14,
             ),
@@ -1002,7 +1099,7 @@ class CustomerDetailPage extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: valueColor ?? const Color(0xFF0F172A),
+            color: valueColor ?? _ink,
             fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
             fontSize: 13,
           ),
@@ -1093,9 +1190,8 @@ class CustomerDetailPage extends StatelessWidget {
                         final existingModel =
                             HiveDatabase.customerBox.get(customer.id);
                         if (existingModel != null) {
-                          final newBalance =
-                              (existingModel.balance - amount)
-                                  .clamp(0.0, double.infinity);
+                          final newBalance = (existingModel.balance - amount)
+                              .clamp(0.0, double.infinity);
                           await HiveDatabase.customerBox.put(
                             customer.id,
                             existingModel.copyWith(balance: newBalance),
@@ -1157,7 +1253,7 @@ class CustomerDetailPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
+                color: _ink,
               ),
             ),
             const SizedBox(height: 12),

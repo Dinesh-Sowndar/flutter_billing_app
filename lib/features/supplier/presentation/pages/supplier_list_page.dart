@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/entities/supplier_entity.dart';
+import 'add_supplier_page.dart';
 import '../bloc/supplier_bloc.dart';
 import '../bloc/supplier_event.dart';
 import '../bloc/supplier_state.dart';
@@ -85,7 +86,7 @@ class _SupplierListViewState extends State<_SupplierListView> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await context.push('/suppliers/add');
+          await AddSupplierPage.showSheet(context);
           if (context.mounted) {
             context.read<SupplierBloc>().add(const LoadSuppliersEvent());
           }

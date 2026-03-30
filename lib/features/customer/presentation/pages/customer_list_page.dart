@@ -5,8 +5,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/data/hive_database.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/customer_entity.dart';
+import 'add_customer_page.dart';
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
 import '../bloc/customer_state.dart';
@@ -21,6 +21,10 @@ class CustomerListPage extends StatefulWidget {
 }
 
 class _CustomerListPageState extends State<CustomerListPage> {
+  static const Color _accent = Color(0xFF1E3A8A);
+  static const Color _accentDark = Color(0xFF312E81);
+  static const Color _accentSoft = Color(0xFFEEF2FF);
+
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -60,16 +64,15 @@ class _CustomerListPageState extends State<CustomerListPage> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: CircleAvatar(
-              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-              child: const Icon(Icons.people_alt_rounded,
-                  color: AppTheme.primaryColor),
+              backgroundColor: _accentSoft,
+              child: const Icon(Icons.people_alt_rounded, color: _accent),
             ),
           )
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await context.push('/customers/add');
+          await AddCustomerPage.showSheet(context);
           if (context.mounted) {
             context.read<CustomerBloc>().add(LoadCustomersEvent());
           }
@@ -79,7 +82,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           'Add Customer',
           style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: _accent,
         foregroundColor: Colors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -92,8 +95,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
               builder: (context, state) {
                 if (state.status == CustomerStatus.loading) {
                   return const Center(
-                      child: CircularProgressIndicator(
-                          color: AppTheme.primaryColor));
+                      child: CircularProgressIndicator(color: _accent));
                 }
 
                 if (state.status == CustomerStatus.error) {
@@ -109,8 +111,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
                       return model?.toEntity() ?? c;
                     }).toList();
 
-                    final visibleCustomers = _applyDueFilter(
-                        _filtered(freshCustomers));
+                    final visibleCustomers =
+                        _applyDueFilter(_filtered(freshCustomers));
 
                     if (visibleCustomers.isEmpty) {
                       return _buildEmptyState();
@@ -162,8 +164,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide:
-                const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+            borderSide: const BorderSide(color: _accent, width: 1.5),
           ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -298,8 +299,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppTheme.primaryColor.withValues(alpha: 0.8),
-                            AppTheme.primaryColor,
+                            _accent,
+                            _accentDark,
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -307,7 +308,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                            color: _accent.withValues(alpha: 0.2),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -385,7 +386,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                             decoration: BoxDecoration(
                               color: hasDue
                                   ? Colors.red.withValues(alpha: 0.1)
-                                  : Colors.green.withValues(alpha: 0.1),
+                                  : _accentSoft,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -393,9 +394,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                   ? 'Due: ${currencyFormat.format(currentDue)}'
                                   : 'Adv: ${currencyFormat.format(currentDue.abs())}',
                               style: TextStyle(
-                                color: hasDue
-                                    ? Colors.red.shade700
-                                    : Colors.green.shade700,
+                                color: hasDue ? Colors.red.shade700 : _accent,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -427,12 +426,11 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981),
+                                    color: _accent,
                                     borderRadius: BorderRadius.circular(10),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF10B981)
-                                            .withValues(alpha: 0.25),
+                                        color: _accent.withValues(alpha: 0.25),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -470,5 +468,4 @@ class _CustomerListPageState extends State<CustomerListPage> {
       },
     );
   }
-
 }

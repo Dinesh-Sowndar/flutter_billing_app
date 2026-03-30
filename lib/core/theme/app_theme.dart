@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF4F46E5); // Vibrant Indigo
+  static const Color primaryColor = Color(0xFF1E3A8A); // Customer section accent
   static const Color secondaryColor = Color(0xFF06B6D4); // Vibrant Cyan
   static const Color backgroundColor = Color(0xFFF8FAFC); // Slate 50
   static const Color surfaceColor = Colors.white;

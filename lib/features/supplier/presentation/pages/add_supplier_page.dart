@@ -10,7 +10,17 @@ import '../bloc/supplier_state.dart';
 import '../../../../core/service_locator.dart' as di;
 
 class AddSupplierPage extends StatefulWidget {
-  const AddSupplierPage({super.key});
+  final bool asSheet;
+  const AddSupplierPage({super.key, this.asSheet = false});
+
+  static Future<void> showSheet(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AddSupplierPage(asSheet: true),
+    );
+  }
 
   @override
   State<AddSupplierPage> createState() => _AddSupplierPageState();
@@ -74,33 +84,55 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _bloc,
-      child: Scaffold(
-        backgroundColor: _surface,
-        appBar: AppBar(
-          backgroundColor: _surface,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-            color: const Color(0xFF0F172A),
-            onPressed: () => context.pop(),
+    final content = Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            widget.asSheet ? 8 : 20,
+            20,
+            20 + MediaQuery.of(context).viewInsets.bottom,
           ),
-          title: const Text(
-            'Add Supplier',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 22,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-        ),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
+              if (widget.asSheet) ...[
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Text(
+                      'Add Supplier',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 22,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => context.pop(),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Color(0xFF0F172A),
+                      ),
+                      splashRadius: 20,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+              ],
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -229,6 +261,40 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
           ),
         ),
       ),
+    );
+
+    return BlocProvider.value(
+      value: _bloc,
+      child: widget.asSheet
+          ? Container(
+              decoration: const BoxDecoration(
+                color: _surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(top: false, child: content),
+            )
+          : Scaffold(
+              backgroundColor: _surface,
+              appBar: AppBar(
+                backgroundColor: _surface,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                  color: const Color(0xFF0F172A),
+                  onPressed: () => context.pop(),
+                ),
+                title: const Text(
+                  'Add Supplier',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              body: content,
+            ),
     );
   }
 

@@ -3,23 +3,47 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../bloc/customer_bloc.dart';
 import '../bloc/customer_event.dart';
+import '../bloc/customer_state.dart';
 
 class EditCustomerPage extends StatefulWidget {
   final CustomerEntity customer;
-  const EditCustomerPage({super.key, required this.customer});
+  final bool asSheet;
+  const EditCustomerPage({
+    super.key,
+    required this.customer,
+    this.asSheet = false,
+  });
+
+  static Future<void> showSheet(
+    BuildContext context,
+    CustomerEntity customer,
+  ) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => EditCustomerPage(customer: customer, asSheet: true),
+    );
+  }
 
   @override
   State<EditCustomerPage> createState() => _EditCustomerPageState();
 }
 
 class _EditCustomerPageState extends State<EditCustomerPage> {
+  static const Color _accent = Color(0xFF1E3A8A);
+  static const Color _accentDark = Color(0xFF312E81);
+  static const Color _surface = Color(0xFFF8FAFC);
+  static const Color _ink = Color(0xFF1F2937);
+
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
+  final _nameFocusNode = FocusNode();
+  final _phoneFocusNode = FocusNode();
   bool _isSaving = false;
 
   @override
@@ -27,12 +51,21 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
     super.initState();
     _nameController = TextEditingController(text: widget.customer.name);
     _phoneController = TextEditingController(text: widget.customer.phone);
+    if (widget.asSheet) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _nameFocusNode.requestFocus();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _nameFocusNode.dispose();
+    _phoneFocusNode.dispose();
     super.dispose();
   }
 
@@ -45,181 +78,218 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
       phone: _phoneController.text.trim(),
     );
 
-    context.read<CustomerBloc>().add(UpdateCustomerEvent(updatedCustomer));
-    await Future.delayed(const Duration(milliseconds: 300));
+    final bloc = context.read<CustomerBloc>();
+    bloc.add(UpdateCustomerEvent(updatedCustomer));
 
-    if (mounted) context.pop();
+    final resultState = await bloc.stream.firstWhere(
+      (s) =>
+          s.status == CustomerStatus.loaded || s.status == CustomerStatus.error,
+    );
+
+    if (!mounted) return;
+
+    if (resultState.status == CustomerStatus.error) {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(resultState.error ?? 'Failed to update customer'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } else {
+      context.pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: Text(
-          'Edit Customer',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 24,
-            color: const Color(0xFF0F172A),
+    final content = Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            widget.asSheet ? 8 : 20,
+            20,
+            20 + MediaQuery.of(context).viewInsets.bottom,
           ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Header card
+              if (widget.asSheet) ...[
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Text(
+                      'Edit Customer',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 22,
+                        color: _ink,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => context.pop(),
+                      icon: const Icon(Icons.close_rounded, color: _ink),
+                      splashRadius: 20,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+              ],
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.primaryColor.withValues(alpha: 0.8),
-                      AppTheme.primaryColor,
-                    ],
+                  gradient: const LinearGradient(
+                    colors: [_accent, _accentDark],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Column(
+                child: Row(
                   children: [
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 46,
+                      height: 46,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.18),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                      ),
+                      child: const Icon(
+                        Icons.edit_note_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Update Customer Profile',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'Edit details below and keep customer records up to date.',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.edit_note_rounded,
-                          color: Colors.white, size: 40),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Update Details',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Modify customer information',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 40),
-
-              // Name field
-              _buildLabel('Full Name'),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _nameController,
-                textCapitalization: TextCapitalization.words,
-                maxLength: 20,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
-                decoration: _inputDecoration(
-                  hint: 'e.g. Rahul Sharma',
-                  icon: Icons.person_outline_rounded,
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Name is required';
-                  if (v.trim().length > 20)
-                    return 'Name cannot exceed 20 characters';
-                  return null;
-                },
+              const SizedBox(height: 14),
+              _buildCard(
+                children: [
+                  _buildField(
+                    controller: _nameController,
+                    focusNode: _nameFocusNode,
+                    label: 'Customer Name',
+                    hint: 'e.g. Rahul Sharma',
+                    icon: Icons.person_outline_rounded,
+                    maxLength: 20,
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.words,
+                    onFieldSubmitted: (_) => _phoneFocusNode.requestFocus(),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Name is required';
+                      }
+                      if (v.trim().length > 20) {
+                        return 'Name cannot exceed 20 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildField(
+                    controller: _phoneController,
+                    focusNode: _phoneFocusNode,
+                    label: 'Phone Number',
+                    hint: 'e.g. 9876543210',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _save(),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Phone number is required';
+                      }
+                      if (v.trim().length != 10) {
+                        return 'Phone number must be exactly 10 digits';
+                      }
+                      if (!RegExp(r'^[6-9]\d{9}$').hasMatch(v.trim())) {
+                        return 'Enter a valid Indian mobile number';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
               ),
-
+              const SizedBox(height: 12),
+              const Text(
+                'Tip: Keep the phone number accurate for quick lookup and billing.',
+                style: TextStyle(
+                  color: Color(0xFF475569),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 24),
-
-              // Phone field
-              _buildLabel('Phone Number'),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 10,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
-                decoration: _inputDecoration(
-                  hint: 'e.g. 9876543210',
-                  icon: Icons.phone_outlined,
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Phone number is required';
-                  }
-                  if (v.trim().length < 10) {
-                    return 'Enter a valid 10-digit phone number';
-                  }
-                  if (!RegExp(r'^[6-9]\d{9}$').hasMatch(v.trim())) {
-                    return 'Enter a valid Indian mobile number';
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 40),
-
-              // Save button
               SizedBox(
-                width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   onPressed: _isSaving ? null : _save,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
+                    backgroundColor: _accent,
                     foregroundColor: Colors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    elevation: 4,
-                    shadowColor: AppTheme.primaryColor.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
                   ),
                   child: _isSaving
                       ? const SizedBox(
-                          width: 24,
-                          height: 24,
+                          width: 22,
+                          height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2.5, color: Colors.white))
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
                       : const Text(
                           'Update Customer',
                           style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              letterSpacing: 0.5),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                 ),
               ),
@@ -228,51 +298,117 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontWeight: FontWeight.w700,
-        fontSize: 14,
-        color: Color(0xFF475569),
-        letterSpacing: 0.3,
+    if (widget.asSheet) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(top: false, child: content),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: _surface,
+      appBar: AppBar(
+        backgroundColor: _surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          color: _ink,
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Edit Customer',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+            color: _ink,
+          ),
+        ),
       ),
+      body: content,
     );
   }
 
-  InputDecoration _inputDecoration(
-      {required String hint, required IconData icon}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(
-          color: Color(0xFF94A3B8), fontWeight: FontWeight.normal),
-      prefixIcon: Icon(icon, color: const Color(0xFF94A3B8)),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
+  Widget _buildCard({required List<Widget> children}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade100, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    FocusNode? focusNode,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    void Function(String)? onFieldSubmitted,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      focusNode: focusNode,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
+      inputFormatters: inputFormatters,
+      maxLength: maxLength,
+      textCapitalization: textCapitalization,
+      validator: validator,
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF1E293B),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        counterText: '',
+        prefixIcon: Icon(icon, color: _accent, size: 20),
+        labelStyle: const TextStyle(
+          color: Color(0xFF64748B),
+          fontWeight: FontWeight.w600,
+        ),
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: _accent, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFEF4444)),
+        ),
       ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-      ),
-      counterText: '',
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     );
   }
 }
