@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../../core/data/hive_database.dart';
 import '../../domain/repositories/billing_repository.dart';
 import '../../data/models/transaction_model.dart';
 
@@ -57,9 +58,24 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
         }
       }
 
+      // Keep period pending non-negative first.
       dailyPending = dailyPending < 0 ? 0 : dailyPending;
       weeklyPending = weeklyPending < 0 ? 0 : weeklyPending;
       monthlyPending = monthlyPending < 0 ? 0 : monthlyPending;
+
+      // Final guard: if all customer dues are currently cleared,
+      // dashboard due chips should not show stale period-level pending.
+      final currentOutstandingDue = HiveDatabase.customerBox.values
+          .fold<double>(
+              0.0,
+              (sum, customer) =>
+                  sum + (customer.balance > 0 ? customer.balance : 0.0));
+
+      if (currentOutstandingDue <= 0) {
+        dailyPending = 0;
+        weeklyPending = 0;
+        monthlyPending = 0;
+      }
 
       // Sort transactions by date descending
       transactions.sort((a, b) => b.date.compareTo(a.date));
