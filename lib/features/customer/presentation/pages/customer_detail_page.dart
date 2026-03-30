@@ -14,6 +14,9 @@ import '../../../billing/domain/repositories/billing_repository.dart';
 import '../../../shop/data/models/shop_model.dart';
 import '../../domain/entities/customer_entity.dart';
 import '../../data/models/customer_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/customer_bloc.dart';
+import '../bloc/customer_event.dart';
 
 class CustomerDetailPage extends StatelessWidget {
   final CustomerEntity customer;
@@ -93,6 +96,71 @@ class CustomerDetailPage extends StatelessWidget {
                               color: Color(0xFF10B981),
                               fontWeight: FontWeight.w700)),
                     ),
+                  const SizedBox(width: 8),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF0F172A)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    color: Colors.white,
+                    elevation: 4,
+                    offset: const Offset(0, 40),
+                    padding: EdgeInsets.zero,
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        context.push('/customers/${currentCustomer.id}/edit', extra: currentCustomer);
+                      } else if (value == 'delete') {
+                        _confirmDelete(context, currentCustomer);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'edit',
+                        height: 36,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.edit_rounded, size: 16, color: Color(0xFF64748B)),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Edit',
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF334155)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuDivider(height: 8),
+                      PopupMenuItem(
+                        value: 'delete',
+                        height: 36,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.red.shade400),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Delete',
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.red.shade600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(width: 8),
                 ],
               ),
@@ -204,20 +272,6 @@ class CustomerDetailPage extends StatelessWidget {
                                 ),
                               ),
                             ],
-                          ),
-                        ),
-                        Material(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: const CircleBorder(),
-                          child: IconButton(
-                            icon: const Icon(Icons.edit_rounded,
-                                color: Colors.white),
-                            onPressed: () {
-                              context.push(
-                                  '/customers/${currentCustomer.id}/edit',
-                                  extra: currentCustomer);
-                            },
-                            tooltip: 'Edit Customer',
                           ),
                         ),
                       ],
@@ -1074,6 +1128,96 @@ class CustomerDetailPage extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, CustomerEntity customer) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.delete_outline_rounded,
+                  color: Colors.red, size: 36),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Delete Customer',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Are you sure you want to remove "${customer.name}"? All associated data will be deleted. This action cannot be undone.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context
+                          .read<CustomerBloc>()
+                          .add(DeleteCustomerEvent(customer.id));
+                      Navigator.pop(ctx);
+                      context.pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

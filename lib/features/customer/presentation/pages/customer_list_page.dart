@@ -457,49 +457,6 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            // Quick Delete
-                            Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(10),
-                                onTap: () => _confirmDelete(context, customer),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(
-                                        color: Colors.red.shade100, width: 1.5),
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            Colors.red.withValues(alpha: 0.05),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.delete_sweep_rounded,
-                                          size: 16, color: Colors.red.shade400),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Del',
-                                        style: TextStyle(
-                                          color: Colors.red.shade600,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ],
@@ -514,43 +471,4 @@ class _CustomerListPageState extends State<CustomerListPage> {
     );
   }
 
-
-
-  void _confirmDelete(BuildContext context, CustomerEntity customer) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Customer?',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(
-            'Are you sure you want to remove "${customer.name}"? This action cannot be undone.'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: Colors.grey.shade600),
-            child: const Text('Cancel',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              context
-                  .read<CustomerBloc>()
-                  .add(DeleteCustomerEvent(customer.id));
-              Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade50,
-              foregroundColor: Colors.red,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Delete',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
 }
