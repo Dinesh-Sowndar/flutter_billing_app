@@ -159,111 +159,110 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        minChildSize: 0.35,
-        maxChildSize: 0.9,
-        builder: (_, ctrl) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      builder: (_) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
               ),
-              const SizedBox(height: 16),
-              Padding(
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  const Text(
+                    'Purchase Details',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A)),
+                  ),
+                  const Spacer(),
+                  Text(
+                    DateFormat('dd MMM yyyy').format(p.date),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    const Text(
-                      'Purchase Details',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A)),
-                    ),
-                    const Spacer(),
-                    Text(
-                      DateFormat('dd MMM yyyy').format(p.date),
-                      style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView(
-                  controller: ctrl,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
-                    ...p.items.map((item) => Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.grey.shade100),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(item.productName,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                            color: Color(0xFF1E293B))),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                        '${item.quantity} ${item.unit} × ₹${item.price.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF64748B),
-                                            fontWeight: FontWeight.w500)),
-                                  ],
-                                ),
+                children: [
+                  ...p.items.map((item) => Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.grey.shade100),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.productName,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: Color(0xFF1E293B))),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                      '${item.quantity} ${item.unit} × ₹${item.price.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF64748B),
+                                          fontWeight: FontWeight.w500)),
+                                ],
                               ),
-                              Text(
-                                '₹${item.total.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                    color: Color(0xFF1E293B)),
-                              ),
-                            ],
-                          ),
-                        )),
-                    const Divider(height: 24),
-                    _detailRow('Total', '₹${p.totalAmount.toStringAsFixed(2)}', bold: true),
-                    const SizedBox(height: 6),
-                    _detailRow('Paid', '₹${p.amountPaid.toStringAsFixed(2)}',
-                        valueColor: const Color(0xFF16A34A)),
-                    const SizedBox(height: 6),
-                    _detailRow('Due', '₹${p.dueAmount.toStringAsFixed(2)}',
-                        valueColor: p.dueAmount > 0
-                            ? const Color(0xFFEF4444)
-                            : const Color(0xFF16A34A),
-                        bold: true),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                            ),
+                            Text(
+                              '₹${item.total.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                  color: Color(0xFF1E293B)),
+                            ),
+                          ],
+                        ),
+                      )),
+                  const Divider(height: 24),
+                  _detailRow('Total', '₹${p.totalAmount.toStringAsFixed(2)}', bold: true),
+                  const SizedBox(height: 6),
+                  _detailRow('Paid', '₹${p.amountPaid.toStringAsFixed(2)}',
+                      valueColor: const Color(0xFF16A34A)),
+                  const SizedBox(height: 6),
+                  _detailRow('Due', '₹${p.dueAmount.toStringAsFixed(2)}',
+                      valueColor: p.dueAmount > 0
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF16A34A),
+                      bold: true),
+                  const SizedBox(height: 24),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

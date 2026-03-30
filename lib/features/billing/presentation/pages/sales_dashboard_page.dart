@@ -365,197 +365,195 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: isPaymentOnly ? 0.4 : 0.7,
-          minChildSize: 0.3,
-          maxChildSize: 0.92,
-          expand: false,
-          builder: (context, scrollCtrl) => Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-            ),
-            child: Column(
-              children: [
-                // Drag handle
-                Container(
-                  margin: const EdgeInsets.only(top: 12, bottom: 4),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.92,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 4),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                // Header
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Transaction Details',
-                          style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5)),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close_rounded,
-                            color: Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
+              ),
+              // Header
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Transaction Details',
+                        style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5)),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded,
+                          color: Color(0xFF64748B)),
+                    ),
+                  ],
                 ),
-                Divider(height: 1, color: Colors.grey.shade100),
-                // Scrollable body
-                Expanded(
-                  child: ListView(
-                    controller: scrollCtrl,
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                    children: [
+              ),
+              Divider(height: 1, color: Colors.grey.shade100),
+              // Scrollable body
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  children: [
+                    Text(
+                      'Date: ${t.date.day.toString().padLeft(2, '0')}/${t.date.month.toString().padLeft(2, '0')}/${t.date.year} ${t.date.hour.toString().padLeft(2, '0')}:${t.date.minute.toString().padLeft(2, '0')}',
+                      style: const TextStyle(
+                          fontSize: 16, color: Color(0xFF64748B)),
+                    ),
+                    if (t.customerName.isNotEmpty) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        'Date: ${t.date.day.toString().padLeft(2, '0')}/${t.date.month.toString().padLeft(2, '0')}/${t.date.year} ${t.date.hour.toString().padLeft(2, '0')}:${t.date.minute.toString().padLeft(2, '0')}',
+                        'Customer: ${t.customerName}',
                         style: const TextStyle(
                             fontSize: 16, color: Color(0xFF64748B)),
                       ),
-                      if (t.customerName.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'Customer: ${t.customerName}',
-                          style: const TextStyle(
-                              fontSize: 16, color: Color(0xFF64748B)),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      if (!isPaymentOnly) ...[
-                        const Text('Items',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        ...List.generate(t.items.length, (index) {
-                          final item = t.items[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.productName,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16)),
-                                      Text(
-                                          '${item.quantity} x ₹${item.price.toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                              color: Color(0xFF94A3B8))),
-                                    ],
-                                  ),
+                    ],
+                    const SizedBox(height: 24),
+                    if (!isPaymentOnly) ...[
+                      const Text('Items',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      ...List.generate(t.items.length, (index) {
+                        final item = t.items[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item.productName,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16)),
+                                    Text(
+                                        '${item.quantity} x ₹${item.price.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                            color: Color(0xFF94A3B8))),
+                                  ],
                                 ),
-                                Text('₹${item.total.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16)),
-                              ],
-                            ),
-                          );
-                        }),
-                      ] else ...[
-                        const Text('Payment Entry',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'This transaction records a due payment from customer.',
-                          style:
-                              TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-                        ),
-                      ],
-                      const Divider(height: 32),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                              isPaymentOnly
-                                  ? 'Total Due Amount'
-                                  : 'Total Amount',
-                              style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text('₹${totalDueAmount.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.primaryColor)),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Amount Paid',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text('₹${t.amountPaid.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF10B981))),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Balance Amount',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text('₹${balanceDue.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: balanceDue > 0
-                                      ? const Color(0xFFEF4444)
-                                      : const Color(0xFF10B981))),
-                        ],
+                              ),
+                              Text('₹${item.total.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
+                            ],
+                          ),
+                        );
+                      }),
+                    ] else ...[
+                      const Text('Payment Entry',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'This transaction records a due payment from customer.',
+                        style:
+                            TextStyle(fontSize: 14, color: Color(0xFF64748B)),
                       ),
                     ],
-                  ),
+                    const Divider(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                            isPaymentOnly
+                                ? 'Total Due Amount'
+                                : 'Total Amount',
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('₹${totalDueAmount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primaryColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Amount Paid',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('₹${t.amountPaid.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF10B981))),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Balance Amount',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('₹${balanceDue.toStringAsFixed(2)}',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: balanceDue > 0
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFF10B981))),
+                      ],
+                    ),
+                  ],
                 ),
-                // Fixed print button at bottom
-                if (!isPaymentOnly) ...[
-                  Divider(height: 1, color: Colors.grey.shade100),
-                  SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _printTransaction(context, t),
-                          icon: const Icon(Icons.print_rounded, size: 20),
-                          label: const Text('Print Bill'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
-                            textStyle: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 15),
-                          ),
+              ),
+              // Fixed print button at bottom
+              if (!isPaymentOnly) ...[
+                Divider(height: 1, color: Colors.grey.shade100),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _printTransaction(context, t),
+                        icon: const Icon(Icons.print_rounded, size: 20),
+                        label: const Text('Print Bill'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          textStyle: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 15),
                         ),
                       ),
                     ),
                   ),
-                ],
+                ),
               ],
-            ),
+            ],
           ),
         );
       },

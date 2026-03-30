@@ -520,264 +520,262 @@ class CustomerDetailPage extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: isPayment ? 0.4 : 0.75,
-        minChildSize: 0.35,
-        maxChildSize: 0.92,
-        expand: false,
-        builder: (_, scrollCtrl) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4),
-                ),
+      builder: (_) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.92,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
               ),
-              // Header
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: isPayment
-                            ? const Color(0xFFD1FAE5)
-                            : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(
-                        isPayment
-                            ? Icons.payments_rounded
-                            : Icons.receipt_long_rounded,
-                        color: isPayment
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF64748B),
-                      ),
+            ),
+            // Header
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: isPayment
+                          ? const Color(0xFFD1FAE5)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isPayment ? 'Payment Receipt' : 'Bill Details',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 18,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          Text(
-                            DateFormat('MMM dd, yyyy  •  hh:mm a')
-                                .format(tx.date),
-                            style: const TextStyle(
-                                color: Color(0xFF94A3B8),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
+                    child: Icon(
+                      isPayment
+                          ? Icons.payments_rounded
+                          : Icons.receipt_long_rounded,
+                      color: isPayment
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFF64748B),
                     ),
-                  ],
-                ),
-              ),
-              Divider(height: 1, color: Colors.grey.shade100),
-
-              // Body
-              Expanded(
-                child: ListView(
-                  controller: scrollCtrl,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                  children: [
-                    if (isPayment) ...
-                      [
-                        _detailRow(
-                          icon: Icons.payments_rounded,
-                          iconColor: const Color(0xFF10B981),
-                          label: 'Amount Paid',
-                          value: currencyFormat.format(tx.amountPaid),
-                          valueColor: const Color(0xFF10B981),
-                          bold: true,
-                        ),
-                        _detailRow(
-                          icon: Icons.info_outline_rounded,
-                          iconColor: const Color(0xFF94A3B8),
-                          label: 'Type',
-                          value: 'Due Payment',
-                        ),
-                      ]
-                    else ...
-                      [
-                        // Items
-                        const Text(
-                          'Items',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isPayment ? 'Payment Receipt' : 'Bill Details',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        ...tx.items.map((item) => Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color: Colors.grey.shade100, width: 1.2),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 38,
-                                    height: 38,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryColor
-                                          .withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(
-                                        Icons.inventory_2_rounded,
-                                        size: 18,
-                                        color: AppTheme.primaryColor),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.productName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                            color: Color(0xFF1E293B),
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          'Rs ${item.price.toStringAsFixed(2)}  ×  ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity}',
-                                          style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF94A3B8),
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    'Rs ${item.total.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 14,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )),
-                        const SizedBox(height: 8),
-                        // Summary section
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(16),
-                            border:
-                                Border.all(color: Colors.grey.shade100, width: 1.2),
-                          ),
-                          child: Column(
-                            children: [
-                              _summaryRow('Bill Amount',
-                                  currencyFormat.format(tx.totalAmount),
-                                  bold: true),
-                              const SizedBox(height: 8),
-                              // If amountPaid > totalAmount, the extra covered prev due
-                              if (tx.amountPaid > tx.totalAmount) ...[
-                                _summaryRow(
-                                  'Prev Due Covered',
-                                  '+ ${currencyFormat.format(tx.amountPaid - tx.totalAmount)}',
-                                  valueColor: const Color(0xFFF59E0B),
-                                ),
-                                const SizedBox(height: 4),
-                                Divider(height: 1, color: Colors.grey.shade200),
-                                const SizedBox(height: 8),
-                              ],
-                              _summaryRow('Amount Paid',
-                                  currencyFormat.format(tx.amountPaid),
-                                  valueColor: const Color(0xFF10B981),
-                                  bold: tx.amountPaid >= tx.totalAmount),
-                              if (tx.totalAmount - tx.amountPaid > 0) ...[
-                                const SizedBox(height: 8),
-                                _summaryRow(
-                                    'Due Amount',
-                                    currencyFormat.format(
-                                        tx.totalAmount - tx.amountPaid),
-                                    valueColor: Colors.red),
-                              ],
-                              const SizedBox(height: 12),
-                              Divider(height: 1, color: Colors.grey.shade200),
-                              const SizedBox(height: 12),
-                              _detailRow(
-                                icon: _paymentIcon(tx.paymentMethod),
-                                iconColor: AppTheme.primaryColor,
-                                label: 'Payment Method',
-                                value: tx.paymentMethod.toUpperCase(),
-                              ),
-                            ],
-                          ),
+                        Text(
+                          DateFormat('MMM dd, yyyy  •  hh:mm a')
+                              .format(tx.date),
+                          style: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500),
                         ),
                       ],
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
+            ),
+            Divider(height: 1, color: Colors.grey.shade100),
 
-              // ── Print button ──
-              if (!isPayment) ...[
-                Divider(height: 1, color: Colors.grey.shade100),
-                SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _printTransaction(context, tx),
-                        icon: const Icon(Icons.print_rounded, size: 20),
-                        label: const Text('Print Bill'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          textStyle: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15),
+            // Body
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                children: [
+                  if (isPayment) ...
+                    [
+                      _detailRow(
+                        icon: Icons.payments_rounded,
+                        iconColor: const Color(0xFF10B981),
+                        label: 'Amount Paid',
+                        value: currencyFormat.format(tx.amountPaid),
+                        valueColor: const Color(0xFF10B981),
+                        bold: true,
+                      ),
+                      _detailRow(
+                        icon: Icons.info_outline_rounded,
+                        iconColor: const Color(0xFF94A3B8),
+                        label: 'Type',
+                        value: 'Due Payment',
+                      ),
+                    ]
+                  else ...
+                    [
+                      // Items
+                      const Text(
+                        'Items',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: Color(0xFF0F172A),
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      ...tx.items.map((item) => Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: Colors.grey.shade100, width: 1.2),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor
+                                        .withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                      Icons.inventory_2_rounded,
+                                      size: 18,
+                                      color: AppTheme.primaryColor),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.productName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Rs ${item.price.toStringAsFixed(2)}  ×  ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity}',
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF94A3B8),
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  'Rs ${item.total.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                      const SizedBox(height: 8),
+                      // Summary section
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16),
+                          border:
+                              Border.all(color: Colors.grey.shade100, width: 1.2),
+                        ),
+                        child: Column(
+                          children: [
+                            _summaryRow('Bill Amount',
+                                currencyFormat.format(tx.totalAmount),
+                                bold: true),
+                            const SizedBox(height: 8),
+                            // If amountPaid > totalAmount, the extra covered prev due
+                            if (tx.amountPaid > tx.totalAmount) ...[
+                              _summaryRow(
+                                'Prev Due Covered',
+                                '+ ${currencyFormat.format(tx.amountPaid - tx.totalAmount)}',
+                                valueColor: const Color(0xFFF59E0B),
+                              ),
+                              const SizedBox(height: 4),
+                              Divider(height: 1, color: Colors.grey.shade200),
+                              const SizedBox(height: 8),
+                            ],
+                            _summaryRow('Amount Paid',
+                                currencyFormat.format(tx.amountPaid),
+                                valueColor: const Color(0xFF10B981),
+                                bold: tx.amountPaid >= tx.totalAmount),
+                            if (tx.totalAmount - tx.amountPaid > 0) ...[
+                              const SizedBox(height: 8),
+                              _summaryRow(
+                                  'Due Amount',
+                                  currencyFormat.format(
+                                      tx.totalAmount - tx.amountPaid),
+                                  valueColor: Colors.red),
+                            ],
+                            const SizedBox(height: 12),
+                            Divider(height: 1, color: Colors.grey.shade200),
+                            const SizedBox(height: 12),
+                            _detailRow(
+                              icon: _paymentIcon(tx.paymentMethod),
+                              iconColor: AppTheme.primaryColor,
+                              label: 'Payment Method',
+                              value: tx.paymentMethod.toUpperCase(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                ],
+              ),
+            ),
+
+            // ── Print button ──
+            if (!isPayment) ...[
+              Divider(height: 1, color: Colors.grey.shade100),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _printTransaction(context, tx),
+                      icon: const Icon(Icons.print_rounded, size: 20),
+                      label: const Text('Print Bill'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 15),
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
