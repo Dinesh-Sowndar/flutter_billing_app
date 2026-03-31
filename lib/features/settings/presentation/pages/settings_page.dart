@@ -23,6 +23,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   String _appVersionLabel = 'App Version';
+  bool _isManualSyncing = false;
 
   static const String _fallbackBuildName =
       String.fromEnvironment('FLUTTER_BUILD_NAME');
@@ -176,6 +177,50 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Future<void> _syncDataNow() async {
+    if (_isManualSyncing) return;
+
+    setState(() => _isManualSyncing = true);
+    String message = 'Sync completed.';
+    Color color = const Color(0xFF10B981);
+
+    try {
+      final synced = await di.sl<SyncService>().syncNow();
+      if (!mounted) return;
+      if (synced) {
+        final hasUnsynced = HiveDatabase.hasUnsyncedData();
+        if (hasUnsynced) {
+          message =
+              'Sync started, but some items are still pending. Please try again.';
+          color = const Color(0xFFF59E0B);
+        } else {
+          message = 'All data synced successfully.';
+          color = const Color(0xFF10B981);
+        }
+      } else {
+        message = 'You are offline or not signed in. Connect and try again.';
+        color = const Color(0xFFF59E0B);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      message = 'Sync failed. Please try again.';
+      color = AppTheme.errorColor;
+    } finally {
+      if (mounted) {
+        setState(() => _isManualSyncing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: color,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 380;
@@ -313,6 +358,35 @@ class _SettingsPageState extends State<SettingsPage> {
               child: _buildListGroup(
                 isCompact: isCompact,
                 children: [
+                  _buildListItem(
+                    icon: Icons.sync_rounded,
+                    iconColor: const Color(0xFF0EA5E9),
+                    title: 'Sync Data Now',
+                    subtitle: _isManualSyncing
+                        ? 'Syncing your latest changes...'
+                        : 'Manually sync local and cloud data',
+                    trailingWidget: _isManualSyncing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF0EA5E9)),
+                            ),
+                          )
+                        : null,
+                    trailingIcon: _isManualSyncing
+                        ? null
+                        : Icons.chevron_right_rounded,
+                    onTap: _isManualSyncing
+                        ? null
+                        : () {
+                            _syncDataNow();
+                          },
+                    isCompact: isCompact,
+                  ),
+                  _buildDivider(),
                   _buildListItem(
                     icon: Icons.logout_rounded,
                     iconColor: AppTheme.errorColor,

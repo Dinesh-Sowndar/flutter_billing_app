@@ -48,31 +48,50 @@ class SyncService {
         _auth = auth ?? FirebaseAuth.instance,
         _connectivity = connectivity ?? Connectivity();
 
+  Future<void> _runFullSyncCycle() async {
+    await processPendingDeletes();
+    await pushPendingCategories();
+    await pullCategoriesFromFirestore();
+    await syncPendingProducts();
+    await pullProductsFromFirestore();
+    await syncPendingTransactions();
+    await pullTransactionsFromFirestore();
+    await syncPendingShop();
+    await pullShopFromFirestore();
+    await pushPendingCustomers();
+    await pullCustomersFromFirestore();
+    await pushPendingSuppliers();
+    await pullSuppliersFromFirestore();
+    await pushPendingSupplierPurchases();
+    await pullSupplierPurchasesFromFirestore();
+  }
+
+  /// Manually trigger a full sync cycle from the UI.
+  /// Returns false when sync cannot run (e.g., offline or no signed-in user).
+  Future<bool> syncNow() async {
+    if (!_isOnline || _userId == null) return false;
+    await _runFullSyncCycle();
+    onSyncComplete.add(null);
+    return true;
+  }
+
   /// Start listening for connectivity changes.
   Future<void> initialize() async {
     final results = await _connectivity.checkConnectivity();
     _isOnline = _resultsHaveConnection(results);
+
+    // If app starts online (common case), immediately retry pending uploads.
+    if (_isOnline) {
+      await _runFullSyncCycle();
+      onSyncComplete.add(null);
+    }
 
     _connectivitySubscription = _connectivity.onConnectivityChanged
         .listen((List<ConnectivityResult> results) async {
       final wasOnline = _isOnline;
       _isOnline = _resultsHaveConnection(results);
       if (!wasOnline && _isOnline) {
-        await processPendingDeletes();
-        await pushPendingCategories();
-        await pullCategoriesFromFirestore();
-        await syncPendingProducts();
-        await pullProductsFromFirestore();
-        await syncPendingTransactions();
-        await pullTransactionsFromFirestore();
-        await syncPendingShop();
-        await pullShopFromFirestore();
-        await pushPendingCustomers();
-        await pullCustomersFromFirestore();
-        await pushPendingSuppliers();
-        await pullSuppliersFromFirestore();
-        await pushPendingSupplierPurchases();
-        await pullSupplierPurchasesFromFirestore();
+        await _runFullSyncCycle();
         onSyncComplete.add(null);
       }
     });
@@ -83,15 +102,7 @@ class SyncService {
       // we still emit to trigger bloc reloads (emptying them).
       if (user != null) {
         if (_isOnline) {
-          await processPendingDeletes();
-          await pullCategoriesFromFirestore();
-          await pullProductsFromFirestore();
-          await pullTransactionsFromFirestore();
-          await syncPendingShop();
-          await pullShopFromFirestore();
-          await pullCustomersFromFirestore();
-          await pullSuppliersFromFirestore();
-          await pullSupplierPurchasesFromFirestore();
+          await _runFullSyncCycle();
         }
       }
       onSyncComplete.add(null);

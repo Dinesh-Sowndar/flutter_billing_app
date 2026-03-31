@@ -29,3 +29,11 @@ class DeleteProduct extends ProductEvent {
   @override
   List<Object> get props => [id];
 }
+
+class DeleteAllProducts extends ProductEvent {
+  final List<String> ids;
+  const DeleteAllProducts(this.ids);
+
+  @override
+  List<Object> get props => [ids];
+}

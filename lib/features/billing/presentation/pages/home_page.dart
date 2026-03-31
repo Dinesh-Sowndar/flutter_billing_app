@@ -1500,6 +1500,7 @@ class _SyncDotState extends State<_SyncDot>
       HiveDatabase.supplierBox.listenable(),
       HiveDatabase.supplierPurchaseBox.listenable(),
       HiveDatabase.customerBox.listenable(),
+      HiveDatabase.settingsBox.listenable(),
     ]);
     _hiveListenable.addListener(_refresh);
 

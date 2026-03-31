@@ -23,6 +23,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<AddProduct>(_onAddProduct);
     on<UpdateProduct>(_onUpdateProduct);
     on<DeleteProduct>(_onDeleteProduct);
+    on<DeleteAllProducts>(_onDeleteAllProducts);
   }
 
   Future<void> _onLoadProducts(
@@ -97,5 +98,40 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         add(LoadProducts());
       },
     );
+  }
+
+  Future<void> _onDeleteAllProducts(
+      DeleteAllProducts event, Emitter<ProductState> emit) async {
+    if (event.ids.isEmpty) {
+      emit(state.copyWith(status: ProductStatus.loaded));
+      return;
+    }
+
+    emit(state.copyWith(status: ProductStatus.loading));
+
+    var deletedCount = 0;
+    var failedCount = 0;
+
+    for (final id in event.ids) {
+      final result = await deleteProductUseCase(id);
+      result.fold(
+        (_) => failedCount++,
+        (_) => deletedCount++,
+      );
+    }
+
+    if (failedCount == 0) {
+      emit(state.copyWith(
+        status: ProductStatus.success,
+        message: 'Deleted $deletedCount products successfully',
+      ));
+    } else {
+      emit(state.copyWith(
+        status: ProductStatus.error,
+        message: 'Deleted $deletedCount products, failed to delete $failedCount',
+      ));
+    }
+
+    add(LoadProducts());
   }
 }
