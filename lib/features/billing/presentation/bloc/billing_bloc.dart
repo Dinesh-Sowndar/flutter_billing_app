@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
@@ -39,6 +41,19 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       unit == QuantityUnit.kg || unit == QuantityUnit.liter;
 
   double _stepForUnit(QuantityUnit unit) => 1.0;
+
+  Future<void> _updateStockAfterSale(List<CartItem> cartItems) async {
+    for (final item in cartItems) {
+      final stockDelta = item.product.unit == QuantityUnit.piece ||
+              item.product.unit == QuantityUnit.box
+          ? item.quantity.round()
+          : item.quantity.floor();
+      final newStock = item.product.stock - stockDelta;
+      await updateProductUseCase(
+        item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
+      );
+    }
+  }
 
   Future<void> _onScanBarcode(
       ScanBarcodeEvent event, Emitter<BillingState> emit) async {
@@ -165,18 +180,6 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       );
       await billingRepository.saveTransaction(transaction);
 
-      // Decrease stock for each item sold
-      for (final item in state.cartItems) {
-        final stockDelta = item.product.unit == QuantityUnit.piece ||
-                item.product.unit == QuantityUnit.box
-            ? item.quantity.round()
-            : item.quantity.floor();
-        final newStock = item.product.stock - stockDelta;
-        await updateProductUseCase(
-          item.product.copyWith(stock: newStock >= 0 ? newStock : 0),
-        );
-      }
-
       // Update customer balance if applicable
       if (state.customerId.isNotEmpty) {
         final newBalance =
@@ -190,6 +193,9 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
           );
         }
       }
+
+      // Non-critical: keep finish flow instant even if network/sync is slow.
+      unawaited(_updateStockAfterSale(List<CartItem>.from(state.cartItems)));
 
       emit(state.copyWith(printSuccess: true));
     } catch (e) {

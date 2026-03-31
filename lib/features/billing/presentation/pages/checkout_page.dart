@@ -13,6 +13,8 @@ import '../../../shop/presentation/bloc/shop_bloc.dart';
 import '../bloc/billing_bloc.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../../../core/service_locator.dart' as di;
+import '../../../../core/services/sync_service.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -193,13 +195,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
         body: BlocConsumer<BillingBloc, BillingState>(
           listener: (context, state) {
             if (state.printSuccess) {
+              if (mounted) {
+                setState(() {
+                  _isFinishing = false;
+                  _isPrinting = false;
+                });
+              }
+              final isOnline = di.sl<SyncService>().isOnline;
               context.read<CustomerBloc>().add(LoadCustomersEvent());
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: const Row(
+                content: Row(
                   children: [
-                    Icon(Icons.check_circle_rounded, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text('Transaction completed successfully'),
+                    const Icon(Icons.check_circle_rounded, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      isOnline
+                          ? 'Transaction completed successfully'
+                          : 'Transaction saved locally. Will sync when online.',
+                    ),
                   ],
                 ),
                 backgroundColor: const Color(0xFF10B981),
@@ -209,6 +222,26 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ));
               context.read<BillingBloc>().add(ClearCartEvent());
               context.go('/');
+              return;
+            }
+
+            if (state.error != null && state.error!.isNotEmpty) {
+              if (mounted) {
+                setState(() {
+                  _isFinishing = false;
+                  _isPrinting = false;
+                });
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.error!),
+                  backgroundColor: const Color(0xFFDC2626),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              );
             }
           },
           builder: (context, billingState) {

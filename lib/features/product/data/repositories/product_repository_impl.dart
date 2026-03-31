@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/error/failure.dart';
@@ -48,7 +50,8 @@ class ProductRepositoryImpl implements ProductRepository {
       );
       await HiveDatabase.productBox.put(model.id, model);
       if (syncService.isOnline) {
-        await syncService.pushProduct(model);
+        // Keep UI writes offline-first; cloud sync can complete in background.
+        unawaited(syncService.pushProduct(model));
       }
       return const Right(null);
     } catch (e) {
@@ -64,7 +67,8 @@ class ProductRepositoryImpl implements ProductRepository {
       );
       await HiveDatabase.productBox.put(model.id, model);
       if (syncService.isOnline) {
-        await syncService.pushProduct(model);
+        // Avoid blocking transactional flows (like checkout) on network latency.
+        unawaited(syncService.pushProduct(model));
       }
       return const Right(null);
     } catch (e) {
