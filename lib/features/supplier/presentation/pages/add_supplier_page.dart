@@ -280,6 +280,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
                 backgroundColor: _surface,
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
+                titleSpacing: 4,
                 leading: AppBackButton(
                   onPressed: () => context.pop(),
                   leftPadding: 0,

@@ -134,9 +134,11 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
     return Scaffold(
       backgroundColor: _surface,
       appBar: AppBar(
+        centerTitle: false,
         backgroundColor: _surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        titleSpacing: 4,
         leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
         title: const Text(
           'Record Purchase',
