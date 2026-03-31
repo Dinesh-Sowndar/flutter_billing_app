@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/error/failure.dart';
@@ -48,12 +50,8 @@ class ShopRepositoryImpl implements ShopRepository {
         return const Right(null);
       }
 
-      // Even if this push is slow/fails, keep local save successful.
-      try {
-        await _syncService.pushShop(model).timeout(const Duration(seconds: 6));
-      } catch (_) {
-        await _syncService.markShopPendingSync();
-      }
+      // Keep save instant; cloud sync runs in background.
+      unawaited(_syncService.pushShop(model));
 
       return const Right(null);
     } catch (e) {

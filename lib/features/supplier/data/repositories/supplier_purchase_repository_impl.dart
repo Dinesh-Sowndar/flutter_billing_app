@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/services/sync_service.dart';
@@ -39,7 +41,7 @@ class SupplierPurchaseRepositoryImpl implements SupplierPurchaseRepository {
       );
       await HiveDatabase.supplierBox.put(updatedSupplier.id, updatedSupplier);
       if (_syncService.isOnline) {
-        await _syncService.pushSupplier(updatedSupplier);
+        unawaited(_syncService.pushSupplier(updatedSupplier));
       }
     }
 
@@ -63,12 +65,12 @@ class SupplierPurchaseRepositoryImpl implements SupplierPurchaseRepository {
       );
       await HiveDatabase.productBox.put(updated.id, updated);
       if (_syncService.isOnline) {
-        await _syncService.pushProduct(updated);
+        unawaited(_syncService.pushProduct(updated));
       }
     }
 
     if (_syncService.isOnline) {
-      await _syncService.pushSupplierPurchase(model);
+      unawaited(_syncService.pushSupplierPurchase(model));
     }
   }
 

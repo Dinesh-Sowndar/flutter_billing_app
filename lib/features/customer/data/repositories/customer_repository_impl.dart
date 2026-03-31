@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/services/sync_service.dart';
@@ -49,7 +51,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
     await HiveDatabase.customerBox.put(model.id, model);
 
     if (_syncService.isOnline) {
-      await _syncService.pushCustomer(model);
+      // Keep customer creation instant; sync happens in background.
+      unawaited(_syncService.pushCustomer(model));
     }
   }
 
@@ -67,7 +70,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
     await HiveDatabase.customerBox.put(model.id, model);
 
     if (_syncService.isOnline) {
-      await _syncService.pushCustomer(model);
+      // Keep customer edits responsive; sync happens in background.
+      unawaited(_syncService.pushCustomer(model));
     }
   }
 

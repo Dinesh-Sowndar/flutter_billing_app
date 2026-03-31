@@ -289,128 +289,146 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOut,
               padding: EdgeInsets.only(bottom: keyboardInset),
-              child: ListView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: ListView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
                       children: [
-                        Row(
-                          children: [
-                            _buildStatChip(
-                              icon: Icons.category_rounded,
-                              label: '${allCategories.length}/8',
-                              subtitle: 'Categories',
-                            ),
-                            const SizedBox(width: 8),
-                            _buildStatChip(
-                              icon: Icons.link_rounded,
-                              label: _linkedProductCount().toString(),
-                              subtitle: 'Linked Products',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _searchController,
-                          onChanged: (value) => setState(() => _query = value),
-                          decoration: InputDecoration(
-                            hintText: 'Search categories',
-                            prefixIcon: const Icon(Icons.search_rounded),
-                            suffixIcon: _query.isEmpty
-                                ? null
-                                : IconButton(
-                                    tooltip: 'Clear search',
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _query = '');
-                                    },
-                                    icon: const Icon(Icons.close_rounded),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 14,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  _buildStatChip(
+                                    icon: Icons.category_rounded,
+                                    label: '${allCategories.length}/8',
+                                    subtitle: 'Categories',
                                   ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  BorderSide(color: AppTheme.primaryColor),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
+                                  const SizedBox(width: 8),
+                                  _buildStatChip(
+                                    icon: Icons.link_rounded,
+                                    label: _linkedProductCount().toString(),
+                                    subtitle: 'Linked Products',
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _searchController,
+                                onChanged: (value) => setState(() => _query = value),
+                                decoration: InputDecoration(
+                                  hintText: 'Search categories',
+                                  prefixIcon: const Icon(Icons.search_rounded),
+                                  suffixIcon: _query.isEmpty
+                                      ? null
+                                      : IconButton(
+                                          tooltip: 'Clear search',
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            setState(() => _query = '');
+                                          },
+                                          icon: const Icon(Icons.close_rounded),
+                                        ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide:
+                                        const BorderSide(color: Color(0xFFE2E8F0)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide:
+                                        const BorderSide(color: Color(0xFFE2E8F0)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide:
+                                        BorderSide(color: AppTheme.primaryColor),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Quick Add Templates',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _quickTemplates.map((name) {
+                                  final disabled =
+                                      isAtLimit || _hasDuplicateName(name);
+                                  return ActionChip(
+                                    onPressed: disabled
+                                        ? null
+                                        : () {
+                                            _addTemplateCategory(name);
+                                          },
+                                    avatar: const Icon(Icons.add, size: 16),
+                                    label: Text(name),
+                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    side:
+                                        const BorderSide(color: Color(0xFFE2E8F0)),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Quick Add Templates',
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _quickTemplates.map((name) {
-                            final disabled =
-                                isAtLimit || _hasDuplicateName(name);
-                            return ActionChip(
-                              onPressed: disabled
-                                  ? null
-                                  : () {
-                                      _addTemplateCategory(name);
-                                    },
-                              avatar: const Icon(Icons.add, size: 16),
-                              label: Text(name),
-                              backgroundColor: const Color(0xFFF8FAFC),
-                              side:
-                                  const BorderSide(color: Color(0xFFE2E8F0)),
+                        if (categories.isEmpty)
+                          _buildEmptyState(hasAny: allCategories.isNotEmpty)
+                        else
+                          ...categories.map((category) {
+                            final usage = _usageCount(category.id);
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _buildCategoryTile(category, usage),
                             );
-                          }).toList(),
-                        ),
+                          }),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  if (categories.isEmpty)
-                    _buildEmptyState(hasAny: allCategories.isNotEmpty)
-                  else
-                    ...categories.map((category) {
-                      final usage = _usageCount(category.id);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _buildCategoryTile(category, usage),
-                      );
-                    }),
-                  const SizedBox(height: 12),
-                  _buildComposerCard(isAtLimit),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F7FA),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, -2),
+                        ),
+                      ],
+                    ),
+                    child: _buildComposerCard(isAtLimit),
+                  ),
                 ],
               ),
             ),

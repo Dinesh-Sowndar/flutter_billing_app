@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/services/sync_service.dart';
@@ -49,7 +51,8 @@ class SupplierRepositoryImpl implements SupplierRepository {
     await HiveDatabase.supplierBox.put(model.id, model);
 
     if (_syncService.isOnline) {
-      await _syncService.pushSupplier(model);
+      // Keep supplier creation instant; sync happens in background.
+      unawaited(_syncService.pushSupplier(model));
     }
   }
 
@@ -67,7 +70,8 @@ class SupplierRepositoryImpl implements SupplierRepository {
     await HiveDatabase.supplierBox.put(model.id, model);
 
     if (_syncService.isOnline) {
-      await _syncService.pushSupplier(model);
+      // Keep supplier edits responsive; sync happens in background.
+      unawaited(_syncService.pushSupplier(model));
     }
   }
 
