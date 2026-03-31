@@ -80,7 +80,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
   void _navigateBasedOnAuth() {
     final isOnboardingCompleted = HiveDatabase.settingsBox
-        .get('onboarding_completed', defaultValue: false) as bool;
+        .get(HiveDatabase.onboardingCompletedKey, defaultValue: false) as bool;
     if (!isOnboardingCompleted) {
       context.go('/onboarding');
       return;

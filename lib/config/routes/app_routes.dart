@@ -42,7 +42,7 @@ final router = GoRouter(
     final isLoggingIn = state.matchedLocation == '/login';
     final isSigningUp = state.matchedLocation == '/signup';
     final isOnboardingCompleted = HiveDatabase.settingsBox
-        .get('onboarding_completed', defaultValue: false) as bool;
+        .get(HiveDatabase.onboardingCompletedKey, defaultValue: false) as bool;
 
     // Don't redirect the splash screen.
     if (isSplash) return null;

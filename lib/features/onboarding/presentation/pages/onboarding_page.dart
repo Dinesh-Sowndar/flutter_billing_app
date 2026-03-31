@@ -11,8 +11,6 @@ class OnboardingPage extends StatefulWidget {
 }
 
 class _OnboardingPageState extends State<OnboardingPage> {
-  static const String _onboardingCompletedKey = 'onboarding_completed';
-
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
@@ -21,6 +19,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: 'Bill Faster, Stress Less',
       description:
           'Create invoices in seconds, scan products quickly, and keep your counter moving during rush hours.',
+      highlights: ['Fast invoice flow', 'Quick barcode scan'],
       icon: Icons.bolt_rounded,
       startColor: Color(0xFF0EA5E9),
       endColor: Color(0xFF1D4ED8),
@@ -29,6 +28,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: 'Track Stock Automatically',
       description:
           'Inventory updates itself after every sale so you always know what is available and what needs restocking.',
+      highlights: ['Auto stock updates', 'Low-stock visibility'],
       icon: Icons.inventory_2_rounded,
       startColor: Color(0xFF14B8A6),
       endColor: Color(0xFF0F766E),
@@ -37,6 +37,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       title: 'See Clear Business Insights',
       description:
           'Monitor customer dues and transaction history in one place to make better daily decisions.',
+      highlights: ['Due tracking', 'Actionable reports'],
       icon: Icons.analytics_rounded,
       startColor: Color(0xFFF97316),
       endColor: Color(0xFFEA580C),
@@ -46,7 +47,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool get _isLastPage => _currentIndex == _steps.length - 1;
 
   Future<void> _completeOnboarding() async {
-    await HiveDatabase.settingsBox.put(_onboardingCompletedKey, true);
+    await HiveDatabase.settingsBox
+        .put(HiveDatabase.onboardingCompletedKey, true);
     if (!mounted) return;
     context.go('/login');
   }
@@ -72,172 +74,280 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     final step = _steps[_currentIndex];
+    final size = MediaQuery.of(context).size;
+    final isSmallHeight = size.height < 720;
 
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              step.startColor.withValues(alpha: 0.14),
-              Colors.white,
-              step.endColor.withValues(alpha: 0.18),
+              step.startColor.withValues(alpha: 0.18),
+              const Color(0xFFF8FAFC),
+              step.endColor.withValues(alpha: 0.16),
             ],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Text(
-                      'QuickReceipt',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'QuickReceipt',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.2,
+                        ),
                       ),
                     ),
+                    const Spacer(),
                     TextButton(
                       onPressed: _completeOnboarding,
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF334155),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                      ),
                       child: const Text(
                         'Skip',
                         style: TextStyle(
-                          color: Color(0xFF334155),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: _steps.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentIndex = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final current = _steps[index];
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Spacer(),
-                          Container(
-                            height: 230,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [current.startColor, current.endColor],
-                              ),
-                              borderRadius: BorderRadius.circular(30),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      current.endColor.withValues(alpha: 0.28),
-                                  blurRadius: 28,
-                                  offset: const Offset(0, 14),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Icon(
-                                current.icon,
-                                size: 92,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 42),
-                          Text(
-                            current.title,
-                            style: TextStyle(
-                              fontSize: 34,
-                              height: 1.1,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            current.description,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF334155),
-                              height: 1.5,
-                            ),
-                          ),
-                          const Spacer(),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: List.generate(
-                          _steps.length,
-                          (index) {
-                            final isActive = index == _currentIndex;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              width: isActive ? 24 : 9,
-                              height: 9,
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? step.endColor
-                                    : const Color(0xFFCBD5E1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: _goToNextPage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: step.endColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        _isLastPage ? 'Get Started' : 'Next',
-                        style: const TextStyle(
-                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: _steps.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentIndex = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final current = _steps[index];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Spacer(),
+                          Container(
+                            height: isSmallHeight ? 220 : 260,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(32),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [current.startColor, current.endColor],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      current.endColor.withValues(alpha: 0.30),
+                                  blurRadius: 30,
+                                  offset: const Offset(0, 16),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  top: -30,
+                                  right: -26,
+                                  child: Container(
+                                    width: 130,
+                                    height: 130,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.14),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: -34,
+                                  left: -18,
+                                  child: Container(
+                                    width: 110,
+                                    height: 110,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.16),
+                                    ),
+                                  ),
+                                ),
+                                Center(
+                                  child: Container(
+                                    width: 112,
+                                    height: 112,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.16),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      current.icon,
+                                      size: 58,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: isSmallHeight ? 24 : 34),
+                          Text(
+                            current.title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              height: 1.12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            current.description,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFF334155),
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            alignment: WrapAlignment.center,
+                            children: current.highlights
+                                .map(
+                                  (highlight) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.84),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: current.endColor
+                                            .withValues(alpha: 0.24),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      highlight,
+                                      style: const TextStyle(
+                                        color: Color(0xFF0F172A),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                          const Spacer(),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      '${_currentIndex + 1}/${_steps.length}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Row(
+                        children: List.generate(
+                          _steps.length,
+                          (index) {
+                            final isActive = index == _currentIndex;
+                            return Expanded(
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 260),
+                                height: 8,
+                                margin: EdgeInsets.only(
+                                  right: index == _steps.length - 1 ? 0 : 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? step.endColor
+                                      : const Color(0xFFCBD5E1),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _goToNextPage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: step.endColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      _isLastPage ? 'Get Started' : 'Next',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -248,6 +358,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 class _OnboardingStep {
   final String title;
   final String description;
+  final List<String> highlights;
   final IconData icon;
   final Color startColor;
   final Color endColor;
@@ -255,6 +366,7 @@ class _OnboardingStep {
   const _OnboardingStep({
     required this.title,
     required this.description,
+    required this.highlights,
     required this.icon,
     required this.startColor,
     required this.endColor,

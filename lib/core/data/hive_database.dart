@@ -16,6 +16,7 @@ class HiveDatabase {
   static const String customerBoxName = 'customers';
   static const String supplierBoxName = 'suppliers';
   static const String supplierPurchaseBoxName = 'supplierPurchases';
+  static const String onboardingCompletedKey = 'onboarding_completed';
 
   static Future<void> init() async {
     await Hive.initFlutter();
@@ -82,6 +83,10 @@ class HiveDatabase {
   }
 
   static Future<void> clearAllData() async {
+    // Preserve app-level onboarding state across logout.
+    final onboardingCompleted =
+        settingsBox.get(onboardingCompletedKey, defaultValue: false) == true;
+
     await productBox.clear();
     await categoryBox.clear();
     await shopBox.clear();
@@ -90,5 +95,9 @@ class HiveDatabase {
     await customerBox.clear();
     await supplierBox.clear();
     await supplierPurchaseBox.clear();
+
+    if (onboardingCompleted) {
+      await settingsBox.put(onboardingCompletedKey, true);
+    }
   }
 }
