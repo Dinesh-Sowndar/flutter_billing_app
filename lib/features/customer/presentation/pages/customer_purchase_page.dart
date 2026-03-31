@@ -8,7 +8,7 @@ import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
+import 'package:billing_app/core/widgets/app_back_button.dart';
 
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -217,8 +217,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
     // Always read balance from Hive directly so it's never stale
     final freshModel = HiveDatabase.customerBox.get(widget.customer.id);
-    final freshBalance =
-        freshModel?.balance ?? widget.customer.balance;
+    final freshBalance = freshModel?.balance ?? widget.customer.balance;
 
     billingBloc.add(SetCustomerEvent(
       customerId: widget.customer.id,
@@ -411,22 +410,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
         elevation: 0,
         centerTitle: false,
         titleSpacing: 8,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12.0),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-              shape: const CircleBorder(),
-              elevation: 2,
-              shadowColor: Colors.black12,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                color: const Color(0xFF0F172A),
-                onPressed: () => context.pop(),
-              ),
-            ),
-          ),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop()),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -1117,7 +1101,8 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   16,
                   8,
                   16,
-                  keyboardInset + (_cart.isNotEmpty && keyboardInset == 0 ? 100 : 20),
+                  keyboardInset +
+                      (_cart.isNotEmpty && keyboardInset == 0 ? 100 : 20),
                 ),
                 itemCount: allProducts.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -1332,27 +1317,26 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             mainAxisSize: MainAxisSize.min,
             children: [
               _circularIconButton(
-                icon: Icons.remove_rounded,
-                color: const Color(0xFF64748B),
-                onPressed: () {
-                  setState(() {
-                    final newQty = qty - _stepForUnit(product);
-                    if (newQty <= 0) {
-                      _cart.removeAt(cartIdx);
-                    } else {
-                      _cart[cartIdx].quantity = newQty;
-                    }
-                  });
-                }
-              ),
+                  icon: Icons.remove_rounded,
+                  color: const Color(0xFF64748B),
+                  onPressed: () {
+                    setState(() {
+                      final newQty = qty - _stepForUnit(product);
+                      if (newQty <= 0) {
+                        _cart.removeAt(cartIdx);
+                      } else {
+                        _cart[cartIdx].quantity = newQty;
+                      }
+                    });
+                  }),
               SizedBox(
                 width: 56,
                 child: _isWeightedUnit(product)
                     ? TextFormField(
                         key: ValueKey('${product.id}-$qty'),
                         initialValue: _formatQty(qty),
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
@@ -1379,14 +1363,13 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                       ),
               ),
               _circularIconButton(
-                icon: Icons.add_rounded,
-                color: AppTheme.primaryColor,
-                onPressed: () {
-                  setState(() {
-                    _cart[cartIdx].quantity += _stepForUnit(product);
-                  });
-                }
-              ),
+                  icon: Icons.add_rounded,
+                  color: AppTheme.primaryColor,
+                  onPressed: () {
+                    setState(() {
+                      _cart[cartIdx].quantity += _stepForUnit(product);
+                    });
+                  }),
             ],
           ),
         ),

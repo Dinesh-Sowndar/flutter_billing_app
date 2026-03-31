@@ -1,6 +1,7 @@
 import 'package:app_settings/app_settings.dart';
 import 'package:billing_app/core/data/hive_database.dart';
 import 'package:billing_app/core/theme/app_theme.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 import 'package:billing_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -238,22 +239,7 @@ class _SettingsPageState extends State<SettingsPage> {
         elevation: 0,
         centerTitle: false,
         titleSpacing: 8,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12.0),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-              shape: const CircleBorder(),
-              elevation: 2,
-              shadowColor: Colors.black12,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                color: const Color(0xFF0F172A),
-                onPressed: () => context.pop(),
-              ),
-            ),
-          ),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop()),
       ),
       bottomNavigationBar: SafeArea(
         top: false,
@@ -376,9 +362,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
                           )
                         : null,
-                    trailingIcon: _isManualSyncing
-                        ? null
-                        : Icons.chevron_right_rounded,
+                    trailingIcon:
+                        _isManualSyncing ? null : Icons.chevron_right_rounded,
                     onTap: _isManualSyncing
                         ? null
                         : () {
@@ -527,8 +512,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildGstSection({required bool isCompact}) {
     final settingsBox = HiveDatabase.settingsBox;
-    bool gstEnabled = settingsBox.get('gst_enabled', defaultValue: false) as bool;
-    double gstRate = (settingsBox.get('gst_rate', defaultValue: 0.0) as num).toDouble();
+    bool gstEnabled =
+        settingsBox.get('gst_enabled', defaultValue: false) as bool;
+    double gstRate =
+        (settingsBox.get('gst_rate', defaultValue: 0.0) as num).toDouble();
 
     return StatefulBuilder(
       builder: (context, setLocalState) {
@@ -681,8 +668,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFF0FDF4),
                             borderRadius: BorderRadius.circular(12),
-                            border:
-                                Border.all(color: const Color(0xFFBBF7D0)),
+                            border: Border.all(color: const Color(0xFFBBF7D0)),
                           ),
                           child: Row(
                             children: [
@@ -802,8 +788,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF2F2),
                     border: Border(
-                      top: BorderSide(
-                          color: Colors.red.shade100, width: 1),
+                      top: BorderSide(color: Colors.red.shade100, width: 1),
                     ),
                   ),
                   child: Row(
@@ -840,11 +825,10 @@ class _SettingsPageState extends State<SettingsPage> {
               Divider(height: 1, color: Colors.grey.shade100),
               InkWell(
                 onTap: () {
-                  AppSettings.openAppSettings(
-                      type: AppSettingsType.bluetooth);
+                  AppSettings.openAppSettings(type: AppSettingsType.bluetooth);
                 },
-                borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(20)),
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1023,8 +1007,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () =>
-            context.read<PrinterBloc>().add(RefreshPrinterEvent()),
+        onPressed: () => context.read<PrinterBloc>().add(RefreshPrinterEvent()),
         icon: const Icon(Icons.print_rounded, size: 20),
         label: Text(
           state.hasSavedPrinter ? 'Reconnect Printer' : 'Connect Printer',
@@ -1034,10 +1017,9 @@ class _SettingsPageState extends State<SettingsPage> {
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
-          textStyle:
-              const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
     );

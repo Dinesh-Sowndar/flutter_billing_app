@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 
 import '../../../../core/service_locator.dart';
 import '../../../../core/services/sync_service.dart';
@@ -98,22 +99,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         elevation: 0,
         centerTitle: false,
         titleSpacing: 8,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12.0),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-              shape: const CircleBorder(),
-              elevation: 2,
-              shadowColor: Colors.black12,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                color: const Color(0xFF0F172A),
-                onPressed: () => context.pop(),
-              ),
-            ),
-          ),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop()),
       ),
       body: BlocConsumer<ShopBloc, ShopState>(
         listener: (context, state) {

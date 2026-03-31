@@ -1,5 +1,6 @@
 import 'package:billing_app/core/widgets/input_label.dart';
 import 'package:billing_app/core/widgets/primary_button.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -73,27 +74,7 @@ class _EditProductPageState extends State<EditProductPage> {
         elevation: 0,
         centerTitle: false,
         titleSpacing: 8,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.pop(),
-                child: const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(Icons.arrow_back_ios_new_rounded,
-                      size: 18, color: Color(0xFF0F172A)),
-                ),
-              ),
-            ),
-          ),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 16),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -246,7 +227,8 @@ class _EditProductPageState extends State<EditProductPage> {
                       label: const Text('Manage'),
                       style: TextButton.styleFrom(
                         foregroundColor: AppTheme.primaryColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -258,16 +240,18 @@ class _EditProductPageState extends State<EditProductPage> {
                   valueListenable: HiveDatabase.categoryBox.listenable(),
                   builder: (context, box, _) {
                     final availableCategories = box.values.toList();
-                    
+
                     // Safety check: if currently selected category was deleted, default to null.
-                    final effectiveCategoryId = (_categoryId != null && availableCategories.any((c) => c.id == _categoryId))
+                    final effectiveCategoryId = (_categoryId != null &&
+                            availableCategories.any((c) => c.id == _categoryId))
                         ? _categoryId
                         : null;
-                        
+
                     // If it changed because of a deletion, update state silently
                     if (effectiveCategoryId != _categoryId) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) setState(() => _categoryId = effectiveCategoryId);
+                        if (mounted)
+                          setState(() => _categoryId = effectiveCategoryId);
                       });
                     }
 
@@ -279,11 +263,13 @@ class _EditProductPageState extends State<EditProductPage> {
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE2E8F0)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE2E8F0)),
                         ),
                       ),
                       items: [

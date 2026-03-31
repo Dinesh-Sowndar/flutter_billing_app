@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 
 import '../../../../core/service_locator.dart' as di;
 import '../../../../core/services/sync_service.dart';
@@ -240,29 +241,7 @@ class _ProductListPageState extends State<ProductListPage> {
         elevation: 0,
         centerTitle: false,
         titleSpacing: 8,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.pop(),
-                child: const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 18,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 16),
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -332,7 +311,8 @@ class _ProductListPageState extends State<ProductListPage> {
                 child: IconButton(
                   tooltip: 'Delete all inventory items',
                   visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  constraints:
+                      const BoxConstraints(minWidth: 34, minHeight: 34),
                   padding: EdgeInsets.zero,
                   onPressed: state.status == ProductStatus.loading
                       ? null

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 import 'package:billing_app/core/theme/app_theme.dart';
 import 'package:billing_app/core/data/hive_database.dart';
 import 'package:billing_app/core/services/sync_service.dart';
@@ -67,7 +68,9 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
   }
 
   int _linkedProductCount() {
-    return HiveDatabase.productBox.values.where((p) => p.categoryId != null).length;
+    return HiveDatabase.productBox.values
+        .where((p) => p.categoryId != null)
+        .length;
   }
 
   Future<void> _addTemplateCategory(String name) async {
@@ -78,7 +81,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
 
     final box = HiveDatabase.categoryBox;
     if (box.length >= 8) {
-      _showSnack('Maximum 8 categories allowed.', color: const Color(0xFFF59E0B));
+      _showSnack('Maximum 8 categories allowed.',
+          color: const Color(0xFFF59E0B));
       return;
     }
 
@@ -128,7 +132,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
     } else {
       // Add
       if (box.length >= 8) {
-        _showSnack('Maximum 8 categories allowed.', color: const Color(0xFFF59E0B));
+        _showSnack('Maximum 8 categories allowed.',
+            color: const Color(0xFFF59E0B));
         return;
       }
       final newCategory = CategoryModel(
@@ -216,7 +221,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
       for (var i = 0; i < productBox.length; i++) {
         final product = productBox.getAt(i);
         if (product != null && product.categoryId == category.id) {
-          final updatedPModel = product.toEntity().copyWith(categoryId: null, pendingSync: true);
+          final updatedPModel =
+              product.toEntity().copyWith(categoryId: null, pendingSync: true);
           final updatedModel = ProductModel.fromEntity(updatedPModel);
           await productBox.putAt(i, updatedModel);
         }
@@ -252,6 +258,9 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        leading: context.canPop()
+            ? AppBackButton(onPressed: () => context.pop())
+            : null,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
         title: const Text(
           'Manage Categories',
@@ -332,7 +341,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                               const SizedBox(height: 12),
                               TextField(
                                 controller: _searchController,
-                                onChanged: (value) => setState(() => _query = value),
+                                onChanged: (value) =>
+                                    setState(() => _query = value),
                                 decoration: InputDecoration(
                                   hintText: 'Search categories',
                                   prefixIcon: const Icon(Icons.search_rounded),
@@ -348,18 +358,18 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                                         ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide:
-                                        const BorderSide(color: Color(0xFFE2E8F0)),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFFE2E8F0)),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide:
-                                        const BorderSide(color: Color(0xFFE2E8F0)),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFFE2E8F0)),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide:
-                                        BorderSide(color: AppTheme.primaryColor),
+                                    borderSide: BorderSide(
+                                        color: AppTheme.primaryColor),
                                   ),
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 12,
@@ -393,8 +403,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                                     avatar: const Icon(Icons.add, size: 16),
                                     label: Text(name),
                                     backgroundColor: const Color(0xFFF8FAFC),
-                                    side:
-                                        const BorderSide(color: Color(0xFFE2E8F0)),
+                                    side: const BorderSide(
+                                        color: Color(0xFFE2E8F0)),
                                   );
                                 }).toList(),
                               ),
@@ -493,7 +503,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.category_outlined, size: 40, color: Color(0xFF94A3B8)),
+          const Icon(Icons.category_outlined,
+              size: 40, color: Color(0xFF94A3B8)),
           const SizedBox(height: 12),
           Text(
             hasAny ? 'No matching categories' : 'No categories added yet',
@@ -537,9 +548,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              category.name.isNotEmpty
-                  ? category.name[0].toUpperCase()
-                  : '#',
+              category.name.isNotEmpty ? category.name[0].toUpperCase() : '#',
               style: TextStyle(
                 color: AppTheme.primaryColor,
                 fontWeight: FontWeight.w800,
@@ -655,7 +664,9 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                   decoration: InputDecoration(
                     hintText: _editingCategoryId != null
                         ? 'Update category name'
-                        : (isAtLimit ? 'Maximum 8 categories reached' : 'Enter category name'),
+                        : (isAtLimit
+                            ? 'Maximum 8 categories reached'
+                            : 'Enter category name'),
                     isDense: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -686,8 +697,9 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 ),
-                onPressed:
-                    (_editingCategoryId != null || !isAtLimit) ? _saveCategory : null,
+                onPressed: (_editingCategoryId != null || !isAtLimit)
+                    ? _saveCategory
+                    : null,
                 icon: Icon(
                   _editingCategoryId != null
                       ? Icons.save_rounded

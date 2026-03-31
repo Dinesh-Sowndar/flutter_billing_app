@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
 
@@ -61,15 +62,13 @@ class _SignUpPageState extends State<SignUpPage> {
       },
       builder: (context, state) {
         final isLoading = state.status == AuthStatus.loading;
-        
+
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A)),
-              onPressed: () => context.pop(),
-            ),
+            leading:
+                AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
           ),
           extendBodyBehindAppBar: true,
           body: Container(
@@ -102,7 +101,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             color: Colors.white,
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                color: AppTheme.primaryColor
+                                    .withValues(alpha: 0.1),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -115,7 +115,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        
+
                         // Header Text
                         Text(
                           'Create Account',
@@ -145,7 +145,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                                color: AppTheme.primaryColor
+                                    .withValues(alpha: 0.05),
                                 blurRadius: 24,
                                 offset: const Offset(0, 8),
                               ),
@@ -187,7 +188,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _isPasswordVisible = !_isPasswordVisible;
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible;
                                       });
                                     },
                                   ),
@@ -209,7 +211,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                 obscureText: !_isConfirmPasswordVisible,
                                 decoration: InputDecoration(
                                   labelText: 'Confirm Password',
-                                  prefixIcon: const Icon(Icons.lock_reset_outlined),
+                                  prefixIcon:
+                                      const Icon(Icons.lock_reset_outlined),
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _isConfirmPasswordVisible
@@ -218,7 +221,8 @@ class _SignUpPageState extends State<SignUpPage> {
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                        _isConfirmPasswordVisible =
+                                            !_isConfirmPasswordVisible;
                                       });
                                     },
                                   ),
@@ -234,12 +238,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                   return null;
                                 },
                               ),
-
                               const SizedBox(height: 32),
                               ElevatedButton(
                                 onPressed: isLoading ? null : _onSignUp,
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 20),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),

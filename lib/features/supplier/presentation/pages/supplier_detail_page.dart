@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../domain/entities/supplier_entity.dart';
 import '../../domain/entities/supplier_purchase_entity.dart';
@@ -939,11 +940,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
         backgroundColor: _surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          color: const Color(0xFF0F172A),
-          onPressed: () => context.pop(),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
         title: Text(
           _supplier.name,
           style: const TextStyle(

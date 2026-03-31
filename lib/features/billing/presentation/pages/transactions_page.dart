@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/sync_service.dart';
@@ -203,27 +204,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         titleSpacing: 8,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.pop(),
-                child: const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(Icons.arrow_back_ios_new_rounded,
-                      size: 18, color: Color(0xFF0F172A)),
-                ),
-              ),
-            ),
-          ),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 16),
       ),
       body: Column(
         children: [
@@ -570,8 +551,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             children: [
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.productName,
                                         style: const TextStyle(
@@ -669,9 +649,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                            isPaymentOnly
-                                ? 'Total Due Amount'
-                                : 'Total Amount',
+                            isPaymentOnly ? 'Total Due Amount' : 'Total Amount',
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         Text('₹${totalDueAmount.toStringAsFixed(2)}',

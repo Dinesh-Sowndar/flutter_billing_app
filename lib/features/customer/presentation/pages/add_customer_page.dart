@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 
 import '../../domain/entities/customer_entity.dart';
 import '../bloc/customer_bloc.dart';
@@ -308,11 +309,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         backgroundColor: _surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          color: _ink,
-          onPressed: () => context.pop(),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
         title: const Text(
           'Add Customer',
           style: TextStyle(

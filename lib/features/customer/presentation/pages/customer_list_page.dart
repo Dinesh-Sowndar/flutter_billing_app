@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/data/hive_database.dart';
+import '../../../../core/widgets/app_back_button.dart';
 import '../../domain/entities/customer_entity.dart';
 import 'add_customer_page.dart';
 import '../bloc/customer_bloc.dart';
@@ -49,6 +50,10 @@ class _CustomerListPageState extends State<CustomerListPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        leading: context.canPop()
+            ? AppBackButton(onPressed: () => context.pop())
+            : null,
+        titleSpacing: 6,
         title: Text(
           widget.dueOnly ? 'Customers with Due' : 'Customers',
           style: TextStyle(

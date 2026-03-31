@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -46,27 +47,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
         elevation: 0,
         centerTitle: false,
         titleSpacing: 8,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Center(
-            child: Material(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.pop(),
-                child: const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(Icons.arrow_back_ios_new_rounded,
-                      size: 18, color: Color(0xFF0F172A)),
-                ),
-              ),
-            ),
-          ),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 16),
       ),
       body: BlocBuilder<SalesBloc, SalesState>(
         builder: (context, state) {
@@ -157,7 +138,8 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                           valueListenable:
                               HiveDatabase.customerBox.listenable(),
                           builder: (context, customerBox, _) {
-                            return ValueListenableBuilder<Box<TransactionModel>>(
+                            return ValueListenableBuilder<
+                                Box<TransactionModel>>(
                               valueListenable:
                                   HiveDatabase.transactionBox.listenable(),
                               builder: (context, txBox, __) {
@@ -441,8 +423,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                             children: [
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.productName,
                                         style: const TextStyle(
@@ -540,9 +521,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                            isPaymentOnly
-                                ? 'Total Due Amount'
-                                : 'Total Amount',
+                            isPaymentOnly ? 'Total Due Amount' : 'Total Amount',
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         Text('₹${totalDueAmount.toStringAsFixed(2)}',
@@ -602,8 +581,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
                           textStyle: const TextStyle(

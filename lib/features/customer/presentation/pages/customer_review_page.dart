@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
+import 'package:billing_app/core/widgets/app_back_button.dart';
 
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/services/sync_service.dart';
@@ -110,10 +111,7 @@ class _CustomerReviewPageState extends State<CustomerReviewPage> {
         foregroundColor: const Color(0xFF1E293B),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
-        ),
+        leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
       ),
       body: Column(
         children: [
