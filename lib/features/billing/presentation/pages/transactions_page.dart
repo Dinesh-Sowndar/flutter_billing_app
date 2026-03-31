@@ -714,7 +714,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   ],
                 ),
               ),
-              // Fixed print button at bottom
               if (!isPaymentOnly) ...[
                 Divider(height: 1, color: Colors.grey.shade100),
                 SafeArea(
@@ -731,8 +730,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
                           textStyle: const TextStyle(

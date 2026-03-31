@@ -362,6 +362,8 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     _ensureScannerActiveSoon();
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final isKeyboardOpen = keyboardInset > 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA), // Elegant light background
@@ -448,15 +450,20 @@ class _HomePageState extends State<HomePage>
         },
         child: Column(
           children: [
-            _buildElegantScannerCard(),
-            const SizedBox(height: 14),
+            Offstage(
+              offstage: isKeyboardOpen,
+              child: _buildElegantScannerCard(),
+            ),
+            SizedBox(height: isKeyboardOpen ? 6 : 14),
             Expanded(child: _buildBottomPanel()),
           ],
         ),
       ),
       bottomNavigationBar: BlocBuilder<BillingBloc, BillingState>(
         builder: (context, state) {
-          if (state.cartItems.isEmpty) return const SizedBox.shrink();
+          if (state.cartItems.isEmpty || keyboardInset > 0) {
+            return const SizedBox.shrink();
+          }
 
           return Container(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
@@ -867,8 +874,16 @@ class _HomePageState extends State<HomePage>
   Widget _buildOrderTab() {
     return BlocBuilder<BillingBloc, BillingState>(
       builder: (context, state) {
+        final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(
+            20,
+            16,
+            20,
+            keyboardInset + (state.cartItems.isNotEmpty && keyboardInset == 0 ? 24 : 110),
+          ),
           child: _buildSaleEntryStyleSection(
             child: state.cartItems.isEmpty
                 ? Padding(
@@ -1062,6 +1077,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildInventoryTab() {
     return BlocBuilder<BillingBloc, BillingState>(
       builder: (context, state) {
+        final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
         final cartByProductId = {
           for (final cartItem in state.cartItems) cartItem.product.id: cartItem,
         };
@@ -1137,7 +1153,12 @@ class _HomePageState extends State<HomePage>
                   }
 
                       return ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          8,
+                          16,
+                          keyboardInset + (state.cartItems.isNotEmpty && keyboardInset == 0 ? 24 : 110),
+                        ),
                         itemCount: filteredList.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {

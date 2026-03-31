@@ -392,6 +392,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   // â”€â”€â”€ Build UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final isKeyboardOpen = keyboardInset > 0;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       extendBody: true,
@@ -479,7 +482,11 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           Column(
             children: [
               _buildCustomerBanner(),
-              _buildCompactScannerPanel(),
+              Offstage(
+                offstage: isKeyboardOpen,
+                child: _buildCompactScannerPanel(),
+              ),
+              SizedBox(height: isKeyboardOpen ? 4 : 0),
               _buildCustomTabBar(),
               Expanded(
                 child: TabBarView(
@@ -493,7 +500,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
               ),
             ],
           ),
-          if (_cart.isNotEmpty)
+          if (_cart.isNotEmpty && keyboardInset == 0)
             Align(
               alignment: Alignment.bottomCenter,
               child: _buildFloatingCheckoutBar(),
@@ -1041,6 +1048,8 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
   // ─── Products Tab Builder ────────────────────────────────────────────────────
   Widget _buildProductsTab() {
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
     return Column(
       children: [
         // Header w/ View All
@@ -1104,7 +1113,12 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                 );
               }
               return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  8,
+                  16,
+                  keyboardInset + (_cart.isNotEmpty && keyboardInset == 0 ? 100 : 20),
+                ),
                 itemCount: allProducts.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (ctx, i) {
@@ -1240,8 +1254,15 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
   // â”€â”€â”€ Shared Cart List Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildCartListView() {
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        0,
+        20,
+        keyboardInset + (_cart.isNotEmpty && keyboardInset == 0 ? 100 : 20),
+      ),
       itemCount: _cart.length,
       itemBuilder: (ctx, i) {
         final item = _cart[i];

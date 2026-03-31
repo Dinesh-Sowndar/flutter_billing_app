@@ -926,7 +926,6 @@ class CustomerDetailPage extends StatelessWidget {
               ),
             ),
 
-            // ── Print button ──
             if (!isPayment) ...[
               Divider(height: 1, color: Colors.grey.shade100),
               SafeArea(
@@ -958,6 +957,37 @@ class CustomerDetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  double _customerDueAfterTransaction(TransactionModel selectedTx) {
+    if (selectedTx.customerId.isEmpty) return 0.0;
+
+    final customerTransactions = HiveDatabase.transactionBox.values
+        .where((t) => t.customerId == selectedTx.customerId)
+        .toList()
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        if (byDate != 0) return byDate;
+        return a.id.compareTo(b.id);
+      });
+
+    var runningDue = 0.0;
+    for (final tx in customerTransactions) {
+      final isPaymentOnly = tx.items.isEmpty && tx.amountPaid > 0;
+
+      if (isPaymentOnly) {
+        runningDue -= tx.amountPaid;
+      } else {
+        final paidAtSale = tx.amountPaid.clamp(0.0, tx.totalAmount).toDouble();
+        runningDue += (tx.totalAmount - paidAtSale);
+      }
+
+      if (tx.id == selectedTx.id) {
+        break;
+      }
+    }
+
+    return runningDue < 0 ? 0.0 : runningDue;
   }
 
   Future<void> _printTransaction(
