@@ -27,7 +27,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final TextEditingController _amountPaidController = TextEditingController();
   final FocusNode _amountFocusNode = FocusNode();
   String _paymentMethod = 'cash';
-  bool _isInitialized = false;
   double _qrAmount = 0.0;
   bool _isFinishing = false;
   bool _isPrinting = false;
@@ -77,6 +76,45 @@ class _CheckoutPageState extends State<CheckoutPage> {
     if (parsed.isNaN || parsed.isInfinite) return 0.0;
     if (parsed < 0) return 0.0;
     if (parsed > totalAmount) return totalAmount;
+    return parsed;
+  }
+
+  void _showCheckoutValidationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFDC2626),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+  }
+
+  double? _validatedCustomerAmountToPay(double totalAmount) {
+    final text = _amountPaidController.text.trim();
+    if (text.isEmpty) {
+      _showCheckoutValidationError('Please enter amount customer will pay.');
+      _amountFocusNode.requestFocus();
+      return null;
+    }
+
+    final parsed = double.tryParse(text);
+    if (parsed == null || parsed.isNaN || parsed.isInfinite || parsed < 0) {
+      _showCheckoutValidationError('Please enter a valid payment amount.');
+      _amountFocusNode.requestFocus();
+      return null;
+    }
+
+    if (parsed > totalAmount) {
+      _showCheckoutValidationError(
+        'Amount cannot exceed Rs ${totalAmount.toStringAsFixed(2)}.',
+      );
+      _amountFocusNode.requestFocus();
+      return null;
+    }
+
     return parsed;
   }
 
@@ -249,11 +287,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 (billingState.customerId.isNotEmpty
                     ? billingState.customerDue
                     : 0.0);
-            if (!_isInitialized && grandTotal > 0) {
-              _amountPaidController.text = grandTotal.toStringAsFixed(2);
-              _qrAmount = grandTotal;
-              _isInitialized = true;
-            }
 
             return BlocBuilder<ShopBloc, ShopState>(
               builder: (context, shopState) {
@@ -1017,10 +1050,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 onPressed: _isFinishing
                     ? null
                     : () {
+                    final paid = billingState.customerId.isNotEmpty
+                      ? _validatedCustomerAmountToPay(grandTotal)
+                      : billingState.totalAmount;
+                    if (paid == null) return;
+
                         setState(() => _isFinishing = true);
-                        final paid = billingState.customerId.isNotEmpty
-                            ? _parseWillingToPay(grandTotal)
-                            : billingState.totalAmount;
                         context.read<BillingBloc>().add(
                               FinishTransactionEvent(
                                   amountPaid: paid,
@@ -1070,10 +1105,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ? null
                     : () {
                         if (shop != null) {
+                      final paid = billingState.customerId.isNotEmpty
+                        ? _validatedCustomerAmountToPay(grandTotal)
+                        : billingState.totalAmount;
+                      if (paid == null) return;
+
                           setState(() => _isPrinting = true);
-                          final paid = billingState.customerId.isNotEmpty
-                              ? _parseWillingToPay(grandTotal)
-                              : billingState.totalAmount;
                           context.read<BillingBloc>().add(PrintReceiptEvent(
                                 shopName: shop.name,
                                 address1: shop.addressLine1,

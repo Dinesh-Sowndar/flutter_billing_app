@@ -65,7 +65,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _scanner = _createScannerController();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
   }
 
   @override
