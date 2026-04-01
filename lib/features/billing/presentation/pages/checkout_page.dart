@@ -163,8 +163,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
               padding: const EdgeInsets.only(right: 12.0),
               child: BlocBuilder<PrinterBloc, PrinterState>(
                 builder: (context, printerState) {
+                  final status = printerState.status;
                   final isConnected = printerState.isLiveConnected;
                   final isBusy = printerState.isBusy;
+                  final statusLabel = switch (status) {
+                    PrinterStatus.connecting => 'Connecting…',
+                    PrinterStatus.scanning => 'Scanning…',
+                    PrinterStatus.checking => 'Checking…',
+                    PrinterStatus.testPrinting => 'Printing…',
+                    PrinterStatus.connected => 'Printer On',
+                    _ => 'Printer Off',
+                  };
+                  final statusColor = isConnected
+                      ? const Color(0xFF059669)
+                      : const Color(0xFFDC2626);
 
                   return Material(
                     color: isConnected
@@ -196,23 +208,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               Icon(
                                 Icons.print_rounded,
                                 size: 16,
-                                color: isConnected
-                                    ? const Color(0xFF059669)
-                                    : const Color(0xFFDC2626),
+                                color: statusColor,
                               ),
                             const SizedBox(width: 6),
                             Text(
-                              isBusy
-                                  ? 'Connecting…'
-                                  : isConnected
-                                      ? 'Printer On'
-                                      : 'Printer Off',
+                              statusLabel,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: isConnected
-                                    ? const Color(0xFF059669)
-                                    : const Color(0xFFDC2626),
+                                color: statusColor,
                               ),
                             ),
                             if (!isConnected && !isBusy) ...[

@@ -7,6 +7,7 @@ import 'printer_state.dart';
 
 class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
   final PrinterRepository repository;
+  static const Duration _connectionCheckTimeout = Duration(seconds: 3);
 
   PrinterBloc({required this.repository}) : super(const PrinterState()) {
     on<InitPrinterEvent>(_onInit);
@@ -16,6 +17,11 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
     on<DisconnectPrinterEvent>(_onDisconnect);
     on<TestPrintEvent>(_onTestPrint);
     on<CheckConnectionEvent>(_onCheckConnection);
+  }
+
+  Future<bool> _getConnectionStatusWithTimeout() async {
+    return await PrintBluetoothThermal.connectionStatus
+        .timeout(_connectionCheckTimeout);
   }
 
   /// On init, load saved printer info and verify live BT connection.
@@ -44,7 +50,7 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
     ));
 
     try {
-      final btAlive = await PrintBluetoothThermal.connectionStatus;
+      final btAlive = await _getConnectionStatusWithTimeout();
       if (btAlive) {
         // Sync the singleton helper flag so print methods work
         await PrinterHelper().syncConnectionStatus();
@@ -76,7 +82,7 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
       CheckConnectionEvent event, Emitter<PrinterState> emit) async {
     emit(state.copyWith(status: PrinterStatus.checking, clearError: true));
     try {
-      final btAlive = await PrintBluetoothThermal.connectionStatus;
+      final btAlive = await _getConnectionStatusWithTimeout();
       if (btAlive) {
         emit(state.copyWith(status: PrinterStatus.connected));
       } else {
