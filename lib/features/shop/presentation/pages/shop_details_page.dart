@@ -106,25 +106,25 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           if (state is ShopLoaded) {
             _updateControllers(state.shop);
           } else if (state is ShopOperationSuccess) {
-            final isQueuedForSync = sl<SyncService>().hasPendingShopSync;
+            final isOffline = !sl<SyncService>().isOnline;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Row(
                 children: [
                   Icon(
-                    isQueuedForSync
+                    isOffline
                         ? Icons.cloud_off_rounded
                         : Icons.check_circle_rounded,
                     color: Colors.white,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isQueuedForSync
+                    isOffline
                         ? 'Saved locally. Will sync when online.'
                         : 'Shop details saved successfully!',
                   ),
                 ],
               ),
-              backgroundColor: isQueuedForSync
+              backgroundColor: isOffline
                   ? const Color(0xFFF59E0B)
                   : const Color(0xFF10B981),
               behavior: SnackBarBehavior.floating,

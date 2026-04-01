@@ -44,14 +44,17 @@ class ShopRepositoryImpl implements ShopRepository {
       final model = ShopModel.fromEntity(shop);
       await box.put(shopKey, model);
 
-      // Offline-first: save locally and defer cloud push when offline.
-      if (!_syncService.isOnline) {
-        await _syncService.markShopPendingSync();
-        return const Right(null);
-      }
+      // Always mark as pending BEFORE attempting the push.
+      // pushShop() will clear this flag on success. This guarantees that
+      // if the push fails for any reason (auth race, Firestore error, etc.)
+      // the next sync cycle will pick it up and retry.
+      await _syncService.markShopPendingSync();
 
-      // Keep save instant; cloud sync runs in background.
-      unawaited(_syncService.pushShop(model));
+      if (_syncService.isOnline) {
+        // Push in the background; pendingShopSync is cleared inside pushShop
+        // on success, or stays true on failure so the next cycle retries it.
+        unawaited(_syncService.pushShop(model));
+      }
 
       return const Right(null);
     } catch (e) {
