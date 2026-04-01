@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/data/hive_database.dart';
 import '../../../../core/service_locator.dart';
+import '../../../../core/services/sync_service.dart';
 import '../../../../core/utils/printer_helper.dart';
 import '../../../billing/data/models/transaction_model.dart';
 import '../../../billing/domain/repositories/billing_repository.dart';
@@ -1222,10 +1225,14 @@ class CustomerDetailPage extends StatelessWidget {
                         if (existingModel != null) {
                           final newBalance = (existingModel.balance - amount)
                               .clamp(0.0, double.infinity);
-                          await HiveDatabase.customerBox.put(
-                            customer.id,
-                            existingModel.copyWith(balance: newBalance),
+                          final updated = existingModel.copyWith(
+                            balance: newBalance,
+                            pendingSync: true,
                           );
+                          await HiveDatabase.customerBox.put(
+                              customer.id, updated);
+                          // Push to Firestore immediately in the background.
+                          unawaited(sl<SyncService>().pushCustomer(updated));
                         }
 
                         if (ctx.mounted) {

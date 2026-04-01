@@ -8,6 +8,8 @@ import 'package:billing_app/features/product/domain/entities/product.dart';
 import 'package:billing_app/features/product/domain/usecases/product_usecases.dart';
 import '../../../../core/utils/printer_helper.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../../../core/service_locator.dart';
+import '../../../../core/services/sync_service.dart';
 import '../../data/models/transaction_model.dart';
 import '../../domain/repositories/billing_repository.dart';
 import '../../../customer/domain/repositories/customer_repository.dart';
@@ -184,13 +186,13 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       if (state.customerId.isNotEmpty) {
         final newBalance =
             (grandTotal - normalizedAmountPaid).clamp(0.0, grandTotal).toDouble();
-        // Direct Hive update — no entity roundtrip, no userId lookup
         final existingModel = HiveDatabase.customerBox.get(state.customerId);
         if (existingModel != null) {
-          await HiveDatabase.customerBox.put(
-            state.customerId,
-            existingModel.copyWith(balance: newBalance),
-          );
+          final updated =
+              existingModel.copyWith(balance: newBalance, pendingSync: true);
+          await HiveDatabase.customerBox.put(state.customerId, updated);
+          // Push to Firestore immediately in the background.
+          unawaited(sl<SyncService>().pushCustomer(updated));
         }
       }
 
@@ -316,13 +318,13 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       if (state.customerId.isNotEmpty) {
         final newBalance =
             (grandTotal - normalizedAmountPaid).clamp(0.0, grandTotal).toDouble();
-        // Direct Hive update — no entity roundtrip, no userId lookup
         final existingModel = HiveDatabase.customerBox.get(state.customerId);
         if (existingModel != null) {
-          await HiveDatabase.customerBox.put(
-            state.customerId,
-            existingModel.copyWith(balance: newBalance),
-          );
+          final updated =
+              existingModel.copyWith(balance: newBalance, pendingSync: true);
+          await HiveDatabase.customerBox.put(state.customerId, updated);
+          // Push to Firestore immediately in the background.
+          unawaited(sl<SyncService>().pushCustomer(updated));
         }
       }
 

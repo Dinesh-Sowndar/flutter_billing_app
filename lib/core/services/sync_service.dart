@@ -427,22 +427,12 @@ class SyncService {
       await _customersCollection
           .doc(model.id)
           .set(model.toFirestore(), SetOptions(merge: true));
-      final cleared = CustomerModel(
-        id: model.id,
-        name: model.name,
-        phone: model.phone,
-        userId: model.userId,
-        pendingSync: false,
-      );
+      // Clear pendingSync but preserve all other fields including balance.
+      final cleared = model.copyWith(pendingSync: false);
       await HiveDatabase.customerBox.put(cleared.id, cleared);
     } catch (_) {
-      final pending = CustomerModel(
-        id: model.id,
-        name: model.name,
-        phone: model.phone,
-        userId: model.userId,
-        pendingSync: true,
-      );
+      // Push failed — mark as pending for retry, preserve balance.
+      final pending = model.copyWith(pendingSync: true);
       await HiveDatabase.customerBox.put(pending.id, pending);
     }
   }
@@ -484,7 +474,11 @@ class SyncService {
       final snapshot = await _customersCollection.get();
       for (final doc in snapshot.docs) {
         final model = CustomerModel.fromFirestore(doc.data());
-        await HiveDatabase.customerBox.put(model.id, model);
+        final local = HiveDatabase.customerBox.get(model.id);
+        // Don't overwrite a local record that has a pending balance update.
+        if (local == null || !local.pendingSync) {
+          await HiveDatabase.customerBox.put(model.id, model);
+        }
       }
     } catch (_) {}
   }
