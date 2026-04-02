@@ -1,0 +1,24 @@
+﻿Analyzing supplier_detail_page.dart...                          
+
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\supplier\presentation\pages\supplier_detail_page.dart:349:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\supplier\presentation\pages\supplier_detail_page.dart:1060:60 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\supplier\presentation\pages\supplier_detail_page.dart:1193:37 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\supplier\presentation\pages\supplier_detail_page.dart:1538:19 - use_build_context_synchronously
+
+flutter : 4 issues found. 
+(ran in 1.3s)
+At line:1 char:1
++ flutter analyze lib/featu
+res/supplier/presentation/p
+ages/supplier_det ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (4 i  
+  ssues found. (ran in 1   
+ .3s):String) [], Remot    
+eException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 

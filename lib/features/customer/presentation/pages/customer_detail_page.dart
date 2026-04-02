@@ -251,7 +251,7 @@ class CustomerDetailPage extends StatelessWidget {
                             children: [
                               Text(
                                 currentCustomer.name,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 22,
                                   color: Colors.white,
@@ -259,7 +259,47 @@ class CustomerDetailPage extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 6),
+                              if (ledgerDue > 0) ...[
+                                const SizedBox(height: 10),
+                                GestureDetector(
+                                  onTap: () => _showPaymentDialog(
+                                      context, currentCustomer, ledgerDue),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.15),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.payments_rounded,
+                                            size: 16, color: _accent),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'PAY NOW',
+                                          style: TextStyle(
+                                            color: _accent,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 10),
                               InkWell(
                                 onTap: () => _makePhoneCall(
                                     context, currentCustomer.phone),
@@ -285,7 +325,7 @@ class CustomerDetailPage extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
@@ -585,34 +625,6 @@ class CustomerDetailPage extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (hasDue)
-                GestureDetector(
-                  onTap: () => _showPaymentDialog(context, customer, due),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _accent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.payments_rounded,
-                            size: 13, color: Colors.white),
-                        SizedBox(width: 4),
-                        Text(
-                          'Pay Now',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
             ],
           ),
         ],

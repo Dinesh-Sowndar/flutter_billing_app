@@ -1,0 +1,25 @@
+﻿Analyzing supplier_list_page.dart...                            
+
+warning - The value of the field '_primaryDark' isn't used - lib\features\supplier\presentation\pages\supplier_list_page.dart:37:22 - unused_field
+   info - Use 'const' with the constructor to improve performance - lib\features\supplier\presentation\pages\supplier_list_page.dart:448:12 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\supplier\presentation\pages\supplier_list_page.dart:449:14 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\supplier\presentation\pages\supplier_list_page.dart:473:12 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - lib\features\supplier\presentation\pages\supplier_list_page.dart:474:14 - prefer_const_constructors
+
+flutter : 5 issues found. 
+(ran in 2.5s)
+At line:1 char:1
++ flutter analyze lib/featu
+res/supplier/presentation/p
+ages/supplier_lis ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (5 i  
+  ssues found. (ran in 2   
+ .5s):String) [], Remot    
+eException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 

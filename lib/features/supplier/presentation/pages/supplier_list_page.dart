@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
+import '../../../../core/services/sync_service.dart';
 import '../../domain/entities/supplier_entity.dart';
 import 'add_supplier_page.dart';
 import '../bloc/supplier_bloc.dart';
@@ -38,9 +40,23 @@ class _SupplierListViewState extends State<_SupplierListView> {
 
   final TextEditingController _searchController = TextEditingController();
   _SupplierFilter _activeFilter = _SupplierFilter.all;
+  StreamSubscription<void>? _syncSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Reload suppliers whenever a sync cycle completes (e.g. after login pull).
+    _syncSubscription =
+        di.sl<SyncService>().onSyncComplete.stream.listen((_) {
+      if (mounted) {
+        context.read<SupplierBloc>().add(const LoadSuppliersEvent());
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _syncSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -100,8 +116,33 @@ class _SupplierListViewState extends State<_SupplierListView> {
       ),
       body: BlocBuilder<SupplierBloc, SupplierState>(
         builder: (context, state) {
-          if (state.status == SupplierStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
+          if (state.status == SupplierStatus.loading ||
+              state.status == SupplierStatus.initial) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3.5,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF0F766E)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Loading suppliers…',
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
           final filteredSuppliers = _applyFilters(state.suppliers);
