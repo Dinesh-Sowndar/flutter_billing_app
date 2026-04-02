@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF1E3A8A); // Customer section accent
@@ -7,23 +8,23 @@ class AppTheme {
   static const Color surfaceColor = Colors.white;
   static const Color errorColor = Color(0xFFEF4444); // Red 500
 
-  static final TextTheme textTheme = const TextTheme().copyWith(
-    bodyLarge: const TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.w500,
-      color: Color(0xFF1E293B),
-    ),
-    bodyMedium: const TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w400,
-      color: Color(0xFF334155),
-    ),
-    titleLarge: const TextStyle(
-      fontSize: 20,
-      fontWeight: FontWeight.w700,
-      color: Color(0xFF0F172A),
-    ),
-  );
+  static TextTheme get textTheme => TextTheme(
+        bodyLarge: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w500,
+          color: const Color(0xFF1E293B),
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w400,
+          color: const Color(0xFF334155),
+        ),
+        titleLarge: TextStyle(
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF0F172A),
+        ),
+      );
 
   static ThemeData get lightTheme {
     return ThemeData(
@@ -52,42 +53,42 @@ class AppTheme {
         titleTextStyle: textTheme.titleLarge?.copyWith(
           color: const Color(0xFF0F172A),
           fontWeight: FontWeight.bold,
-          fontSize: 20,
+          fontSize: 20.sp,
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+        iconTheme: IconThemeData(color: const Color(0xFF0F172A), size: 24.r),
       ),
       cardTheme: CardThemeData(
         elevation: 12,
         shadowColor: primaryColor.withValues(alpha: 0.12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
         color: surfaceColor,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFFF1F5F9), // Slate 100
-        hintStyle: const TextStyle(
-          color: Color(0xFF94A3B8),
+        hintStyle: TextStyle(
+          color: const Color(0xFF94A3B8),
           fontWeight: FontWeight.normal,
-          fontSize: 14,
+          fontSize: 14.sp,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(16.r),
+          borderSide: BorderSide(color: primaryColor, width: 2.w),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: errorColor, width: 2),
+          borderRadius: BorderRadius.circular(16.r),
+          borderSide: BorderSide(color: errorColor, width: 2.w),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -95,12 +96,12 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 8,
           shadowColor: primaryColor.withValues(alpha: 0.4),
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 28),
+          padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 28.w),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          textStyle: const TextStyle(
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          textStyle: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 16.sp,
           ),
         ),
       ),

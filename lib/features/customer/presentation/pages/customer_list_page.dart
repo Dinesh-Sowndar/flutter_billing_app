@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
@@ -58,7 +59,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           widget.dueOnly ? 'Customers with Due' : 'Customers',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 24,
+            fontSize: 20.sp,
             color: const Color(0xFF0F172A),
           ),
         ),
@@ -83,9 +84,10 @@ class _CustomerListPageState extends State<CustomerListPage> {
           }
         },
         icon: const Icon(Icons.person_add_rounded),
-        label: const Text(
+        label: Text(
           'Add Customer',
-          style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+          style: TextStyle(
+              fontWeight: FontWeight.w700, letterSpacing: 0.5, fontSize: 14.sp),
         ),
         backgroundColor: _accent,
         foregroundColor: Colors.white,
@@ -143,8 +145,10 @@ class _CustomerListPageState extends State<CustomerListPage> {
         style: const TextStyle(fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           hintText: 'Search by name or phone...',
-          hintStyle: const TextStyle(
-              color: Color(0xFF94A3B8), fontWeight: FontWeight.normal),
+          hintStyle: TextStyle(
+              color: const Color(0xFF94A3B8),
+              fontWeight: FontWeight.normal,
+              fontSize: 14.sp),
           prefixIcon:
               const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
           suffixIcon: _searchQuery.isNotEmpty
@@ -344,10 +348,10 @@ class _CustomerListPageState extends State<CustomerListPage> {
                               Expanded(
                                 child: Text(
                                   customer.name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                    color: Color(0xFF0F172A),
+                                    fontSize: 16.sp,
+                                    color: const Color(0xFF0F172A),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -368,9 +372,9 @@ class _CustomerListPageState extends State<CustomerListPage> {
                               const SizedBox(width: 4),
                               Text(
                                 customer.phone,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 14,
+                                style: TextStyle(
+                                  color: const Color(0xFF64748B),
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -409,10 +413,10 @@ class _CustomerListPageState extends State<CustomerListPage> {
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
-                            child: const Text('Settled',
+                            child: Text('Settled',
                                 style: TextStyle(
-                                    color: Color(0xFF94A3B8),
-                                    fontSize: 12,
+                                    color: const Color(0xFF94A3B8),
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600)),
                           ),
                         const SizedBox(height: 8),
@@ -441,17 +445,17 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                       ),
                                     ],
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.point_of_sale_rounded,
+                                      const Icon(Icons.point_of_sale_rounded,
                                           size: 16, color: Colors.white),
-                                      SizedBox(width: 4),
+                                      const SizedBox(width: 4),
                                       Text(
                                         'Bill',
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 12,
+                                          fontSize: 12.sp,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),

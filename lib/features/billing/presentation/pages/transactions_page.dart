@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
@@ -195,7 +196,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
           'All Transactions',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 22,
+            fontSize: 20,
             color: Color(0xFF0F172A),
             letterSpacing: -0.5,
           ),
@@ -395,7 +396,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                           : 'Guest Customer',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w700,
-                                        fontSize: 15,
+                                        fontSize: 14,
                                         color: Color(0xFF1E293B),
                                       ),
                                       maxLines: 1,
@@ -420,10 +421,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                         Text(
                                           DateFormat('dd MMM yyyy, hh:mm a')
                                               .format(t.date),
-                                          style: const TextStyle(
-                                              color: Color(0xFF64748B),
+                                          style: TextStyle(
+                                              color: const Color(0xFF64748B),
                                               fontWeight: FontWeight.w500,
-                                              fontSize: 11.5),
+                                              fontSize: 11.5.sp),
                                         ),
                                         if (t.pendingSync) ...[
                                           const SizedBox(width: 8),
@@ -443,7 +444,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                     : 'Rs ${t.totalAmount.toStringAsFixed(0)}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w900,
-                                  fontSize: isCompact ? 14 : 16,
+                                  fontSize: isCompact ? 13 : 15,
                                   color: isPaymentOnly
                                       ? const Color(0xFF10B981)
                                       : const Color(0xFF0F172A),
@@ -503,9 +504,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Transaction Details',
+                    Text('Transaction Details',
                         style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5)),
                     IconButton(
@@ -525,15 +526,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   children: [
                     Text(
                       'Date: ${t.date.day.toString().padLeft(2, '0')}/${t.date.month.toString().padLeft(2, '0')}/${t.date.year} ${t.date.hour.toString().padLeft(2, '0')}:${t.date.minute.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
-                          fontSize: 16, color: Color(0xFF64748B)),
+                      style:
+                          TextStyle(fontSize: 14.sp, color: Color(0xFF64748B)),
                     ),
                     if (t.customerName.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
                         'Customer: ${t.customerName}',
-                        style: const TextStyle(
-                            fontSize: 16, color: Color(0xFF64748B)),
+                        style: TextStyle(
+                            fontSize: 14.sp, color: Color(0xFF64748B)),
                       ),
                     ],
                     const SizedBox(height: 24),
@@ -653,8 +654,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         Text('₹${totalDueAmount.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                                fontSize: 22,
+                            style: TextStyle(
+                                fontSize: 18.sp,
                                 fontWeight: FontWeight.w900,
                                 color: AppTheme.primaryColor)),
                       ],
@@ -663,12 +664,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Amount Paid',
+                        Text('Amount Paid',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
                         Text('₹${t.amountPaid.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                                fontSize: 18,
+                            style: TextStyle(
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF10B981))),
                       ],
@@ -677,12 +678,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Balance Amount',
+                        Text('Balance Amount',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
                         Text('₹${balanceDue.toStringAsFixed(2)}',
                             style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w800,
                                 color: balanceDue > 0
                                     ? const Color(0xFFEF4444)
@@ -841,7 +842,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
         Text('₹${value.toStringAsFixed(2)}',
             style: TextStyle(
                 color: textColor,
-                fontSize: 18,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.3)),
       ],

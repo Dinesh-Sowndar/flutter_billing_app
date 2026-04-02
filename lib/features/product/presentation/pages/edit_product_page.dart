@@ -5,6 +5,7 @@ import 'package:billing_app/core/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bloc/product_bloc.dart';
@@ -61,12 +62,12 @@ class _EditProductPageState extends State<EditProductPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Edit Product',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 22,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
             letterSpacing: -0.5,
           ),
         ),
@@ -117,19 +118,19 @@ class _EditProductPageState extends State<EditProductPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('LINKED BARCODE',
+                            Text('LINKED BARCODE',
                                 style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 11.sp,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF94A3B8),
+                                    color: const Color(0xFF94A3B8),
                                     letterSpacing: 1.2)),
                             const SizedBox(height: 4),
                             Text(widget.product.barcode,
-                                style: const TextStyle(
-                                    fontSize: 16,
+                                style: TextStyle(
+                                    fontSize: 16.sp,
                                     fontWeight: FontWeight.w700,
                                     fontFamily: 'monospace',
-                                    color: Color(0xFF1E293B))),
+                                    color: const Color(0xFF1E293B))),
                           ],
                         ),
                       ),
@@ -350,10 +351,10 @@ class _UnitSelector extends StatelessWidget {
               children: [
                 Icon(
                   _unitIcon(unit),
-                  size: 18,
+                  size: 16.sp,
                   color: isSelected ? Colors.white : AppTheme.primaryColor,
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6.w),
                 Text(
                   unit.label,
                   style: TextStyle(

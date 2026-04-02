@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppBackButton extends StatelessWidget {
   const AppBackButton({
@@ -21,7 +22,7 @@ class AppBackButton extends StatelessWidget {
           elevation: 2,
           shadowColor: Colors.black12,
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, size: 16.sp),
             color: const Color(0xFF0F172A),
             onPressed: onPressed,
           ),

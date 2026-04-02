@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
@@ -303,7 +304,9 @@ class _HomePageState extends State<HomePage>
     final qty = double.tryParse(rawValue.trim());
     if (qty == null) return;
     if (qty <= 0) {
-      context.read<BillingBloc>().add(RemoveProductFromCartEvent(item.product.id));
+      context
+          .read<BillingBloc>()
+          .add(RemoveProductFromCartEvent(item.product.id));
       return;
     }
     context.read<BillingBloc>().add(UpdateQuantityEvent(item.product.id, qty));
@@ -339,7 +342,9 @@ class _HomePageState extends State<HomePage>
           .read<BillingBloc>()
           .add(UpdateQuantityEvent(item.product.id, item.quantity - step));
     } else {
-      context.read<BillingBloc>().add(RemoveProductFromCartEvent(item.product.id));
+      context
+          .read<BillingBloc>()
+          .add(RemoveProductFromCartEvent(item.product.id));
     }
 
     Vibrate.canVibrate.then((can) {
@@ -370,17 +375,17 @@ class _HomePageState extends State<HomePage>
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Text(
               'Quick Receipt',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                fontSize: 22,
-                color: Color(0xFF0F172A),
+                fontSize: 20.sp,
+                color: const Color(0xFF0F172A),
                 letterSpacing: -0.5,
               ),
             ),
-            SizedBox(width: 8),
+            SizedBox(width: 8.w),
             _SyncDot(),
           ],
         ),
@@ -428,7 +433,7 @@ class _HomePageState extends State<HomePage>
               if (_isCameraOn && mounted) await _resumeScanner();
             },
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8.w),
         ],
       ),
       body: BlocListener<BillingBloc, BillingState>(
@@ -442,8 +447,8 @@ class _HomePageState extends State<HomePage>
                 backgroundColor: AppTheme.errorColor,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                margin: const EdgeInsets.all(16),
+                    borderRadius: BorderRadius.circular(12.r)),
+                margin: EdgeInsets.all(16.r),
               ),
             );
           }
@@ -454,7 +459,7 @@ class _HomePageState extends State<HomePage>
               offstage: isKeyboardOpen,
               child: _buildElegantScannerCard(),
             ),
-            SizedBox(height: isKeyboardOpen ? 6 : 14),
+            SizedBox(height: isKeyboardOpen ? 6.h : 14.h),
             Expanded(child: _buildBottomPanel()),
           ],
         ),
@@ -466,19 +471,19 @@ class _HomePageState extends State<HomePage>
           }
 
           return Container(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+            padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 14.h),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
+                  blurRadius: 20.r,
+                  offset: Offset(0, -5.h),
                 )
               ],
             ),
             child: SizedBox(
-              height: 46,
+              height: 46.h,
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
@@ -486,12 +491,12 @@ class _HomePageState extends State<HomePage>
                   await context.push('/checkout');
                   if (_isCameraOn && mounted) await _resumeScanner();
                 },
-                icon: const Icon(Icons.payments_rounded, size: 18),
+                icon: Icon(Icons.payments_rounded, size: 18.r),
                 label: Text(
                   'Review Order   •   ₹${state.totalAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: 14.sp,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -500,9 +505,9 @@ class _HomePageState extends State<HomePage>
                   elevation: 6,
                   shadowColor: AppTheme.primaryColor.withValues(alpha: 0.35),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
                 ),
               ),
@@ -520,20 +525,20 @@ class _HomePageState extends State<HomePage>
     required VoidCallback onPressed,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      padding: EdgeInsets.symmetric(horizontal: 4.0.w),
       child: Material(
         color: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           side:
               BorderSide(color: const Color(0xFFE2E8F0).withValues(alpha: 0.5)),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           onTap: onPressed,
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(icon, color: iconColor, size: 22),
+            padding: EdgeInsets.all(8.0.r),
+            child: Icon(icon, color: iconColor, size: 22.r),
           ),
         ),
       ),
@@ -548,17 +553,17 @@ class _HomePageState extends State<HomePage>
     final scanFrameHeight = isSmallScreen ? 84.0 : 100.0;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(14),
+      margin: EdgeInsets.symmetric(horizontal: 20.w),
+      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(28.r),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            blurRadius: 24.r,
+            offset: Offset(0, 10.h),
           ),
         ],
       ),
@@ -567,25 +572,24 @@ class _HomePageState extends State<HomePage>
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Scanner',
                   style: TextStyle(
                     color: Color(0xFF0F172A),
-                    fontSize: 15,
+                    fontSize: 15.sp,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.3,
                   ),
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                 decoration: BoxDecoration(
                   color: _isCameraOn
                       ? const Color(0xFFF0FDF4)
                       : const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(999.r),
                 ),
                 child: Text(
                   _isCameraOn ? 'Live' : 'Paused',
@@ -594,15 +598,15 @@ class _HomePageState extends State<HomePage>
                         ? const Color(0xFF10B981)
                         : const Color(0xFFEF4444),
                     fontWeight: FontWeight.w800,
-                    fontSize: 11,
+                    fontSize: 11.sp,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           ClipRRect(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(22.r),
             child: SizedBox(
               height: scannerViewportHeight,
               child: Stack(
@@ -634,13 +638,13 @@ class _HomePageState extends State<HomePage>
                   if (_isCameraOn)
                     Center(
                       child: Container(
-                        width: scanFrameWidth,
-                        height: scanFrameHeight,
+                        width: scanFrameWidth.w,
+                        height: scanFrameHeight.h,
                         decoration: BoxDecoration(
                           border: Border.all(
                               color: Colors.white.withValues(alpha: 0.45),
-                              width: 2),
-                          borderRadius: BorderRadius.circular(20),
+                              width: 2.w),
+                          borderRadius: BorderRadius.circular(20.r),
                         ),
                       ),
                     ),
@@ -678,12 +682,12 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          const Text(
+          SizedBox(height: 10.h),
+          Text(
             'Point the camera at a barcode to add items instantly.',
             style: TextStyle(
               color: Color(0xFF64748B),
-              fontSize: 12.5,
+              fontSize: 12.5.sp,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -698,22 +702,22 @@ class _HomePageState extends State<HomePage>
     bool isActive = false,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(14.r),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: InkWell(
           onTap: onPressed,
           child: Container(
-            width: 44,
-            height: 44,
+            width: 44.w,
+            height: 44.h,
             decoration: BoxDecoration(
               color: isActive
                   ? AppTheme.primaryColor
                   : Colors.black.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(14.r),
               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
-            child: Icon(icon, color: Colors.white, size: 22),
+            child: Icon(icon, color: Colors.white, size: 22.r),
           ),
         ),
       ),
@@ -742,39 +746,40 @@ class _HomePageState extends State<HomePage>
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            blurRadius: compact ? 10 : 14,
-                            spreadRadius: compact ? 2 : 4,
+                            blurRadius: compact ? 10.r : 14.r,
+                            spreadRadius: compact ? 2.r : 4.r,
                           )
                         ]),
                     child: Icon(Icons.videocam_off_rounded,
-                        color: Colors.white, size: compact ? 20 : 24),
+                        color: Colors.white, size: compact ? 20.r : 24.r),
                   ),
-                  SizedBox(height: compact ? 8 : 10),
+                  SizedBox(height: compact ? 8.h : 10.h),
                   Text(
                     'Tap to Scan',
                     style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
-                        fontSize: compact ? 13 : 15,
+                        fontSize: compact ? 13.sp : 15.sp,
                         letterSpacing: -0.5),
                   ),
-                  SizedBox(height: compact ? 6 : 8),
+                  SizedBox(height: compact ? 6.h : 8.h),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12.r)),
                       padding: EdgeInsets.symmetric(
-                          horizontal: compact ? 10 : 14,
-                          vertical: compact ? 6 : 8),
+                          horizontal: compact ? 10.w : 14.w,
+                          vertical: compact ? 6.h : 8.h),
                       elevation: 0,
                     ),
-                    icon: Icon(Icons.play_arrow_rounded, size: compact ? 14 : 16),
+                    icon: Icon(Icons.play_arrow_rounded,
+                        size: compact ? 14.r : 16.r),
                     label: Text('Start Scanner',
                         style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            fontSize: compact ? 10.5 : 12)),
+                            fontSize: compact ? 10.5.sp : 12.sp)),
                     onPressed: () async {
                       await _startScannerFromUserAction();
                     },
@@ -792,24 +797,24 @@ class _HomePageState extends State<HomePage>
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFFBFCFE),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 24,
-            offset: const Offset(0, -4),
+            blurRadius: 24.r,
+            offset: Offset(0, -4.h),
           )
         ],
       ),
       child: Column(
         children: [
-          const SizedBox(height: 8),
+          SizedBox(height: 8.h),
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            padding: const EdgeInsets.all(4),
+            margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+            padding: EdgeInsets.all(4.r),
             decoration: BoxDecoration(
               color: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
             ),
             child: TabBar(
               controller: _tabController,
@@ -817,29 +822,29 @@ class _HomePageState extends State<HomePage>
               indicatorSize: TabBarIndicatorSize.tab,
               indicator: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+                    blurRadius: 4.r,
+                    offset: Offset(0, 2.h),
                   ),
                 ],
               ),
               labelColor: AppTheme.primaryColor,
               unselectedLabelColor: const Color(0xFF64748B),
               labelStyle:
-                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  TextStyle(fontWeight: FontWeight.w700, fontSize: 14.sp),
               unselectedLabelStyle:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-              tabs: const [
+                  TextStyle(fontWeight: FontWeight.w600, fontSize: 14.sp),
+              tabs: [
                 Tab(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.shopping_cart_rounded, size: 18),
-                      SizedBox(width: 8),
-                      Text('Current Order'),
+                      Icon(Icons.shopping_cart_rounded, size: 18.r),
+                      SizedBox(width: 8.w),
+                      const Text('Current Order'),
                     ],
                   ),
                 ),
@@ -847,9 +852,9 @@ class _HomePageState extends State<HomePage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.inventory_2_rounded, size: 18),
-                      SizedBox(width: 8),
-                      Text('Add Items'),
+                      Icon(Icons.inventory_2_rounded, size: 18.r),
+                      SizedBox(width: 8.w),
+                      const Text('Add Items'),
                     ],
                   ),
                 ),
@@ -879,55 +884,58 @@ class _HomePageState extends State<HomePage>
         return SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            keyboardInset + (state.cartItems.isNotEmpty && keyboardInset == 0 ? 24 : 110),
+            20.w,
+            16.h,
+            20.w,
+            keyboardInset +
+                (state.cartItems.isNotEmpty && keyboardInset == 0
+                    ? 24.h
+                    : 110.h),
           ),
           child: _buildSaleEntryStyleSection(
             child: state.cartItems.isEmpty
                 ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 34),
+                    padding: EdgeInsets.symmetric(vertical: 34.h),
                     child: _buildEmptyCart(),
                   )
                 : Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 10.h),
                         child: Row(
                           children: [
-                            const Text(
+                            Text(
                               'Current Order',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 18,
+                                fontSize: 18.sp,
                                 color: Color(0xFF1E293B),
                               ),
                             ),
                             const Spacer(),
                             Text(
                               '${state.cartItems.length} item(s)',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Color(0xFF64748B),
-                                fontSize: 13,
+                                fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            SizedBox(width: 10.w),
                             GestureDetector(
                               onTap: _clearAllGuestCart,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w, vertical: 4.h),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFEF2F2),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(8.r),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'Clear',
                                   style: TextStyle(
                                     color: Color(0xFFEF4444),
-                                    fontSize: 12,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -943,18 +951,18 @@ class _HomePageState extends State<HomePage>
                         itemBuilder: (context, index) {
                           final item = state.cartItems[index];
                           return Container(
-                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                            padding: const EdgeInsets.all(16),
+                            margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+                            padding: EdgeInsets.all(16.r),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(20.r),
                               border: Border.all(
-                                  color: Colors.grey.shade100, width: 1.5),
+                                  color: Colors.grey.shade100, width: 1.5.w),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.02),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                                  blurRadius: 10.r,
+                                  offset: Offset(0, 4.h),
                                 ),
                               ],
                             ),
@@ -967,19 +975,19 @@ class _HomePageState extends State<HomePage>
                                     children: [
                                       Text(
                                         item.product.name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 16,
+                                          fontSize: 16.sp,
                                           color: Color(0xFF1E293B),
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      const SizedBox(height: 4),
+                                      SizedBox(height: 4.h),
                                       Text(
                                         'Rs ${item.product.price.toStringAsFixed(0)} x ${_formatQty(item.quantity)} ${item.product.unit.shortLabel}  =  Rs ${item.total.toStringAsFixed(0)}',
-                                        style: const TextStyle(
-                                          fontSize: 13,
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
                                           color: Color(0xFF10B981),
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -992,10 +1000,11 @@ class _HomePageState extends State<HomePage>
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Container(
-                                      height: 36,
+                                      height: 36.h,
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF8FAFC),
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius:
+                                            BorderRadius.circular(12.r),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -1007,29 +1016,29 @@ class _HomePageState extends State<HomePage>
                                                 _decrementCartItem(item),
                                           ),
                                           SizedBox(
-                                            width: 56,
-                                            child: _isWeightedUnit(item.product.unit)
+                                            width: 56.w,
+                                            child: _isWeightedUnit(
+                                                    item.product.unit)
                                                 ? TextFormField(
                                                     key: ValueKey(
                                                         '${item.product.id}-${item.quantity}'),
-                                                    initialValue:
-                                                        _formatQty(item.quantity),
+                                                    initialValue: _formatQty(
+                                                        item.quantity),
                                                     keyboardType:
-                                                        const TextInputType.numberWithOptions(
+                                                        const TextInputType
+                                                            .numberWithOptions(
                                                             decimal: true),
                                                     textAlign: TextAlign.center,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.w800,
-                                                      fontSize: 13,
-                                                      color:
-                                                          Color(0xFF0F172A),
+                                                      fontSize: 13.sp,
+                                                      color: Color(0xFF0F172A),
                                                     ),
                                                     decoration:
                                                         const InputDecoration(
                                                       isDense: true,
-                                                      border:
-                                                          InputBorder.none,
+                                                      border: InputBorder.none,
                                                       contentPadding:
                                                           EdgeInsets.zero,
                                                     ),
@@ -1041,12 +1050,11 @@ class _HomePageState extends State<HomePage>
                                                 : Text(
                                                     _formatQty(item.quantity),
                                                     textAlign: TextAlign.center,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.w800,
-                                                      fontSize: 13,
-                                                      color:
-                                                          Color(0xFF0F172A),
+                                                      fontSize: 13.sp,
+                                                      color: Color(0xFF0F172A),
                                                     ),
                                                   ),
                                           ),
@@ -1087,14 +1095,14 @@ class _HomePageState extends State<HomePage>
             // ── Header w/ View All ───────────────────────────────────────────
             Container(
               color: const Color(0xFFFBFCFE),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Available Items',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1E293B),
                     ),
@@ -1105,11 +1113,12 @@ class _HomePageState extends State<HomePage>
                       await context.push('/product-search');
                       if (_isCameraOn && mounted) await _resumeScanner();
                     },
-                    icon: const Icon(Icons.search_rounded, size: 18),
+                    icon: Icon(Icons.search_rounded, size: 18.r),
                     label: const Text('View All'),
                     style: TextButton.styleFrom(
                       foregroundColor: AppTheme.primaryColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -1126,117 +1135,119 @@ class _HomePageState extends State<HomePage>
                   final allProducts = box.values.toList();
                   final filteredList = allProducts;
 
-
-                      if (filteredList.isEmpty) {
+                  if (filteredList.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 72,
-                            height: 72,
+                            width: 72.w,
+                            height: 72.h,
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(24.r),
                             ),
                             child: Icon(Icons.inventory_2_outlined,
-                                size: 34, color: Colors.grey.shade300),
+                                size: 34.r, color: Colors.grey.shade300),
                           ),
-                          const SizedBox(height: 12),
-                          const Text('No products found',
+                          SizedBox(height: 12.h),
+                          Text('No products found',
                               style: TextStyle(
                                   color: Color(0xFF94A3B8),
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w600)),
                         ],
                       ),
                     );
                   }
 
-                      return ListView.separated(
-                        padding: EdgeInsets.fromLTRB(
-                          16,
-                          8,
-                          16,
-                          keyboardInset + (state.cartItems.isNotEmpty && keyboardInset == 0 ? 24 : 110),
-                        ),
-                        itemCount: filteredList.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final product = filteredList[index];
+                  return ListView.separated(
+                    padding: EdgeInsets.fromLTRB(
+                      16.w,
+                      8.h,
+                      16.w,
+                      keyboardInset +
+                          (state.cartItems.isNotEmpty && keyboardInset == 0
+                              ? 24.h
+                              : 110.h),
+                    ),
+                    itemCount: filteredList.length,
+                    separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                    itemBuilder: (context, index) {
+                      final product = filteredList[index];
                       final cartItem = cartByProductId[product.id];
                       final inCart = cartItem != null;
 
                       return Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: EdgeInsets.all(14.r),
                         decoration: BoxDecoration(
-                          color: inCart
-                              ? const Color(0xFFF8FAFC)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          color:
+                              inCart ? const Color(0xFFF8FAFC) : Colors.white,
+                          borderRadius: BorderRadius.circular(20.r),
                           border: inCart
                               ? Border.all(
                                   color: AppTheme.primaryColor
                                       .withValues(alpha: 0.35),
-                                  width: 1.5)
+                                  width: 1.5.w)
                               : Border.all(
-                                  color: Colors.grey.shade100, width: 1.5),
+                                  color: Colors.grey.shade100, width: 1.5.w),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.02),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              blurRadius: 12.r,
+                              offset: Offset(0, 4.h),
                             ),
                           ],
                         ),
                         child: Row(
                           children: [
                             Container(
-                              width: 46,
-                              height: 46,
+                              width: 46.w,
+                              height: 46.h,
                               decoration: BoxDecoration(
-                                color:
-                                    AppTheme.primaryColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(14),
+                                color: AppTheme.primaryColor
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(14.r),
                               ),
-                              child: const Icon(Icons.inventory_2_rounded,
-                                  color: AppTheme.primaryColor, size: 20),
+                              child: Icon(Icons.inventory_2_rounded,
+                                  color: AppTheme.primaryColor, size: 20.r),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(product.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 15,
+                                          fontSize: 15.sp,
                                           color: Color(0xFF1E293B))),
-                                  const SizedBox(height: 3),
+                                  SizedBox(height: 3.h),
                                   Text(
                                     '₹${product.price.toStringAsFixed(2)} • ${product.stock} ${product.unit.shortLabel}',
-                                    style: const TextStyle(
-                                        fontSize: 12,
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
                                         fontWeight: FontWeight.w600,
                                         color: Color(0xFF94A3B8)),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8.w),
                             if (inCart)
                               Container(
-                                height: 38,
+                                height: 38.h,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(12.r),
                                   border: Border.all(
                                       color: const Color(0xFFE2E8F0)),
                                   boxShadow: [
                                     BoxShadow(
                                       color:
                                           Colors.black.withValues(alpha: 0.03),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
+                                      blurRadius: 4.r,
+                                      offset: Offset(0, 2.h),
                                     )
                                   ],
                                 ),
@@ -1250,29 +1261,28 @@ class _HomePageState extends State<HomePage>
                                           _decrementCartItem(cartItem),
                                     ),
                                     SizedBox(
-                                      width:
-                                          _isWeightedUnit(product.unit) ? 56 : 40,
+                                      width: _isWeightedUnit(product.unit)
+                                          ? 56.w
+                                          : 40.w,
                                       child: _isWeightedUnit(product.unit)
                                           ? TextFormField(
                                               key: ValueKey(
                                                   '${cartItem.product.id}-${cartItem.quantity}'),
                                               initialValue:
                                                   _formatQty(cartItem.quantity),
-                                              keyboardType:
-                                                  const TextInputType
-                                                      .numberWithOptions(
-                                                      decimal: true),
+                                              keyboardType: const TextInputType
+                                                  .numberWithOptions(
+                                                  decimal: true),
                                               textAlign: TextAlign.center,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontWeight: FontWeight.w800,
-                                                fontSize: 13,
+                                                fontSize: 13.sp,
                                                 color: Color(0xFF0F172A),
                                               ),
                                               decoration: const InputDecoration(
                                                 isDense: true,
                                                 border: InputBorder.none,
-                                                contentPadding:
-                                                    EdgeInsets.zero,
+                                                contentPadding: EdgeInsets.zero,
                                               ),
                                               onFieldSubmitted: (value) {
                                                 _applyInlineQuantityForCartItem(
@@ -1284,10 +1294,11 @@ class _HomePageState extends State<HomePage>
                                                   cartItem.quantity,
                                                   product.unit),
                                               textAlign: TextAlign.center,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                   fontWeight: FontWeight.w800,
-                                                  fontSize: 13,
-                                                  color: Color(0xFF0F172A)),
+                                                  fontSize: 13.sp,
+                                                  color:
+                                                      const Color(0xFF0F172A)),
                                             ),
                                     ),
                                     _circularIconButton(
@@ -1301,33 +1312,34 @@ class _HomePageState extends State<HomePage>
                               )
                             else
                               ElevatedButton(
-                                onPressed: () =>
-                                    _addProductFromInventory(product.toEntity()),
+                                onPressed: () => _addProductFromInventory(
+                                    product.toEntity()),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryColor,
                                   foregroundColor: Colors.white,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
+                                      borderRadius:
+                                          BorderRadius.circular(10.r)),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16.w, vertical: 8.h),
                                   minimumSize: Size.zero,
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                child: const Text('Add',
+                                child: Text('Add',
                                     style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 13.sp,
                                         fontWeight: FontWeight.w700)),
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
+            ),
           ],
         );
       },
@@ -1340,15 +1352,15 @@ class _HomePageState extends State<HomePage>
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(22.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            blurRadius: 14.r,
+            offset: Offset(0, 6.h),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.w),
       ),
       child: child,
     );
@@ -1373,20 +1385,20 @@ class _HomePageState extends State<HomePage>
     return Container(
       color: Colors.black,
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: 24.w),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.videocam_off_rounded, color: Colors.white, size: 48),
-          const SizedBox(height: 12),
+          Icon(Icons.videocam_off_rounded, color: Colors.white, size: 48.r),
+          SizedBox(height: 12.h),
           Text(
             isPermissionError
                 ? 'Camera permission is required for scanning.'
                 : 'Unable to open camera. Please retry.',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: Colors.white, fontSize: 14.sp),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           ElevatedButton(
             onPressed: isPermissionError
                 ? () => AppSettings.openAppSettings()
@@ -1398,13 +1410,13 @@ class _HomePageState extends State<HomePage>
                 Text(isPermissionError ? 'Open App Settings' : 'Retry Camera'),
           ),
           if (!isPermissionError && _cameraErrorMessage != null) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             Text(
               _cameraErrorMessage!,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+              style: TextStyle(color: Colors.white54, fontSize: 12.sp),
             ),
           ]
         ],
@@ -1418,36 +1430,36 @@ class _HomePageState extends State<HomePage>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24.r),
             decoration: BoxDecoration(
                 color: const Color(0xFFF1F5F9), // Slate 100
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 10.r,
+                    offset: Offset(0, 4.h),
                   )
                 ]),
-            child: const Icon(Icons.shopping_bag_outlined,
-                size: 48, color: Color(0xFF94A3B8)), // Slate 400
+            child: Icon(Icons.shopping_bag_outlined,
+                size: 48.r, color: const Color(0xFF94A3B8)), // Slate 400
           ),
-          const SizedBox(height: 16),
-          const Text('Your cart is empty',
+          SizedBox(height: 16.h),
+          Text('Your cart is empty',
               style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 18,
+                  fontSize: 18.sp,
                   letterSpacing: -0.5,
                   color: Color(0xFF0F172A))),
-          const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 48),
+          SizedBox(height: 8.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 48.w),
             child: Text(
               'Scan products or browse inventory to add items to your cart.',
               textAlign: TextAlign.center,
               style: TextStyle(
                   color: Color(0xFF64748B),
-                  fontSize: 13,
+                  fontSize: 13.sp,
                   height: 1.4,
                   fontWeight: FontWeight.w500),
             ),
@@ -1465,12 +1477,12 @@ class _HomePageState extends State<HomePage>
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
         child: Container(
-          width: 36,
-          height: 36,
+          width: 36.w,
+          height: 36.h,
           alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: color),
+          child: Icon(icon, size: 18.r, color: color),
         ),
       ),
     );
@@ -1526,7 +1538,8 @@ class _SyncDotState extends State<_SyncDot>
     _hiveListenable.addListener(_refresh);
 
     // Also listen to SyncService.onSyncComplete (fires after online sync clears flags)
-    _syncSub = di.sl<SyncService>().onSyncComplete.stream.listen((_) => _refresh());
+    _syncSub =
+        di.sl<SyncService>().onSyncComplete.stream.listen((_) => _refresh());
 
     _refresh();
   }
@@ -1558,16 +1571,16 @@ class _SyncDotState extends State<_SyncDot>
     return ScaleTransition(
       scale: _synced ? const AlwaysStoppedAnimation(1.0) : _scale,
       child: Container(
-        width: 10,
-        height: 10,
+        width: 10.r,
+        height: 10.r,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: color,
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: _synced ? 0.35 : 0.6),
-              blurRadius: 6,
-              spreadRadius: 1,
+              blurRadius: 6.r,
+              spreadRadius: 1.r,
             ),
           ],
         ),
@@ -1575,4 +1588,3 @@ class _SyncDotState extends State<_SyncDot>
     );
   }
 }
-

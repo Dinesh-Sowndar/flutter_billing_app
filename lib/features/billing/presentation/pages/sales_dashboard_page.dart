@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
@@ -34,12 +35,12 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Sales Dashboard',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 22,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
             letterSpacing: -0.5,
           ),
         ),
@@ -170,7 +171,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                     const Text(
                       'Recent Transactions',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF0F172A),
                       ),
@@ -188,7 +189,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                         'View All',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -284,7 +285,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                               : 'Guest Customer',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w700,
-                                            fontSize: 15,
+                                            fontSize: 14,
                                             color: Color(0xFF1E293B),
                                           ),
                                           maxLines: 1,
@@ -313,7 +314,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                         : 'Rs ${t.totalAmount.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w900,
-                                      fontSize: isCompact ? 14 : 16,
+                                      fontSize: isCompact ? 13 : 15,
                                       color: isPaymentOnly
                                           ? const Color(0xFF10B981)
                                           : const Color(0xFF0F172A),
@@ -674,7 +675,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
       String title, double amount, double pending, Color color, IconData icon,
       {bool compact = false}) {
     final titleSize = compact ? 13.0 : 15.0;
-    final amountSize = compact ? 22.0 : 28.0;
+    final amountSize = compact ? 20.0 : 26.0;
     final chipSize = compact ? 11.0 : 12.0;
     final iconSize = compact ? 20.0 : 24.0;
 

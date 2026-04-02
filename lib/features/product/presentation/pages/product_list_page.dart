@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
 
@@ -242,7 +243,7 @@ class _ProductListPageState extends State<ProductListPage> {
         centerTitle: false,
         titleSpacing: 8,
         leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 16),
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -250,8 +251,8 @@ class _ProductListPageState extends State<ProductListPage> {
               'Inventory',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                fontSize: 22,
-                color: Color(0xFF0F172A),
+                fontSize: 20.sp,
+                color: const Color(0xFF0F172A),
                 letterSpacing: -0.4,
               ),
             ),
@@ -297,7 +298,7 @@ class _ProductListPageState extends State<ProductListPage> {
                           ? const Color(0xFF15803D)
                           : const Color(0xFF64748B),
                       fontWeight: FontWeight.w700,
-                      fontSize: 12,
+                      fontSize: 12.sp,
                     ),
                   ),
                 ],
@@ -390,9 +391,9 @@ class _ProductListPageState extends State<ProductListPage> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           icon: const Icon(Icons.add_rounded),
-          label: const Text(
+          label: Text(
             'Add Product',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
           ),
         ),
       ),
@@ -420,8 +421,7 @@ class _ProductListPageState extends State<ProductListPage> {
               child: TextFormField(
                 controller: _searchController,
                 textCapitalization: TextCapitalization.words,
-                style:
-                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.sp),
                 decoration: InputDecoration(
                   hintText: 'Search product or barcode...',
                   hintStyle: const TextStyle(
@@ -462,8 +462,8 @@ class _ProductListPageState extends State<ProductListPage> {
             onTap: () => _scanQR(products),
             borderRadius: BorderRadius.circular(16),
             child: Ink(
-              height: 52,
-              width: 52,
+              height: 52.h,
+              width: 52.w,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -742,8 +742,8 @@ class _ProductListPageState extends State<ProductListPage> {
           Row(
             children: [
               Container(
-                height: 52,
-                width: 52,
+                height: 52.h,
+                width: 52.w,
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0E7FF),
                   borderRadius: BorderRadius.circular(16),
@@ -760,10 +760,10 @@ class _ProductListPageState extends State<ProductListPage> {
                       product.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: Color(0xFF0F172A),
+                        fontSize: 14.sp,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -794,9 +794,9 @@ class _ProductListPageState extends State<ProductListPage> {
                 children: [
                   Text(
                     'Rs ${product.price.toStringAsFixed(0)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      fontSize: 15,
+                      fontSize: 14.sp,
                       color: AppTheme.primaryColor,
                     ),
                   ),
@@ -812,7 +812,7 @@ class _ProductListPageState extends State<ProductListPage> {
                       '${product.stock} ${product.unit.shortLabel}',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 11,
+                        fontSize: 11.sp,
                         color: stockColor,
                       ),
                     ),
@@ -832,10 +832,10 @@ class _ProductListPageState extends State<ProductListPage> {
                 ),
                 child: Text(
                   'Value: Rs ${(product.stock * product.price).toStringAsFixed(0)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                    color: Color(0xFF334155),
+                    fontSize: 11.sp,
+                    color: const Color(0xFF334155),
                   ),
                 ),
               ),
@@ -864,7 +864,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     Text(
                       product.pendingSync ? 'Pending Sync' : 'Synced',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 11.sp,
                         fontWeight: FontWeight.w700,
                         color: product.pendingSync
                             ? Colors.orange.shade700
@@ -932,10 +932,10 @@ class _MetricCard extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w800,
-              fontSize: 18,
+              fontSize: 16.sp,
             ),
           ),
           const SizedBox(height: 2),
@@ -994,10 +994,10 @@ class _MiniMetricChip extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF334155),
+              style: TextStyle(
+                color: const Color(0xFF334155),
                 fontWeight: FontWeight.w700,
-                fontSize: 12,
+                fontSize: 12.sp,
               ),
             ),
           ),
@@ -1046,7 +1046,7 @@ class _InventoryFilterChip extends StatelessWidget {
           style: TextStyle(
             color: selected ? Colors.white : const Color(0xFF475569),
             fontWeight: FontWeight.w700,
-            fontSize: 12,
+            fontSize: 12.sp,
           ),
         ),
       ),
@@ -1075,8 +1075,8 @@ class _ActionIconButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 30,
-          height: 30,
+          width: 30.w,
+          height: 30.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: background,

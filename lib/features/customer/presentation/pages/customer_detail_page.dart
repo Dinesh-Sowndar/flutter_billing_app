@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
@@ -86,7 +87,7 @@ class CustomerDetailPage extends StatelessWidget {
                   'Customer Details',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 22,
+                    fontSize: 20.sp,
                     color: _ink,
                   ),
                 ),
@@ -185,10 +186,12 @@ class CustomerDetailPage extends StatelessWidget {
                   extra: currentCustomer,
                 ),
                 icon: const Icon(Icons.qr_code_scanner_rounded),
-                label: const Text(
+                label: Text(
                   'Add Bill',
                   style: TextStyle(
-                      fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      fontSize: 14.sp),
                 ),
                 backgroundColor: _accent,
                 foregroundColor: Colors.white,
@@ -224,8 +227,8 @@ class CustomerDetailPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          width: 64,
-                          height: 64,
+                          width: 64.w,
+                          height: 64.h,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
@@ -241,7 +244,7 @@ class CustomerDetailPage extends StatelessWidget {
                             style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 28),
+                                fontSize: 20.sp),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -251,9 +254,9 @@ class CustomerDetailPage extends StatelessWidget {
                             children: [
                               Text(
                                 currentCustomer.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 22,
+                                  fontSize: 20.sp,
                                   color: Colors.white,
                                 ),
                                 maxLines: 1,
@@ -279,7 +282,7 @@ class CustomerDetailPage extends StatelessWidget {
                                         ),
                                       ],
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(Icons.payments_rounded,
@@ -290,7 +293,7 @@ class CustomerDetailPage extends StatelessWidget {
                                           style: TextStyle(
                                             color: _accent,
                                             fontWeight: FontWeight.w900,
-                                            fontSize: 12,
+                                            fontSize: 12.sp,
                                             letterSpacing: 0.8,
                                           ),
                                         ),
@@ -315,10 +318,10 @@ class CustomerDetailPage extends StatelessWidget {
                                       const SizedBox(width: 6),
                                       Text(
                                         currentCustomer.phone,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w500,
-                                          fontSize: 15,
+                                          fontSize: 14.sp,
                                         ),
                                       ),
                                     ],
@@ -340,10 +343,10 @@ class CustomerDetailPage extends StatelessWidget {
                                     ),
                                     child: Text(
                                       '${transactions.length} transaction${transactions.length == 1 ? '' : 's'}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
-                                        fontSize: 12,
+                                        fontSize: 12.sp,
                                       ),
                                     ),
                                   ),
@@ -365,7 +368,7 @@ class CustomerDetailPage extends StatelessWidget {
                                             ? _accentDark
                                             : _accent,
                                         fontWeight: FontWeight.w800,
-                                        fontSize: 12,
+                                        fontSize: 12.sp,
                                       ),
                                     ),
                                   ),
@@ -403,10 +406,10 @@ class CustomerDetailPage extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                     child: Row(
                       children: [
-                        const Text(
+                        Text(
                           'Transaction History',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w800,
                             color: _ink,
                           ),
@@ -421,10 +424,10 @@ class CustomerDetailPage extends StatelessWidget {
                           ),
                           child: Text(
                             '${transactions.length} entries',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: _accent,
                               fontWeight: FontWeight.w700,
-                              fontSize: 12,
+                              fontSize: 12.sp,
                             ),
                           ),
                         ),
@@ -530,10 +533,10 @@ class CustomerDetailPage extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
+                  style: TextStyle(
+                    color: const Color(0xFF64748B),
                     fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                    fontSize: 13.sp,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -545,7 +548,7 @@ class CustomerDetailPage extends StatelessWidget {
           Text(
             currencyFormat.format(amount),
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18.sp,
               fontWeight: FontWeight.w800,
               color: color.shade700,
             ),
@@ -595,13 +598,13 @@ class CustomerDetailPage extends StatelessWidget {
                     size: 16, color: color.shade600),
               ),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Due Balance',
                   style: TextStyle(
-                    color: Color(0xFF64748B),
+                    color: const Color(0xFF64748B),
                     fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                    fontSize: 13.sp,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -617,7 +620,7 @@ class CustomerDetailPage extends StatelessWidget {
                 child: Text(
                   currencyFormat.format(due),
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.w800,
                     color: color.shade700,
                   ),
@@ -633,8 +636,7 @@ class CustomerDetailPage extends StatelessWidget {
   }
 
   Widget _buildTransactionTile(BuildContext context, TransactionModel tx) {
-    final billDue =
-        (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount));
+    final billDue = (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount));
     final isPaid = billDue <= 0;
     final isPartial = billDue > 0 && tx.amountPaid > 0;
     final isUnpaid = !isPaid && !isPartial;
@@ -673,8 +675,8 @@ class CustomerDetailPage extends StatelessWidget {
                 width: 60,
                 decoration: BoxDecoration(
                   color: borderColor.withValues(alpha: 0.06),
-                  borderRadius: const BorderRadius.horizontal(
-                      left: Radius.circular(18)),
+                  borderRadius:
+                      const BorderRadius.horizontal(left: Radius.circular(18)),
                   border: Border(
                     left: BorderSide(color: borderColor, width: 4),
                   ),
@@ -687,7 +689,7 @@ class CustomerDetailPage extends StatelessWidget {
                     Text(
                       DateFormat('dd').format(date),
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.w900,
                         color: borderColor,
                         height: 1,
@@ -696,7 +698,7 @@ class CustomerDetailPage extends StatelessWidget {
                     Text(
                       DateFormat('MMM').format(date).toUpperCase(),
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
                         color: borderColor,
                         letterSpacing: 0.8,
@@ -706,7 +708,7 @@ class CustomerDetailPage extends StatelessWidget {
                     Text(
                       DateFormat('yy').format(date),
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 10.sp,
                         color: borderColor.withValues(alpha: 0.65),
                         fontWeight: FontWeight.w600,
                       ),
@@ -718,8 +720,8 @@ class CustomerDetailPage extends StatelessWidget {
               // ── Main content ──
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -727,13 +729,12 @@ class CustomerDetailPage extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.access_time_rounded,
-                              size: 12,
-                              color: Colors.grey.shade400),
+                              size: 12, color: Colors.grey.shade400),
                           const SizedBox(width: 4),
                           Text(
                             DateFormat('hh:mm a').format(date),
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 11.sp,
                               color: Colors.grey.shade500,
                               fontWeight: FontWeight.w600,
                             ),
@@ -766,8 +767,8 @@ class CustomerDetailPage extends StatelessWidget {
                         children: [
                           Text(
                             currencyFormat.format(tx.totalAmount),
-                            style: const TextStyle(
-                              fontSize: 20,
+                            style: TextStyle(
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w900,
                               color: _ink,
                             ),
@@ -778,8 +779,8 @@ class CustomerDetailPage extends StatelessWidget {
                             children: [
                               Text(
                                 'Paid ${currencyFormat.format(tx.amountPaid)}',
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF10B981),
                                 ),
@@ -788,7 +789,7 @@ class CustomerDetailPage extends StatelessWidget {
                                 Text(
                                   'Due ${currencyFormat.format(billDue)}',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w700,
                                     color: isPartial
                                         ? const Color(0xFFF59E0B)
@@ -813,8 +814,8 @@ class CustomerDetailPage extends StatelessWidget {
                             ),
                             child: Text(
                               '${tx.items.length} item${tx.items.length == 1 ? '' : 's'}',
-                              style: const TextStyle(
-                                fontSize: 11,
+                              style: TextStyle(
+                                fontSize: 11.sp,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF64748B),
                               ),
@@ -836,8 +837,8 @@ class CustomerDetailPage extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   tx.paymentMethod.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 11,
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
                                     fontWeight: FontWeight.w700,
                                     color: _accent,
                                   ),
@@ -890,11 +891,10 @@ class CustomerDetailPage extends StatelessWidget {
                 width: 60,
                 decoration: const BoxDecoration(
                   color: Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.horizontal(
-                      left: Radius.circular(18)),
+                  borderRadius:
+                      BorderRadius.horizontal(left: Radius.circular(18)),
                   border: Border(
-                    left: BorderSide(
-                        color: Color(0xFF22C55E), width: 4),
+                    left: BorderSide(color: Color(0xFF22C55E), width: 4),
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -904,8 +904,8 @@ class CustomerDetailPage extends StatelessWidget {
                   children: [
                     Text(
                       DateFormat('dd').format(date),
-                      style: const TextStyle(
-                        fontSize: 20,
+                      style: TextStyle(
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF15803D),
                         height: 1,
@@ -913,8 +913,8 @@ class CustomerDetailPage extends StatelessWidget {
                     ),
                     Text(
                       DateFormat('MMM').format(date).toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 10,
+                      style: TextStyle(
+                        fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF15803D),
                         letterSpacing: 0.8,
@@ -927,8 +927,8 @@ class CustomerDetailPage extends StatelessWidget {
               // Content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   child: Row(
                     children: [
                       // Icon
@@ -936,8 +936,8 @@ class CustomerDetailPage extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E)
-                              .withValues(alpha: 0.12),
+                          color:
+                              const Color(0xFF22C55E).withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.check_circle_rounded,
@@ -949,19 +949,19 @@ class CustomerDetailPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Payment Received',
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 14,
+                                fontSize: 12.sp,
                                 color: Color(0xFF14532D),
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               DateFormat('hh:mm a').format(date),
-                              style: const TextStyle(
-                                fontSize: 12,
+                              style: TextStyle(
+                                fontSize: 12.sp,
                                 color: Color(0xFF4ADE80),
                                 fontWeight: FontWeight.w600,
                               ),
@@ -975,16 +975,16 @@ class CustomerDetailPage extends StatelessWidget {
                         children: [
                           Text(
                             '+ ${currencyFormat.format(tx.amountPaid)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w900,
-                              fontSize: 18,
+                              fontSize: 16.sp,
                               color: Color(0xFF16A34A),
                             ),
                           ),
-                          const Text(
+                          Text(
                             'Due cleared',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 11.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF4ADE80),
                             ),
@@ -1013,7 +1013,7 @@ class CustomerDetailPage extends StatelessWidget {
         text,
         style: TextStyle(
           color: fg,
-          fontSize: 11,
+          fontSize: 11.sp,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
         ),
@@ -1026,8 +1026,7 @@ class CustomerDetailPage extends StatelessWidget {
     final cf = NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
     final cf2 = NumberFormat.currency(symbol: 'Rs ', decimalDigits: 2);
     final isPayment = tx.items.isEmpty && tx.amountPaid > 0;
-    final billDue =
-        (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount));
+    final billDue = (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount));
     final isSettled = billDue <= 0;
     final isPartial = billDue > 0 && tx.amountPaid > 0;
 
@@ -1111,19 +1110,18 @@ class CustomerDetailPage extends StatelessWidget {
                       children: [
                         Text(
                           isPayment ? 'Payment Received' : 'Bill Receipt',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
-                            fontSize: 18,
+                            fontSize: 16.sp,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          DateFormat('dd MMM yyyy  •  hh:mm a')
-                              .format(tx.date),
+                          DateFormat('dd MMM yyyy  •  hh:mm a').format(tx.date),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 12,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1138,10 +1136,10 @@ class CustomerDetailPage extends StatelessWidget {
                         isPayment
                             ? '+${cf.format(tx.amountPaid)}'
                             : cf.format(tx.totalAmount),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
-                          fontSize: 22,
+                          fontSize: 16.sp,
                         ),
                       ),
                       if (!isPayment)
@@ -1201,16 +1199,15 @@ class CustomerDetailPage extends StatelessWidget {
                         icon: Icons.calendar_today_rounded,
                         iconColor: const Color(0xFF94A3B8),
                         label: 'Date & Time',
-                        value: DateFormat('dd MMM yyyy, hh:mm a')
-                            .format(tx.date),
+                        value:
+                            DateFormat('dd MMM yyyy, hh:mm a').format(tx.date),
                       ),
                     ]),
                   ] else ...[
                     // ── Items section ─────────────────────────────────────
                     if (tx.items.isNotEmpty) ...[
                       Padding(
-                        padding: const EdgeInsets.only(
-                            left: 4, bottom: 10),
+                        padding: const EdgeInsets.only(left: 4, bottom: 10),
                         child: Row(
                           children: [
                             const Icon(Icons.inventory_2_rounded,
@@ -1231,12 +1228,10 @@ class CustomerDetailPage extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          border:
-                              Border.all(color: Colors.grey.shade100),
+                          border: Border.all(color: Colors.grey.shade100),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black
-                                  .withValues(alpha: 0.03),
+                              color: Colors.black.withValues(alpha: 0.03),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -1246,8 +1241,7 @@ class CustomerDetailPage extends StatelessWidget {
                           children: [
                             ...List.generate(tx.items.length, (i) {
                               final item = tx.items[i];
-                              final isLast =
-                                  i == tx.items.length - 1;
+                              final isLast = i == tx.items.length - 1;
                               return Column(
                                 children: [
                                   Padding(
@@ -1258,11 +1252,10 @@ class CustomerDetailPage extends StatelessWidget {
                                           width: 36,
                                           height: 36,
                                           decoration: BoxDecoration(
-                                            color: _accent.withValues(
-                                                alpha: 0.08),
+                                            color:
+                                                _accent.withValues(alpha: 0.08),
                                             borderRadius:
-                                                BorderRadius.circular(
-                                                    10),
+                                                BorderRadius.circular(10),
                                           ),
                                           child: const Icon(
                                             Icons.inventory_2_rounded,
@@ -1274,30 +1267,25 @@ class CustomerDetailPage extends StatelessWidget {
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
-                                                CrossAxisAlignment
-                                                    .start,
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 item.productName,
                                                 style: const TextStyle(
-                                                  fontWeight:
-                                                      FontWeight.w700,
+                                                  fontWeight: FontWeight.w700,
                                                   fontSize: 14,
                                                   color: _ink,
                                                 ),
                                                 maxLines: 1,
-                                                overflow: TextOverflow
-                                                    .ellipsis,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
                                                 'Rs ${item.price.toStringAsFixed(0)}  ×  ${item.quantity % 1 == 0 ? item.quantity.toInt() : item.quantity}',
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color:
-                                                      Color(0xFF94A3B8),
-                                                  fontWeight:
-                                                      FontWeight.w500,
+                                                  color: Color(0xFF94A3B8),
+                                                  fontWeight: FontWeight.w500,
                                                 ),
                                               ),
                                             ],
@@ -1367,16 +1355,14 @@ class CustomerDetailPage extends StatelessWidget {
                               _cardRow(
                                 icon: Icons.percent_rounded,
                                 iconColor: const Color(0xFF94A3B8),
-                                label:
-                                    'CGST @ ${halfRate.toStringAsFixed(1)}%',
+                                label: 'CGST @ ${halfRate.toStringAsFixed(1)}%',
                                 value: cf.format(tx.cgstAmount),
                                 valueColor: const Color(0xFF64748B),
                               ),
                               _cardRow(
                                 icon: Icons.percent_rounded,
                                 iconColor: const Color(0xFF94A3B8),
-                                label:
-                                    'SGST @ ${halfRate.toStringAsFixed(1)}%',
+                                label: 'SGST @ ${halfRate.toStringAsFixed(1)}%',
                                 value: cf.format(tx.sgstAmount),
                                 valueColor: const Color(0xFF64748B),
                               ),
@@ -1479,7 +1465,8 @@ class CustomerDetailPage extends StatelessWidget {
                 child: const SizedBox(height: 8),
               ),
             ],
-            if (isPayment) const SafeArea(top: false, child: SizedBox(height: 16)),
+            if (isPayment)
+              const SafeArea(top: false, child: SizedBox(height: 16)),
           ],
         ),
       ),
@@ -1505,8 +1492,8 @@ class CustomerDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _cardDivider() =>
-      Divider(height: 1, indent: 16, endIndent: 16, color: Colors.grey.shade100);
+  Widget _cardDivider() => Divider(
+      height: 1, indent: 16, endIndent: 16, color: Colors.grey.shade100);
 
   Widget _cardRow({
     required IconData icon,
@@ -1533,10 +1520,10 @@ class CustomerDetailPage extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF64748B),
+              style: TextStyle(
+                color: const Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
-                fontSize: 14,
+                fontSize: 14.sp,
               ),
             ),
           ),
@@ -1545,7 +1532,7 @@ class CustomerDetailPage extends StatelessWidget {
             style: TextStyle(
               color: valueColor ?? _ink,
               fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
-              fontSize: large ? 16 : 14,
+              fontSize: large ? 16.sp : 14.sp,
             ),
           ),
         ],
@@ -1677,7 +1664,6 @@ class CustomerDetailPage extends StatelessWidget {
     }
   }
 
-
   void _showPaymentDialog(
       BuildContext context, CustomerEntity customer, double due) {
     final amountController =
@@ -1706,8 +1692,7 @@ class CustomerDetailPage extends StatelessWidget {
             child: Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1747,10 +1732,10 @@ class CustomerDetailPage extends StatelessWidget {
                         color: Colors.white, size: 32),
                   ),
                   const SizedBox(height: 14),
-                  const Text(
+                  Text(
                     'Record Payment',
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 20.sp,
                       fontWeight: FontWeight.w800,
                       color: _ink,
                     ),
@@ -1758,8 +1743,8 @@ class CustomerDetailPage extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     customer.name,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: 16.sp,
                       color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
@@ -1768,13 +1753,12 @@ class CustomerDetailPage extends StatelessWidget {
 
                   // ── Due badge ────────────────────────────────────────
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
                       borderRadius: BorderRadius.circular(999),
-                      border:
-                          Border.all(color: Colors.red.shade100),
+                      border: Border.all(color: Colors.red.shade100),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1787,7 +1771,7 @@ class CustomerDetailPage extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.red.shade700,
                             fontWeight: FontWeight.w700,
-                            fontSize: 13,
+                            fontSize: 13.sp,
                           ),
                         ),
                       ],
@@ -1800,23 +1784,20 @@ class CustomerDetailPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
                       children: [
-                        const Text(
+                        Text(
                           'Quick select:',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF64748B),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        _quickChip('25%', () => selectAmount(0.25),
-                            setState),
+                        _quickChip('25%', () => selectAmount(0.25), setState),
                         const SizedBox(width: 8),
-                        _quickChip('50%', () => selectAmount(0.50),
-                            setState),
+                        _quickChip('50%', () => selectAmount(0.50), setState),
                         const SizedBox(width: 8),
-                        _quickChip('Full', () => selectAmount(1.0),
-                            setState),
+                        _quickChip('Full', () => selectAmount(1.0), setState),
                       ],
                     ),
                   ),
@@ -1830,9 +1811,8 @@ class CustomerDetailPage extends StatelessWidget {
                       child: TextFormField(
                         controller: amountController,
                         autofocus: false,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(
-                                decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -1840,8 +1820,8 @@ class CustomerDetailPage extends StatelessWidget {
                         ),
                         decoration: InputDecoration(
                           prefixText: 'Rs  ',
-                          prefixStyle: const TextStyle(
-                            fontSize: 18,
+                          prefixStyle: TextStyle(
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF64748B),
                           ),
@@ -1852,33 +1832,28 @@ class CustomerDetailPage extends StatelessWidget {
                               horizontal: 20, vertical: 18),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                                color: Colors.grey.shade200),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                                color: Colors.grey.shade200),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                                color: _accent, width: 2),
+                            borderSide:
+                                const BorderSide(color: _accent, width: 2),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
-                                color: Colors.red.shade300),
+                            borderSide: BorderSide(color: Colors.red.shade300),
                           ),
                         ),
                         validator: (v) {
-                          if (v == null || v.isEmpty)
-                            return 'Enter an amount';
+                          if (v == null || v.isEmpty) return 'Enter an amount';
                           final val = double.tryParse(v);
                           if (val == null || val <= 0)
                             return 'Enter a valid amount';
-                          if (val > due)
-                            return 'Cannot exceed due amount';
+                          if (val > due) return 'Cannot exceed due amount';
                           return null;
                         },
                       ),
@@ -1907,8 +1882,7 @@ class CustomerDetailPage extends StatelessWidget {
                               ? []
                               : [
                                   BoxShadow(
-                                    color:
-                                        _accent.withValues(alpha: 0.35),
+                                    color: _accent.withValues(alpha: 0.35),
                                     blurRadius: 14,
                                     offset: const Offset(0, 6),
                                   ),
@@ -1918,11 +1892,10 @@ class CustomerDetailPage extends StatelessWidget {
                           onPressed: isSaving
                               ? null
                               : () async {
-                                  if (!formKey.currentState!.validate())
-                                    return;
+                                  if (!formKey.currentState!.validate()) return;
                                   setState(() => isSaving = true);
-                                  final amount = double.parse(
-                                      amountController.text);
+                                  final amount =
+                                      double.parse(amountController.text);
                                   final paymentTx = TransactionModel(
                                     id: DateTime.now()
                                         .millisecondsSinceEpoch
@@ -1939,8 +1912,7 @@ class CustomerDetailPage extends StatelessWidget {
                                   await sl<BillingRepository>()
                                       .saveTransaction(paymentTx);
                                   final existingModel =
-                                      HiveDatabase.customerBox
-                                          .get(customer.id);
+                                      HiveDatabase.customerBox.get(customer.id);
                                   if (existingModel != null) {
                                     final newBalance =
                                         (existingModel.balance - amount)
@@ -1949,35 +1921,29 @@ class CustomerDetailPage extends StatelessWidget {
                                       balance: newBalance,
                                       pendingSync: true,
                                     );
-                                    await HiveDatabase.customerBox.put(
-                                        customer.id, updated);
+                                    await HiveDatabase.customerBox
+                                        .put(customer.id, updated);
                                     unawaited(sl<SyncService>()
                                         .pushCustomer(updated));
                                   }
                                   if (ctx.mounted) {
                                     Navigator.pop(ctx);
-                                    ScaffoldMessenger.of(ctx)
-                                        .showSnackBar(
+                                    ScaffoldMessenger.of(ctx).showSnackBar(
                                       SnackBar(
                                         content: const Row(
                                           children: [
-                                            Icon(
-                                                Icons
-                                                    .check_circle_rounded,
-                                                color: Colors.white,
-                                                size: 18),
+                                            Icon(Icons.check_circle_rounded,
+                                                color: Colors.white, size: 18),
                                             SizedBox(width: 8),
                                             Text('Payment recorded!'),
                                           ],
                                         ),
                                         backgroundColor:
                                             const Color(0xFF10B981),
-                                        behavior:
-                                            SnackBarBehavior.floating,
+                                        behavior: SnackBarBehavior.floating,
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
-                                                BorderRadius.circular(
-                                                    12)),
+                                                BorderRadius.circular(12)),
                                         margin: const EdgeInsets.all(16),
                                       ),
                                     );
@@ -1995,18 +1961,16 @@ class CustomerDetailPage extends StatelessWidget {
                                   width: 22,
                                   height: 22,
                                   child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.5))
-                              : const Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                      color: Colors.white, strokeWidth: 2.5))
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.check_rounded, size: 20),
                                     SizedBox(width: 8),
                                     Text(
                                       'Confirm Payment',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 16.sp,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.3,
                                       ),
@@ -2021,12 +1985,12 @@ class CustomerDetailPage extends StatelessWidget {
                   // ── Cancel link ──────────────────────────────────────
                   TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text(
+                    child: Text(
                       'Cancel',
                       style: TextStyle(
                         color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontSize: 14.sp,
                       ),
                     ),
                   ),
@@ -2040,16 +2004,14 @@ class CustomerDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _quickChip(
-      String label, VoidCallback onTap, StateSetter setState) {
+  Widget _quickChip(String label, VoidCallback onTap, StateSetter setState) {
     return GestureDetector(
       onTap: () {
         onTap();
         setState(() {});
       },
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: _accentSoft,
           borderRadius: BorderRadius.circular(999),

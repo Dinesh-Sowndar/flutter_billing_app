@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
@@ -262,12 +263,12 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
             ? AppBackButton(onPressed: () => context.pop())
             : null,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
-        title: const Text(
+        title: Text(
           'Manage Categories',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 20,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
             letterSpacing: -0.5,
           ),
         ),
@@ -383,7 +384,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                                 style: TextStyle(
                                   color: Colors.grey.shade700,
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 12,
+                                  fontSize: 12.sp,
                                   letterSpacing: 0.2,
                                 ),
                               ),
@@ -401,7 +402,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                                             _addTemplateCategory(name);
                                           },
                                     avatar: const Icon(Icons.add, size: 16),
-                                    label: Text(name),
+                                    label: Text(name,
+                                        style: TextStyle(fontSize: 12.sp)),
                                     backgroundColor: const Color(0xFFF8FAFC),
                                     side: const BorderSide(
                                         color: Color(0xFFE2E8F0)),
@@ -477,9 +479,9 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF64748B),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: const Color(0xFF64748B),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -562,10 +564,10 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
               children: [
                 Text(
                   category.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: Color(0xFF1E293B),
+                    fontSize: 15.sp,
+                    color: const Color(0xFF1E293B),
                   ),
                 ),
                 const SizedBox(height: 4),
