@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
@@ -130,12 +131,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
         backgroundColor: const Color(0xFFF8FAFC),
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          title: const Text(
+          title:  Text(
             'Checkout',
             style: TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 22,
-              color: Color(0xFF0F172A),
+              fontSize: 20.sp,
+              color: const Color(0xFF0F172A),
             ),
           ),
           backgroundColor: Colors.transparent,
@@ -220,9 +221,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               ),
                             ),
                             if (!isConnected && !isBusy) ...[
-                              const SizedBox(width: 4),
-                              const Icon(Icons.refresh_rounded,
-                                  size: 14, color: Color(0xFFDC2626)),
+                               SizedBox(width: 4.w),
+                               Icon(Icons.refresh_rounded,
+                                  size: 12.h, color: Color(0xFFDC2626)),
                             ],
                           ],
                         ),
@@ -377,10 +378,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
               const SizedBox(width: 8),
               Text(
                 'Billing to: $name',
-                style: const TextStyle(
+                style:  TextStyle(
                   color: AppTheme.primaryColor,
                   fontWeight: FontWeight.w700,
-                  fontSize: 14,
+                  fontSize: 12.sp,
                 ),
               ),
             ],
@@ -412,16 +413,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
               color: Color(0xFF0F172A),
               borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
             ),
-            child: const Row(
+            child:  Row(
               children: [
-                Icon(Icons.receipt_long_rounded, color: Colors.white, size: 20),
-                SizedBox(width: 10),
+                const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
                 Text(
                   'Order Summary',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 14.sp,
                   ),
                 ),
               ],
@@ -460,10 +461,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         children: [
                           Text(
                             item.product.name,
-                            style: const TextStyle(
+                            style:  TextStyle(
                               fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                              color: Color(0xFF1E293B),
+                              fontSize: 14.sp,
+                              color: const Color(0xFF1E293B),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -471,9 +472,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           const SizedBox(height: 4),
                           Text(
                             'Rs ${item.product.price.toStringAsFixed(2)} x ${_formatQty(item.quantity)} ${item.product.unit.shortLabel}',
-                            style: const TextStyle(
+                            style:  TextStyle(
                               color: Color(0xFF64748B),
-                              fontSize: 13,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -482,10 +483,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                     Text(
                       'Rs ${item.total.toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style:  TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: Color(0xFF0F172A),
+                        fontSize: 13.sp,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                   ],
@@ -612,21 +613,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                       Text(
                         'SUB TOTAL',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF94A3B8),
-                          fontSize: 12,
+                          color: const Color(0xFF94A3B8),
+                          fontSize: 10.sp,
                           letterSpacing: 0.5,
                         ),
                       ),
                       Text(
                         'Rs ${subTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1E293B),
-                          fontSize: 15,
+                          color: const Color(0xFF1E293B),
+                          fontSize: 13.sp,
                         ),
                       ),
                     ],
@@ -647,16 +648,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
-                            children: const [
-                              Icon(Icons.warning_amber_rounded,
+                            children:  [
+                              const Icon(Icons.warning_amber_rounded,
                                   size: 16, color: Color(0xFFD97706)),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
                                 'PREV. DUE',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFFD97706),
-                                  fontSize: 12,
+                                  color: const Color(0xFFD97706),
+                                  fontSize: 10.sp,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -664,10 +665,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           ),
                           Text(
                             '+ Rs ${prevDue.toStringAsFixed(2)}',
-                            style: const TextStyle(
+                            style:  TextStyle(
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFFD97706),
-                              fontSize: 15,
+                              color: const Color(0xFFD97706),
+                              fontSize: 13.sp,
                             ),
                           ),
                         ],
@@ -683,19 +684,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     children: [
                       Text(
                         hasDue ? 'GRAND TOTAL' : 'TOTAL AMOUNT',
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF64748B),
-                          fontSize: 13,
+                          color: const Color(0xFF64748B),
+                          fontSize: 13.sp,
                           letterSpacing: 0.5,
                         ),
                       ),
                       Text(
                         'Rs ${grandTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontWeight: FontWeight.w900,
                           color: AppTheme.primaryColor,
-                          fontSize: 24,
+                          fontSize: 22.sp,
                         ),
                       ),
                     ],
@@ -738,12 +739,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+         Text(
           'Payment Details',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 18,
-            color: Color(0xFF0F172A),
+            fontSize: 16.sp,
+            color: const Color(0xFF0F172A),
           ),
         ),
         const SizedBox(height: 12),
@@ -764,11 +765,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+               Text(
                 'Amount Will Pay Now',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: 12.sp,
                   color: Color(0xFF64748B),
                 ),
               ),
@@ -779,10 +780,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 autofillHints: const [],
-                style: const TextStyle(
+                style:  TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  color: Color(0xFF0F172A),
+                  fontSize: 18.sp,
+                  color: const Color(0xFF0F172A),
                 ),
                 decoration: InputDecoration(
                   prefixText: 'Rs ',
@@ -842,12 +843,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 },
               ),
               const SizedBox(height: 20),
-              const Text(
+               Text(
                 'Payment Method',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: Color(0xFF64748B),
+                  fontSize: 12.sp,
+                  color: const Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 10),
@@ -1078,12 +1079,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                     Text(
                       'Finish without Receipt',
                       style: TextStyle(
                         color: AppTheme.primaryColor,
                         fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                        fontSize: 15.sp ,
                       ),
                     ),
                     if (_isFinishing) ...[
@@ -1148,16 +1149,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 3),
                       )
-                    : const Row(
+                    :  Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.print_rounded, size: 20),
-                          SizedBox(width: 8),
+                          Icon(Icons.print_rounded, size: 18.h),
+                          SizedBox(width: 8.w),
                           Text(
                             'Print Receipt & Finish',
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 16,
+                              fontSize: 15.sp,
                             ),
                           ),
                         ],

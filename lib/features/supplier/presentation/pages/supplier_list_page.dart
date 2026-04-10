@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
 import '../../../../core/services/sync_service.dart';
@@ -90,11 +91,11 @@ class _SupplierListViewState extends State<_SupplierListView> {
         elevation: 0,
         titleSpacing: 4,
         leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
-        title: const Text(
+        title:  Text(
           'Suppliers',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 23,
+            fontSize: 20.sp,
             color: _textPrimary,
           ),
         ),
@@ -106,10 +107,10 @@ class _SupplierListViewState extends State<_SupplierListView> {
             context.read<SupplierBloc>().add(const LoadSuppliersEvent());
           }
         },
-        icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: const Text(
+        icon:  Icon(Icons.person_add_alt_1_rounded,size: 20.h,),
+        label:  Text(
           'Add Supplier',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(fontWeight: FontWeight.w700,fontSize: 12.sp),
         ),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
@@ -289,8 +290,10 @@ class _SummaryCard extends StatelessWidget {
             ),
             child: Text(
               '$dueCount with pending due',
-              style: const TextStyle(
+              
+              style:  TextStyle(
                 color: Colors.white,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -348,7 +351,8 @@ class _SupplierCard extends StatelessWidget {
                     supplier.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style:  TextStyle(
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),
                     ),
@@ -356,8 +360,9 @@ class _SupplierCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     supplier.phone.isEmpty ? 'Phone not added' : supplier.phone,
-                    style: const TextStyle(
-                      color: Color(0xFF64748B),
+                    style:  TextStyle(
+                      fontSize: 12.sp,
+                      color: const Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -378,7 +383,7 @@ class _SupplierCard extends StatelessWidget {
                       Text(
                         supplier.pendingSync ? 'Not synced' : 'Synced',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.sp,
                           color: supplier.pendingSync
                               ? const Color(0xFFD97706)
                               : const Color(0xFF059669),
@@ -408,6 +413,7 @@ class _SupplierCard extends StatelessWidget {
                         ? 'Rs ${supplier.balance.toStringAsFixed(2)}'
                         : 'Cleared',
                     style: TextStyle(
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
                       color: hasDue
                           ? const Color(0xFFDC2626)
@@ -458,6 +464,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             color: selected ? Colors.white : const Color(0xFF334155),
             fontWeight: FontWeight.w700,
+            fontSize: 12.sp,
           ),
         ),
       ),

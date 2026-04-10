@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
@@ -140,12 +141,12 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
         elevation: 0,
         titleSpacing: 4,
         leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
-        title: const Text(
+        title:  Text(
           'Record Purchase',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 20,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
           ),
         ),
       ),
@@ -184,10 +185,10 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
                         children: [
                           Text(
                             widget.supplier.name,
-                            style: const TextStyle(
+                            style:  TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
-                              fontSize: 16,
+                              fontSize: 14.sp,
                             ),
                           ),
                           Text(
@@ -195,6 +196,7 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w500,
+                              fontSize: 12.sp,
                             ),
                           ),
                         ],
@@ -204,11 +206,12 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+               Text(
                 'Items',
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF334155),
+                  fontSize: 10.sp,
+                  color: const Color(0xFF334155),
                 ),
               ),
               const SizedBox(height: 8),
@@ -237,10 +240,10 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
                 onPressed: _addItem,
                 icon: const Icon(Icons.add_circle_outline_rounded,
                     color: _primary),
-                label: const Text(
+                label:  Text(
                   'Add Another Item',
                   style:
-                      TextStyle(color: _primary, fontWeight: FontWeight.w700),
+                      TextStyle(color: _primary, fontWeight: FontWeight.w700, fontSize: 12.sp),
                 ),
               ),
               const SizedBox(height: 8),
@@ -252,7 +255,7 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
               ),
               const SizedBox(height: 20),
               SizedBox(
-                height: 56,
+                height: 60.h,
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
@@ -263,15 +266,15 @@ class _SupplierPurchasePageState extends State<SupplierPurchasePage> {
                         borderRadius: BorderRadius.circular(18)),
                   ),
                   child: _isSubmitting
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
+                      ?  SizedBox(
+                          width: 22.w,
+                          height: 22.h,
+                          child: const CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2.5),
                         )
-                      : const Text('Save Purchase Entry',
+                      :  Text('Save Purchase Entry',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w700)),
+                              fontSize: 14.sp, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -415,10 +418,10 @@ class _ItemRowState extends State<_ItemRow> {
           Row(
             children: [
               Text('Item ${widget.index + 1}',
-                  style: const TextStyle(
+                  style:  TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: Color(0xFF64748B))),
+                      fontSize: 12.sp,
+                      color: const Color(0xFF64748B))),
               const Spacer(),
               if (widget.canRemove)
                 GestureDetector(
@@ -436,21 +439,23 @@ class _ItemRowState extends State<_ItemRow> {
             children: [
               // Search field
               TextField(
+                
                 controller: _searchCtrl,
                 focusNode: _searchFocus,
-                readOnly: _hasSelection, // lock after selection
-                style: const TextStyle(
-                    fontSize: 14,
+                readOnly: _hasSelection,
+               // lock after selection
+                style:  TextStyle(
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B)),
+                    color: const Color(0xFF1E293B)),
                 decoration: _fieldDecor('Select Item').copyWith(
                   hintText: 'Search inventory...',
-                  prefixIcon: const Icon(Icons.search_rounded,
-                      color: Color(0xFF0F766E), size: 20),
+                  prefixIcon:  Icon(Icons.search_rounded,
+                      color: const Color(0xFF0F766E), size: 16.sp),
                   suffixIcon: _hasSelection
                       ? IconButton(
-                          icon: const Icon(Icons.close_rounded,
-                              color: Color(0xFF94A3B8), size: 20),
+                          icon:  Icon(Icons.close_rounded,
+                              color: const Color(0xFF94A3B8), size: 16.sp),
                           onPressed: () {
                             _searchCtrl.clear();
                             widget.item.productId = '';
@@ -585,6 +590,7 @@ class _ItemRowState extends State<_ItemRow> {
               Expanded(
                 flex: 2,
                 child: TextField(
+            
                   controller: _priceCtrl,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
@@ -592,10 +598,10 @@ class _ItemRowState extends State<_ItemRow> {
                     FilteringTextInputFormatter.allow(
                         RegExp(r'^\d+\.?\d{0,2}')),
                   ],
-                  style: const TextStyle(
-                      fontSize: 14,
+                  style:  TextStyle(
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B)),
+                      color: const Color(0xFF1E293B)),
                   decoration:
                       _fieldDecor('Purchase Price / Unit', prefixText: '₹ ')
                           .copyWith(hintText: '0.00'),
@@ -685,15 +691,15 @@ class _SummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Previous Due',
+               Text('Previous Due',
                   style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: Color(0xFF64748B))),
+                      fontSize: 12.sp,
+                      color: const Color(0xFF64748B))),
               Text('₹${previousDue.toStringAsFixed(2)}',
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                      fontSize: 14.sp,
                       color: previousDue > 0
                           ? const Color(0xFFD97706)
                           : const Color(0xFF16A34A))),
@@ -703,16 +709,16 @@ class _SummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Subtotal',
+               Text('Subtotal',
                   style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: Color(0xFF64748B))),
+                      fontSize: 12.sp,
+                      color: const Color(0xFF64748B))),
               Text('₹${subtotal.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style:  TextStyle(
                       fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      color: Color(0xFF1E293B))),
+                      fontSize: 15.sp,
+                      color: const Color(0xFF1E293B))),
             ],
           ),
           const SizedBox(height: 10),
@@ -721,16 +727,16 @@ class _SummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Grand Total',
+               Text('Grand Total',
                   style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      color: Color(0xFF334155))),
+                      fontSize: 12.sp,
+                      color: const Color(0xFF334155))),
               Text('₹${grandTotal.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style:  TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      color: Color(0xFF0F766E))),
+                      fontSize: 16.sp,
+                      color: const Color(0xFF0F766E))),
             ],
           ),
           const SizedBox(height: 12),
@@ -743,6 +749,10 @@ class _SummaryCard extends StatelessWidget {
             onChanged: (_) => onChanged(),
             decoration: InputDecoration(
               labelText: 'Amount Paid',
+              labelStyle: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1E293B)),
               hintText: 'Enter payment against grand total',
               prefixText: '₹ ',
               filled: true,
@@ -769,7 +779,7 @@ class _SummaryCard extends StatelessWidget {
               Text('₹${due.toStringAsFixed(2)}',
                   style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      fontSize: 16,
+                      fontSize: 14.sp,
                       color: due > 0
                           ? const Color(0xFFEF4444)
                           : const Color(0xFF16A34A))),

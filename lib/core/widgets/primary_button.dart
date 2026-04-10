@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -44,9 +45,9 @@ class PrimaryButton extends StatelessWidget {
         child: ElevatedButton.icon(
           onPressed: isLoading ? null : onPressed,
           icon: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
+              ?  SizedBox(
+                  width: 20.w,
+                  height: 20.h,
                   child: CircularProgressIndicator(
                     color: Colors.white,
                     strokeWidth: 2,
@@ -54,6 +55,7 @@ class PrimaryButton extends StatelessWidget {
                 )
               : Icon(icon),
           label: Text(
+
             label,
             style: textStyle,
           ),

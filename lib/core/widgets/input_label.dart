@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class InputLabel extends StatelessWidget {
   const InputLabel({
@@ -11,11 +12,12 @@ class InputLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding:  EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Color(0xFF4C669A),
+        style:  TextStyle(
+          fontSize: 12.sp,
+          color: const Color(0xFF4C669A),
         ),
       ),
     );

@@ -5,6 +5,7 @@ import 'package:billing_app/core/widgets/app_back_button.dart';
 import 'package:billing_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -229,11 +230,11 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Options',
+        title:  Text('Options',
             style: TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 22,
-              color: Color(0xFF0F172A),
+              fontSize: 20.sp,
+              color: const Color(0xFF0F172A),
             )),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -457,7 +458,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         Expanded(
                           child: Text(shopName,
                               style: TextStyle(
-                                  fontSize: isCompact ? 18 : 20,
+                                  fontSize: isCompact ? 18.sp : 20.sp,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                   letterSpacing: -0.5),

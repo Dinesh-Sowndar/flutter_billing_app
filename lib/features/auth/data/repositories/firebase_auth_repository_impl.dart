@@ -10,6 +10,15 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   final firebase_auth.FirebaseAuth _firebaseAuth;
   final FirebaseFirestore _firestore;
 
+  AppUser _fallbackUser(firebase_auth.User firebaseUser) {
+    return AppUser(
+      id: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      status: 'active',
+      deleted: false,
+    );
+  }
+
   FirebaseAuthRepositoryImpl({
     firebase_auth.FirebaseAuth? firebaseAuth,
     FirebaseFirestore? firestore,
@@ -119,10 +128,16 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
                       ),
                     );
                   },
-                  onError: controller.addError,
+                  onError: (_) {
+                    // If rules temporarily block this stream, keep the session
+                    // usable and avoid crashing the app with an uncaught stream error.
+                    controller.add(_fallbackUser(firebaseUser));
+                  },
                 );
           },
-          onError: controller.addError,
+          onError: (_) {
+            controller.add(null);
+          },
         );
       },
       onCancel: () async {

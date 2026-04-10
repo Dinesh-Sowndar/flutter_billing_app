@@ -260,7 +260,7 @@ class _ProductListPageState extends State<ProductListPage> {
             Text(
               'Track stock health and sync status',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 12.sp,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w600,
               ),

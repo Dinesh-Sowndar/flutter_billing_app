@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../core/data/hive_database.dart';
@@ -145,12 +146,12 @@ class _CustomerProductSearchPageState
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
-        title: const Text(
+        title:  Text(
           'Search Products',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 20,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
             letterSpacing: -0.5,
           ),
         ),
@@ -329,9 +330,9 @@ class _CustomerProductSearchPageState
                       icon: const Icon(Icons.check_rounded, size: 18),
                       label: Text(
                         'Done   •   $itemCount ${itemCount == 1 ? 'item' : 'items'}   •   ₹${total.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                          fontSize: 14.sp,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -444,10 +445,10 @@ class _CustomerProductSearchPageState
                         const SizedBox(height: 3),
                         Text(
                           '₹${product.price.toStringAsFixed(2)}  •  ${_unitShortLabel(product.unit)}',
-                          style: const TextStyle(
-                              fontSize: 12,
+                          style:  TextStyle(
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF94A3B8)),
+                              color: const Color(0xFF94A3B8)),
                         ),
                       ],
                     ),
@@ -521,10 +522,10 @@ class _CustomerProductSearchPageState
                   else
                     ElevatedButton.icon(
                       onPressed: () => _addProduct(product),
-                      icon: const Icon(Icons.add_rounded, size: 16),
-                      label: const Text('Add',
+                      icon:  Icon(Icons.add_rounded, size: 14.sp),
+                      label:  Text('Add',
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w700)),
+                              fontSize: 12.sp, fontWeight: FontWeight.w700)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,

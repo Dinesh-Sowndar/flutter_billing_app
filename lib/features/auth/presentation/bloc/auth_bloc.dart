@@ -24,9 +24,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthSignUpRequested>(_onSignUpRequested);
 
-    _userSubscription = _authRepository.user.listen((user) {
-      add(AuthUserChanged(user));
-    });
+    _userSubscription = _authRepository.user.listen(
+      (user) {
+        add(AuthUserChanged(user));
+      },
+      onError: (_, __) {
+        add(const AuthUserChanged(null));
+      },
+    );
   }
 
   void _onUserChanged(AuthUserChanged event, Emitter<AuthState> emit) {

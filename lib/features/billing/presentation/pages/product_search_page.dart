@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
@@ -117,12 +118,12 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
-        title: const Text(
+        title:  Text(
           'Search Products',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 20,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
             letterSpacing: -0.5,
           ),
         ),
@@ -190,7 +191,7 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
                       children: [
                         ChoiceChip(
-                          label: const Text('All'),
+                          label:  Text('All',style: TextStyle(fontSize: 12.sp),),
                           selected: selectedId == null,
                           onSelected: (_) => _selectedCategoryId.value = null,
                           selectedColor: AppTheme.primaryColor,
@@ -390,10 +391,10 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(product.name,
-                            style: const TextStyle(
+                            style:  TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                color: Color(0xFF1E293B))),
+                                fontSize: 14.sp,
+                                color: const Color(0xFF1E293B))),
                         const SizedBox(height: 3),
                         Text(
                           '₹${product.price.toStringAsFixed(2)}  •  ${_unitShortLabel(product.unit)}',

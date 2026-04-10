@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
@@ -510,10 +511,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                       children: [
                         Text(
                           isPayment ? 'Payment Details' : 'Purchase Details',
-                          style: const TextStyle(
+                          style:  TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
-                            fontSize: 18,
+                            fontSize: 16.sp,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -522,7 +523,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                            fontSize: 12.sp,
                           ),
                         ),
                       ],
@@ -582,12 +583,12 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Row(
                         children: [
-                          const Text(
+                           Text(
                             'Items',
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: Color(0xFF334155),
+                              fontSize: 14.sp,
+                              color: const Color(0xFF334155),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -650,18 +651,18 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                   children: [
                                     Text(
                                       item.productName,
-                                      style: const TextStyle(
+                                      style:  TextStyle(
                                         fontWeight: FontWeight.w700,
-                                        fontSize: 14,
+                                        fontSize: 12.sp,
                                         color: Color(0xFF1E293B),
                                       ),
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
                                       '${item.quantity} ${item.unit} × ${_money.format(item.price)}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF64748B),
+                                      style:  TextStyle(
+                                        fontSize: 10.sp,
+                                        color: const Color(0xFF64748B),
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -670,10 +671,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                               ),
                               Text(
                                 _money.format(item.total),
-                                style: const TextStyle(
+                                style:  TextStyle(
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                  color: Color(0xFF1E293B),
+                                  fontSize: 12.sp,
+                                  color: const Color(0xFF1E293B),
                                 ),
                               ),
                             ],
@@ -742,7 +743,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12.sp,
             color: isBold ? const Color(0xFF1E293B) : const Color(0xFF64748B),
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
           ),
@@ -750,7 +751,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
         Text(
           value,
           style: TextStyle(
-            fontSize: isBold ? 17 : 15,
+            fontSize: isBold ? 16.sp : 14.sp,
             fontWeight: isBold ? FontWeight.w900 : FontWeight.w700,
             color: valueColor,
           ),
@@ -1316,10 +1317,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
         leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
         title: Text(
           _supplier.name,
-          style: const TextStyle(
+          style:  TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 20,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
           ),
         ),
         actions: [
@@ -1339,18 +1340,18 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+               PopupMenuItem(
                 value: 'edit',
                 height: 34,
-                padding: EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.edit_rounded,
+                    const Icon(Icons.edit_rounded,
                         size: 16, color: Color(0xFF64748B)),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Edit',
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 12.sp),
                     ),
                   ],
                 ),
@@ -1434,8 +1435,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(_supplier.name,
-                                style: const TextStyle(
-                                    fontSize: 18,
+                                style:  TextStyle(
+                                    fontSize: 18.sp,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white)),
                             const SizedBox(height: 3),
@@ -1444,7 +1445,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                   ? 'No phone'
                                   : _supplier.phone,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12.sp,
                                 color: Colors.white.withValues(alpha: 0.8),
                                 fontWeight: FontWeight.w500,
                               ),
@@ -1478,8 +1479,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                               const SizedBox(height: 4),
                               Text(
                                 _money.format(_supplier.balance),
-                                style: const TextStyle(
-                                  fontSize: 21,
+                                style:  TextStyle(
+                                  fontSize: 20.sp,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
                                 ),
@@ -1490,10 +1491,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                         if (hasDue)
                           FilledButton.icon(
                             onPressed: _showPaymentSheet,
-                            icon: const Icon(Icons.payments_rounded, size: 18),
-                            label: const Text(
+                            icon:  Icon(Icons.payments_rounded, size: 16.sp),
+                            label:  Text(
                               'Pay Due',
-                              style: TextStyle(fontWeight: FontWeight.w700),
+                              style: TextStyle(fontWeight: FontWeight.w700,fontSize: 12.sp),
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor:
@@ -1515,10 +1516,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
           ),
           const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding:  EdgeInsets.symmetric(horizontal: 10.h),
             child: SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 50.h,
               child: ElevatedButton.icon(
                 onPressed: () async {
                   await context.push('/suppliers/${_supplier.id}/purchase',
@@ -1536,9 +1537,9 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                   }
                 },
                 icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                label: const Text(
+                label:  Text(
                   'Record Purchase',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
@@ -1551,19 +1552,19 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+           SizedBox(height: 16.sp),
 
           // ── Activity Header ──
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: Row(
               children: [
-                const Text(
+                 Text(
                   'Purchase History',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: const Color(0xFF0F172A),
                   ),
                 ),
                 const Spacer(),
@@ -1779,7 +1780,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                           Text(
                                             DateFormat('hh:mm a').format(date),
                                             style: TextStyle(
-                                              fontSize: 11,
+                                              fontSize: 10.sp,
                                               color: Colors.grey.shade500,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -1834,8 +1835,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                               children: [
                                                 Text(
                                                   'Paid ${_money.format(p.amountPaid)}',
-                                                  style: const TextStyle(
-                                                    fontSize: 11,
+                                                  style:  TextStyle(
+                                                    fontSize: 10.sp,
                                                     fontWeight: FontWeight.w700,
                                                     color: Color(0xFF10B981),
                                                   ),
@@ -1847,7 +1848,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                   Text(
                                                     'Due ${_money.format(p.dueAmount)}',
                                                     style: TextStyle(
-                                                      fontSize: 11,
+                                                      fontSize: 10.sp,
                                                       fontWeight:
                                                           FontWeight.w700,
                                                       color:
@@ -1920,10 +1921,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                               ),
                                               child: Text(
                                                 '${p.items.length} item${p.items.length == 1 ? '' : 's'}',
-                                                style: const TextStyle(
-                                                  fontSize: 11,
+                                                style:  TextStyle(
+                                                  fontSize: 10.sp,
                                                   fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF64748B),
+                                                  color: const Color(0xFF64748B),
                                                 ),
                                               ),
                                             ),
@@ -1948,21 +1949,21 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                               ),
-                                              child: const Row(
+                                              child:  Row(
                                                 mainAxisSize:
                                                     MainAxisSize.min,
                                                 children: [
-                                                  Icon(
+                                                  const Icon(
                                                     Icons.print_rounded,
                                                     size: 14,
                                                     color:
                                                         Color(0xFF0F766E),
                                                   ),
-                                                  SizedBox(width: 4),
+                                                  const SizedBox(width: 4),
                                                   Text(
                                                     'Print',
                                                     style: TextStyle(
-                                                      fontSize: 11,
+                                                      fontSize: 10.sp,
                                                       fontWeight:
                                                           FontWeight.w700,
                                                       color:

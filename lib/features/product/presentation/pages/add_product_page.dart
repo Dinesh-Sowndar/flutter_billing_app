@@ -5,6 +5,7 @@ import 'package:billing_app/core/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
@@ -83,12 +84,12 @@ class _AddProductPageState extends State<AddProductPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
+          title:  Text(
             'Add Product',
             style: TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 22,
-              color: Color(0xFF0F172A),
+              fontSize: 20.sp,
+              color: const Color(0xFF0F172A),
               letterSpacing: -0.5,
             ),
           ),

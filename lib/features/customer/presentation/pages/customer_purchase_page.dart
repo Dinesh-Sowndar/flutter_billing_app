@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -402,7 +403,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           'Sale Entry',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 22,
+            fontSize: 20.sp,
             color: const Color(0xFF0F172A),
           ),
         ),
@@ -613,14 +614,14 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
         labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
         unselectedLabelStyle:
             TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        tabs: const [
+        tabs:  [
           Tab(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.shopping_cart_rounded, size: 18),
-                SizedBox(width: 8),
-                Text('Current Order'),
+               const Icon(Icons.shopping_cart_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text('Current Order',style: TextStyle(fontSize: 12.sp),),
               ],
             ),
           ),
@@ -628,9 +629,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inventory_2_rounded, size: 18),
-                SizedBox(width: 8),
-                Text('Add Manual'),
+                const Icon(Icons.inventory_2_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text('Add Manual',style: TextStyle(fontSize: 12.sp),),
               ],
             ),
           ),
@@ -693,7 +694,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                         ? const Color(0xFF10B981)
                         : const Color(0xFFEF4444),
                     fontWeight: FontWeight.w800,
-                    fontSize: 10.5,
+                    fontSize: 10.5.sp,
                   ),
                 ),
               ),
@@ -780,11 +781,11 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+           Text(
             'Point the camera at a barcode to add items instantly.',
             style: TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 12,
+              color: const Color(0xFF64748B),
+              fontSize: 12.sp,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -849,16 +850,16 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   'Total Amount',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
-                    fontSize: 12,
+                    fontSize: 10.sp,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Rs ${_total.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: Colors.white,
-                    fontSize: 22,
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -880,9 +881,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                 children: [
                   Text('Checkout',
                       style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 14.sp)),
                   const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded, size: 18),
+                   Icon(Icons.arrow_forward_rounded, size: 14.sp),
                 ],
               ),
             ),
@@ -1043,18 +1044,18 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+               Text(
                 'Available Items',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
+                  color: const Color(0xFF1E293B),
                 ),
               ),
               TextButton.icon(
                 onPressed: _openProductSearchPage,
-                icon: const Icon(Icons.search_rounded, size: 18),
-                label: const Text('View All'),
+                icon:  Icon(Icons.search_rounded, size: 16.sp),
+                label:  Text('View All',style: TextStyle(fontSize: 12.sp),),
                 style: TextButton.styleFrom(
                   foregroundColor: AppTheme.primaryColor,
                   padding:
@@ -1194,7 +1195,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   product.name,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: 14.sp,
                     color: const Color(0xFF1E293B),
                   ),
                   maxLines: 1,
@@ -1203,8 +1204,8 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                 const SizedBox(height: 2),
                 Text(
                   'Rs ${product.price.toStringAsFixed(0)} / ${product.unit.shortLabel} - Stock: ${product.stock}',
-                  style: const TextStyle(
-                      fontSize: 12,
+                  style:  TextStyle(
+                      fontSize: 10.sp,
                       color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500),
                 ),

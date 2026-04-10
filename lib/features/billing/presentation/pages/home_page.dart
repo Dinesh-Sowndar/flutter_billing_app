@@ -1220,7 +1220,7 @@ class _HomePageState extends State<HomePage>
                                   Text(product.name,
                                       style: TextStyle(
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 15.sp,
+                                          fontSize: 14.sp,
                                           color: Color(0xFF1E293B))),
                                   SizedBox(height: 3.h),
                                   Text(

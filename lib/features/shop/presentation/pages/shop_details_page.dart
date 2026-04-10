@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
 
@@ -87,12 +88,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text(
+        title:  Text(
           'Shop Details',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 22,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -194,11 +195,11 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                                   color: AppTheme.primaryColor, size: 32),
                             ),
                             const SizedBox(width: 16),
-                            const Expanded(
+                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                 const  Text(
                                     'Business Profile',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
@@ -206,12 +207,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                                       color: Color(0xFF0F172A),
                                     ),
                                   ),
-                                  SizedBox(height: 6),
+                                 const SizedBox(height: 6),
                                   Text(
                                     'These details will appear on all your digital and printed receipts.',
                                     style: TextStyle(
-                                      color: Color(0xFF64748B),
-                                      fontSize: 13,
+                                      color: const Color(0xFF64748B),
+                                      fontSize: 12.sp,
                                       fontWeight: FontWeight.w500,
                                       height: 1.4,
                                     ),
@@ -223,12 +224,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                         ),
                       ),
 
-                      const Text(
+                       Text(
                         'Basic Information',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: Color(0xFF1E293B),
+                          fontSize: 14.sp,
+                          color: const Color(0xFF1E293B),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -271,12 +272,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       ),
 
                       const SizedBox(height: 12),
-                      const Text(
+                       Text(
                         'Location Details',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: Color(0xFF1E293B),
+                          fontSize: 14.sp,
+                          color: const Color(0xFF1E293B),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -292,12 +293,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       ),
 
                       const SizedBox(height: 12),
-                      const Text(
+                       Text(
                         'Payment & Receipt Info',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: Color(0xFF1E293B),
+                          fontSize: 14.sp,
+                          color: const Color(0xFF1E293B),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -363,16 +364,16 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                                       Colors.white),
                                 ),
                               )
-                            : const Row(
+                            :  Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.save_rounded, size: 20),
-                                  SizedBox(width: 8),
+                                   Icon(Icons.save_rounded, size: 18.h),
+                                  const SizedBox(width: 8),
                                   Text(
                                     'Save Details',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w800,
-                                      fontSize: 16,
+                                      fontSize: 15.sp,
                                     ),
                                   ),
                                 ],
@@ -405,10 +406,10 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style:  TextStyle(
             fontWeight: FontWeight.w600,
-            fontSize: 13,
-            color: Color(0xFF64748B),
+            fontSize: 12.sp,
+            color: const Color(0xFF64748B),
           ),
         ),
         const SizedBox(height: 8),
