@@ -107,7 +107,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text('Tap the icon to open camera scanner',
+                  const Text('Tap the icon to open camera scanner',  
                       style: TextStyle(fontSize: 12, color: Color(0xFF4C669A))),
                 ],
               );
