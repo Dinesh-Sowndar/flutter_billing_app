@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/data/hive_database.dart';
@@ -113,12 +114,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           ),
                         ],
                       ),
-                      child: const Text(
+                      child:  Text(
                         'QuickReceipt',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: const Color(0xFF0F172A),
                           letterSpacing: -0.2,
                         ),
                       ),
@@ -128,8 +129,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       onPressed: _completeOnboarding,
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF334155),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
+                        padding:  EdgeInsets.symmetric(
+                          horizontal: 12.sp,
                           vertical: 10,
                         ),
                       ),
@@ -227,11 +228,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           Text(
                             current.title,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 32,
+                            style:  TextStyle(
+                              fontSize: 22.sp,
                               height: 1.12,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
+                              color: const Color(0xFF0F172A),
                               letterSpacing: -0.8,
                             ),
                           ),
@@ -239,8 +240,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           Text(
                             current.description,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 15,
+                            style:  TextStyle(
+                              fontSize: 14.sp,
                               color: Color(0xFF334155),
                               height: 1.5,
                             ),
@@ -268,10 +269,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                     ),
                                     child: Text(
                                       highlight,
-                                      style: const TextStyle(
-                                        color: Color(0xFF0F172A),
+                                      style:  TextStyle(
+                                        color: const Color(0xFF0F172A),
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 12,
+                                        fontSize: 12.sp,
                                       ),
                                     ),
                                   ),
@@ -289,9 +290,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   children: [
                     Text(
                       '${_currentIndex + 1}/${_steps.length}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF64748B),
+                      style:  TextStyle(
+                        fontSize: 12.sp,
+                        color: const Color(0xFF64748B),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -339,8 +340,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ),
                     child: Text(
                       _isLastPage ? 'Get Started' : 'Next',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style:  TextStyle(
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w800,
                       ),
                     ),

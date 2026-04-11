@@ -111,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                           style:  TextStyle(
                             fontSize: 25.sp,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A), // Slate 900
+                            color: const Color(0xFF0F172A), // Slate 900
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -212,10 +212,10 @@ class _LoginPageState extends State<LoginPage> {
                                           strokeWidth: 3,
                                         ),
                                       )
-                                    : const Text(
+                                    :  Text(
                                         'Sign In',
                                         style: TextStyle(
-                                          fontSize: 18,
+                                          fontSize: 18.sp,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),

@@ -262,46 +262,31 @@ class CustomerDetailPage extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (ledgerDue > 0) ...[
-                                const SizedBox(height: 10),
-                                GestureDetector(
-                                  onTap: () => _showPaymentDialog(
-                                      context, currentCustomer, ledgerDue),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.15),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  if (ledgerDue > 0)
+                                    _headerActionButton(
+                                      icon: Icons.payments_rounded,
+                                      label: 'PAY NOW',
+                                      onTap: () => _showPaymentDialog(
+                                        context,
+                                        currentCustomer,
+                                        ledgerDue,
+                                      ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.payments_rounded,
-                                            size: 16, color: _accent),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'PAY NOW',
-                                          style: TextStyle(
-                                            color: _accent,
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 12.sp,
-                                            letterSpacing: 0.8,
-                                          ),
-                                        ),
-                                      ],
+                                  _headerActionButton(
+                                    icon: Icons.add_card_rounded,
+                                    label: 'ADD DUE',
+                                    onTap: () => _showAddDueDialog(
+                                      context,
+                                      currentCustomer,
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                               const SizedBox(height: 10),
                               InkWell(
                                 onTap: () => _makePhoneCall(
@@ -477,11 +462,14 @@ class CustomerDetailPage extends StatelessWidget {
                             itemCount: transactions.length,
                             itemBuilder: (context, index) {
                               final tx = transactions[index];
-                              final isPayment =
-                                  tx.items.isEmpty && tx.amountPaid > 0;
+                              final isPayment = _isPaymentOnlyTransaction(tx);
+                              final isDueAdded = _isDueAdditionTransaction(tx);
 
                               if (isPayment) {
                                 return _buildPaymentTile(context, tx);
+                              }
+                              if (isDueAdded) {
+                                return _buildDueAddedTile(context, tx);
                               }
 
                               return _buildTransactionTile(context, tx);
@@ -631,6 +619,46 @@ class CustomerDetailPage extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _headerActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: _accent),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: _accent,
+                fontWeight: FontWeight.w900,
+                fontSize: 12.sp,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -862,6 +890,163 @@ class CustomerDetailPage extends StatelessWidget {
     );
   }
 
+  Widget _buildDueAddedTile(BuildContext context, TransactionModel tx) {
+    final currencyFormat =
+        NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
+    final date = tx.date;
+
+    return GestureDetector(
+      onTap: () => _showTransactionDetail(context, tx),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFFDE68A)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              Container(
+                width: 60,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEF3C7),
+                  borderRadius:
+                      BorderRadius.horizontal(left: Radius.circular(18)),
+                  border: Border(
+                    left: BorderSide(color: Color(0xFFF59E0B), width: 4),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      DateFormat('dd').format(date),
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFFB45309),
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      DateFormat('MMM').format(date).toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFB45309),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.access_time_rounded,
+                              size: 12, color: Colors.grey.shade500),
+                          const SizedBox(width: 4),
+                          Text(
+                            DateFormat('hh:mm a').format(date),
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          _statusPill(
+                            'Due Added',
+                            const Color(0xFFFFF7ED),
+                            const Color(0xFFC2410C),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '+${currencyFormat.format(tx.totalAmount)}',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFC2410C),
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            'Manual Due Entry',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFB45309),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: _accentSoft,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _paymentIcon(tx.paymentMethod),
+                                  size: 11,
+                                  color: _accent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _paymentMethodLabel(tx.paymentMethod),
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: _accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          const Icon(Icons.chevron_right_rounded,
+                              size: 16, color: Color(0xFFCBD5E1)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPaymentTile(BuildContext context, TransactionModel tx) {
     final currencyFormat =
         NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
@@ -1025,19 +1210,22 @@ class CustomerDetailPage extends StatelessWidget {
   void _showTransactionDetail(BuildContext context, TransactionModel tx) {
     final cf = NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
     final cf2 = NumberFormat.currency(symbol: 'Rs ', decimalDigits: 2);
-    final isPayment = tx.items.isEmpty && tx.amountPaid > 0;
+    final isPayment = _isPaymentOnlyTransaction(tx);
+    final isDueAdded = _isDueAdditionTransaction(tx);
     final billDue = (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount));
     final isSettled = billDue <= 0;
     final isPartial = billDue > 0 && tx.amountPaid > 0;
 
     // Color theme for this transaction
     final headerGrad = isPayment
-        ? [const Color(0xFF22C55E), const Color(0xFF15803D)]
+      ? [const Color(0xFF22C55E), const Color(0xFF15803D)]
+      : isDueAdded
+        ? [const Color(0xFFF59E0B), const Color(0xFFD97706)]
         : isSettled
-            ? [const Color(0xFF10B981), const Color(0xFF059669)]
-            : isPartial
-                ? [const Color(0xFFF59E0B), const Color(0xFFD97706)]
-                : [const Color(0xFFEF4444), const Color(0xFFDC2626)];
+          ? [const Color(0xFF10B981), const Color(0xFF059669)]
+          : isPartial
+            ? [const Color(0xFFF59E0B), const Color(0xFFD97706)]
+            : [const Color(0xFFEF4444), const Color(0xFFDC2626)];
 
     showModalBottomSheet(
       context: context,
@@ -1098,7 +1286,9 @@ class CustomerDetailPage extends StatelessWidget {
                     child: Icon(
                       isPayment
                           ? Icons.check_circle_rounded
-                          : Icons.receipt_long_rounded,
+                          : isDueAdded
+                              ? Icons.add_card_rounded
+                              : Icons.receipt_long_rounded,
                       color: Colors.white,
                       size: 28,
                     ),
@@ -1109,7 +1299,11 @@ class CustomerDetailPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isPayment ? 'Payment Received' : 'Bill Receipt',
+                          isPayment
+                              ? 'Payment Received'
+                              : isDueAdded
+                                  ? 'Due Added'
+                                  : 'Bill Receipt',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
@@ -1135,14 +1329,16 @@ class CustomerDetailPage extends StatelessWidget {
                       Text(
                         isPayment
                             ? '+${cf.format(tx.amountPaid)}'
-                            : cf.format(tx.totalAmount),
+                            : isDueAdded
+                                ? '+${cf.format(tx.totalAmount)}'
+                                : cf.format(tx.totalAmount),
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
                           fontSize: 16.sp,
                         ),
                       ),
-                      if (!isPayment)
+                      if (!isPayment && !isDueAdded)
                         Container(
                           margin: const EdgeInsets.only(top: 4),
                           padding: const EdgeInsets.symmetric(
@@ -1194,6 +1390,32 @@ class CustomerDetailPage extends StatelessWidget {
                         iconColor: const Color(0xFF94A3B8),
                         label: 'Transaction Type',
                         value: 'Due Payment',
+                      ),
+                      _cardRow(
+                        icon: Icons.calendar_today_rounded,
+                        iconColor: const Color(0xFF94A3B8),
+                        label: 'Date & Time',
+                        value:
+                            DateFormat('dd MMM yyyy, hh:mm a').format(tx.date),
+                      ),
+                    ]),
+                  ] else if (isDueAdded) ...[
+                    _detailCard([
+                      _cardRow(
+                        icon: Icons.add_card_rounded,
+                        iconColor: const Color(0xFFF59E0B),
+                        label: 'Due Added',
+                        value: cf2.format(tx.totalAmount),
+                        valueColor: const Color(0xFFC2410C),
+                        bold: true,
+                        large: true,
+                      ),
+                      _cardDivider(),
+                      _cardRow(
+                        icon: Icons.category_rounded,
+                        iconColor: const Color(0xFF94A3B8),
+                        label: 'Transaction Type',
+                        value: 'Due Added Manually',
                       ),
                       _cardRow(
                         icon: Icons.calendar_today_rounded,
@@ -1411,7 +1633,7 @@ class CustomerDetailPage extends StatelessWidget {
                         icon: _paymentIcon(tx.paymentMethod),
                         iconColor: _accent,
                         label: 'Payment Method',
-                        value: tx.paymentMethod.toUpperCase(),
+                        value: _paymentMethodLabel(tx.paymentMethod),
                       ),
                     ]),
                     const SizedBox(height: 4),
@@ -1421,7 +1643,7 @@ class CustomerDetailPage extends StatelessWidget {
             ),
 
             // ── Print button ──────────────────────────────────────────────
-            if (!isPayment) ...[
+            if (!isPayment && !isDueAdded) ...[
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: SizedBox(
@@ -1466,6 +1688,8 @@ class CustomerDetailPage extends StatelessWidget {
               ),
             ],
             if (isPayment)
+              const SafeArea(top: false, child: SizedBox(height: 16)),
+            if (isDueAdded)
               const SafeArea(top: false, child: SizedBox(height: 16)),
           ],
         ),
@@ -1554,7 +1778,7 @@ class CustomerDetailPage extends StatelessWidget {
 
     var runningDue = 0.0;
     for (final tx in customerTransactions) {
-      final isPaymentOnly = tx.items.isEmpty && tx.amountPaid > 0;
+      final isPaymentOnly = _isPaymentOnlyTransaction(tx);
 
       if (isPaymentOnly) {
         runningDue -= tx.amountPaid;
@@ -1569,6 +1793,24 @@ class CustomerDetailPage extends StatelessWidget {
     }
 
     return runningDue < 0 ? 0.0 : runningDue;
+  }
+
+  bool _isPaymentOnlyTransaction(TransactionModel tx) {
+    return tx.items.isEmpty && tx.amountPaid > 0 && tx.totalAmount <= 0;
+  }
+
+  bool _isDueAdditionTransaction(TransactionModel tx) {
+    return tx.items.isEmpty &&
+        tx.amountPaid <= 0 &&
+        tx.totalAmount > 0 &&
+        tx.paymentMethod.toLowerCase() == 'due_addition';
+  }
+
+  String _paymentMethodLabel(String method) {
+    if (method.toLowerCase() == 'due_addition') {
+      return 'DUE ADD';
+    }
+    return method.toUpperCase();
   }
 
   Future<void> _printTransaction(
@@ -1659,9 +1901,264 @@ class CustomerDetailPage extends StatelessWidget {
         return Icons.qr_code_rounded;
       case 'card':
         return Icons.credit_card_rounded;
+      case 'due_addition':
+        return Icons.add_card_rounded;
       default:
         return Icons.money_rounded;
     }
+  }
+
+  void _showAddDueDialog(BuildContext context, CustomerEntity customer) {
+    final amountController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const CircleAvatar(
+                      radius: 26,
+                      backgroundColor: Color(0xFFFFF7ED),
+                      child: Icon(Icons.add_card_rounded,
+                          color: Color(0xFFC2410C), size: 26),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Add Due Balance',
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w800,
+                        color: _ink,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        'Use this when adding due directly without creating a bill for ${customer.name}.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Form(
+                        key: formKey,
+                        child: TextFormField(
+                          controller: amountController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: _ink,
+                          ),
+                          decoration: InputDecoration(
+                            prefixText: 'Rs  ',
+                            prefixStyle: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF64748B),
+                            ),
+                            hintText: '0',
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 18),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade200),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade200),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(
+                                  color: Color(0xFFD97706), width: 2),
+                            ),
+                          ),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Enter an amount';
+                            }
+                            final val = double.tryParse(v);
+                            if (val == null || val <= 0) {
+                              return 'Enter a valid amount';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: isSaving
+                              ? null
+                              : () async {
+                                  if (!formKey.currentState!.validate()) {
+                                    return;
+                                  }
+                                  setState(() => isSaving = true);
+                                  final amount =
+                                      double.parse(amountController.text);
+
+                                  final dueTx = TransactionModel(
+                                    id: DateTime.now()
+                                        .millisecondsSinceEpoch
+                                        .toString(),
+                                    customerId: customer.id,
+                                    customerName: customer.name,
+                                    items: const [],
+                                    totalAmount: amount,
+                                    amountPaid: 0.0,
+                                    paymentMethod: 'due_addition',
+                                    date: DateTime.now(),
+                                    pendingSync: true,
+                                  );
+                                  await sl<BillingRepository>()
+                                      .saveTransaction(dueTx);
+
+                                  final existingModel =
+                                      HiveDatabase.customerBox.get(customer.id);
+                                  if (existingModel != null) {
+                                    final updated = existingModel.copyWith(
+                                      balance: existingModel.balance + amount,
+                                      pendingSync: true,
+                                    );
+                                    await HiveDatabase.customerBox
+                                        .put(customer.id, updated);
+                                    unawaited(
+                                        sl<SyncService>().pushCustomer(updated));
+                                  }
+
+                                  if (ctx.mounted) {
+                                    Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(ctx).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.check_circle_rounded,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Due added: Rs ${amount.toStringAsFixed(0)}',
+                                            ),
+                                          ],
+                                        ),
+                                        backgroundColor:
+                                            const Color(0xFFC2410C),
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        margin: const EdgeInsets.all(16),
+                                      ),
+                                    );
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFD97706),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: isSaving
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.add_rounded, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Confirm Add Due',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: const Color(0xFF94A3B8),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _showPaymentDialog(
@@ -1735,7 +2232,7 @@ class CustomerDetailPage extends StatelessWidget {
                   Text(
                     'Record Payment',
                     style: TextStyle(
-                      fontSize: 20.sp,
+                      fontSize: 18.sp,
                       fontWeight: FontWeight.w800,
                       color: _ink,
                     ),
@@ -1970,7 +2467,7 @@ class CustomerDetailPage extends StatelessWidget {
                                     Text(
                                       'Confirm Payment',
                                       style: TextStyle(
-                                        fontSize: 16.sp,
+                                        fontSize: 12.sp,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.3,
                                       ),

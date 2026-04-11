@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/data/hive_database.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -178,11 +179,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                       opacity: _textFade,
                       child: Column(
                         children: [
-                          const Text(
+                           Text(
                             'QuickReceipt',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 34,
+                              fontSize: 28.sp,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -1,
                             ),
@@ -192,7 +193,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                             'Smart Billing, Simplified.',
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.65),
-                              fontSize: 15,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w400,
                               letterSpacing: 0.3,
                             ),
