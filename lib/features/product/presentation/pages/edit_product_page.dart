@@ -381,6 +381,8 @@ class _UnitSelector extends StatelessWidget {
         return Icons.water_drop_outlined;
       case QuantityUnit.box:
         return Icons.inventory_2_outlined;
+      case QuantityUnit.pieceWithKg:
+        return Icons.balance_rounded;
     }
   }
 }

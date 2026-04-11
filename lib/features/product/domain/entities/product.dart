@@ -6,6 +6,7 @@ enum QuantityUnit {
   kg,     // kilograms
   liter,  // litres
   box,    // boxes / cartons
+  pieceWithKg, // sell by kg and track piece/bunch count
 }
 
 extension QuantityUnitLabel on QuantityUnit {
@@ -19,6 +20,8 @@ extension QuantityUnitLabel on QuantityUnit {
         return 'Litre';
       case QuantityUnit.box:
         return 'Box';
+      case QuantityUnit.pieceWithKg:
+        return 'Piece + KG';
     }
   }
 
@@ -32,6 +35,8 @@ extension QuantityUnitLabel on QuantityUnit {
         return 'L';
       case QuantityUnit.box:
         return 'box';
+      case QuantityUnit.pieceWithKg:
+        return 'kg+pc';
     }
   }
 }

@@ -24,6 +24,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
   List<TransactionModel> _allTransactions = [];
   List<TransactionModel> _filteredTransactions = [];
 
+  String _formatTransactionQty(TransactionItemModel item) {
+    if (item.secondaryQuantity > 0) {
+      return '${item.quantity.toStringAsFixed(2)} kg + ${item.secondaryQuantity.toStringAsFixed(0)} pc';
+    }
+    return item.quantity.toStringAsFixed(
+      item.quantity == item.quantity.roundToDouble() ? 0 : 2,
+    );
+  }
+
   String _selectedFilter = 'This Month';
   DateTimeRange? _customRange;
 
@@ -559,7 +568,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                             fontWeight: FontWeight.w600,
                                             fontSize: 14.sp)),
                                     Text(
-                                        '${item.quantity} x ₹${item.price.toStringAsFixed(2)}',
+                                        '${_formatTransactionQty(item)} x ₹${item.price.toStringAsFixed(2)}',
                                         style:  TextStyle(
                                           fontSize: 12.sp,
                                             color: const Color(0xFF94A3B8))),
@@ -745,7 +754,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final items = t.items
         .map((item) => {
               'name': item.productName,
-              'qty': item.quantity,
+              'qty': item.secondaryQuantity > 0
+                  ? '${item.quantity.toStringAsFixed(2)} kg + ${item.secondaryQuantity.toStringAsFixed(0)} pc'
+                  : item.quantity,
               'price': item.price,
               'total': item.total,
             })

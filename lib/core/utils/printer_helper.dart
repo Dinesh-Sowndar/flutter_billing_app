@@ -219,7 +219,10 @@ class PrinterHelper {
 
     // Header (Align Left)
     bytes += EscPos.alignLeft;
-    bytes += _textToBytes('Item            Price   Total');
+    final headerLine = 'Item'.padRight(14) +
+      'Price'.padRight(9) +
+      'Total';
+    bytes += _textToBytes(headerLine);
     bytes += EscPos.lineFeed;
     bytes += _textToBytes('--------------------------------');
     bytes += EscPos.lineFeed;
@@ -231,11 +234,21 @@ class PrinterHelper {
       String price = item['price'].toString();
       String totalItem = item['total'].toString();
 
-      String prefix = '${qty}x $name';
-      if (prefix.length > 16) prefix = prefix.substring(0, 16);
+      // Keep product name readable by printing it on a separate line.
+      final pieceLabel = _pieceLabelFromQty(qty);
+      final title = pieceLabel == null ? name : '$name ($pieceLabel)';
+      final displayName = title.length > 30 ? '${title.substring(0, 30)}…' : title;
+      bytes += EscPos.boldOn;
+      bytes += _textToBytes(displayName);
+      bytes += EscPos.boldOff;
+      bytes += EscPos.lineFeed;
 
-      String line = prefix.padRight(16) + price.padRight(8) + totalItem;
-      bytes += _textToBytes(line);
+      final qtyForLine = _stripPieceSegmentFromQty(qty);
+      final qtyPart = qtyForLine.length > 14 ? '${qtyForLine.substring(0, 14)}…' : qtyForLine;
+      final pricePart = 'Rs $price';
+      final totalPart = 'Rs $totalItem';
+      final detailLine = qtyPart.padRight(14) + pricePart.padRight(9) + totalPart;
+      bytes += _textToBytes(detailLine);
       bytes += EscPos.lineFeed;
     }
 
@@ -373,13 +386,18 @@ class PrinterHelper {
       bytes += EscPos.lineFeed;
     }
 
-    // Footer (Center)
-    bytes += EscPos.alignCenter;
-    bytes += _textToBytes(footer);
+    // Footer (Center) - print only when non-empty to avoid wasting paper.
+    final trimmedFooter = footer.trim();
+    if (trimmedFooter.isNotEmpty) {
+      bytes += EscPos.alignCenter;
+      bytes += _textToBytes(trimmedFooter);
+      bytes += EscPos.lineFeed;
+      bytes += EscPos.lineFeed;
+    }
+
+    // Keep only minimal trailing feeds so paper can tear cleanly.
     bytes += EscPos.lineFeed;
-    bytes += EscPos.lineFeed; // One line space after footer
     bytes += EscPos.lineFeed;
-    bytes += EscPos.lineFeed; // Additional Feed
 
     await PrintBluetoothThermal.writeBytes(bytes);
   }
@@ -387,5 +405,37 @@ class PrinterHelper {
   List<int> _textToBytes(String text) {
     // Should verify encoding, but Latin-1 usually works for basic printers
     return List.from(text.codeUnits);
+  }
+
+  String? _pieceLabelFromQty(String qtyRaw) {
+    final lower = qtyRaw.toLowerCase();
+    final match = RegExp(r'(\d+(?:\.\d+)?)\s*(pc|piece|pieces|bunch)')
+        .firstMatch(lower);
+    if (match != null) {
+      final parsed = double.tryParse(match.group(1) ?? '');
+      if (parsed != null) {
+        return '${parsed.toStringAsFixed(0)} piece';
+      }
+    }
+
+    // For regular piece-only items, qty is typically a numeric value.
+    final numeric = double.tryParse(qtyRaw.trim());
+    if (numeric != null) {
+      return '${numeric.toStringAsFixed(0)} piece';
+    }
+
+    return null;
+  }
+
+  String _stripPieceSegmentFromQty(String qtyRaw) {
+    final lower = qtyRaw.toLowerCase();
+    // For composite values like "2.50 kg + 56 pc", keep only the kg part.
+    if (lower.contains('kg') && lower.contains('+')) {
+      final parts = qtyRaw.split('+');
+      if (parts.isNotEmpty) {
+        return parts.first.trim();
+      }
+    }
+    return qtyRaw;
   }
 }

@@ -33,14 +33,12 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     on<AddProductToCartEvent>(_onAddProductToCart);
     on<RemoveProductFromCartEvent>(_onRemoveProductFromCart);
     on<UpdateQuantityEvent>(_onUpdateQuantity);
+    on<UpdateSecondaryQuantityEvent>(_onUpdateSecondaryQuantity);
     on<ClearCartEvent>(_onClearCart);
     on<SetCustomerEvent>(_onSetCustomer);
     on<PrintReceiptEvent>(_onPrintReceipt);
     on<FinishTransactionEvent>(_onFinishTransaction);
   }
-
-  bool _isWeightedUnit(QuantityUnit unit) =>
-      unit == QuantityUnit.kg || unit == QuantityUnit.liter;
 
   double _stepForUnit(QuantityUnit unit) => 1.0;
 
@@ -80,12 +78,20 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       final existingItem = cleanState.cartItems[existingIndex];
       final backendItems = List<CartItem>.from(cleanState.cartItems);
       final increment = _stepForUnit(existingItem.product.unit);
+      final secondaryIncrement =
+          existingItem.product.unit == QuantityUnit.pieceWithKg ? 1.0 : 0.0;
       backendItems[existingIndex] = existingItem.copyWith(
         quantity: existingItem.quantity + increment,
+        secondaryQuantity: existingItem.secondaryQuantity + secondaryIncrement,
       );
       emit(cleanState.copyWith(cartItems: backendItems, error: null));
     } else {
-      final newItem = CartItem(product: event.product);
+      final initialSecondary = event.secondaryQuantity ??
+          (event.product.unit == QuantityUnit.pieceWithKg ? 1.0 : 0.0);
+      final newItem = CartItem(
+        product: event.product,
+        secondaryQuantity: initialSecondary,
+      );
       emit(cleanState.copyWith(
           cartItems: [...cleanState.cartItems, newItem], error: null));
     }
@@ -111,6 +117,21 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
     if (index >= 0) {
       final items = List<CartItem>.from(state.cartItems);
       items[index] = items[index].copyWith(quantity: event.quantity);
+      emit(state.copyWith(cartItems: items));
+    }
+  }
+
+  void _onUpdateSecondaryQuantity(
+      UpdateSecondaryQuantityEvent event, Emitter<BillingState> emit) {
+    if (event.secondaryQuantity < 0) return;
+
+    final index = state.cartItems
+        .indexWhere((item) => item.product.id == event.productId);
+    if (index >= 0) {
+      final items = List<CartItem>.from(state.cartItems);
+      items[index] = items[index].copyWith(
+        secondaryQuantity: event.secondaryQuantity,
+      );
       emit(state.copyWith(cartItems: items));
     }
   }
@@ -176,6 +197,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
                   productName: item.product.name,
                   price: item.product.price,
                   quantity: item.quantity,
+                  secondaryQuantity: item.secondaryQuantity,
                   total: item.total,
                 ))
             .toList(),
@@ -296,6 +318,7 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
                   productName: item.product.name,
                   price: item.product.price,
                   quantity: item.quantity,
+                  secondaryQuantity: item.secondaryQuantity,
                   total: item.total,
                 ))
             .toList(),
@@ -346,7 +369,9 @@ class BillingBloc extends Bloc<BillingEvent, BillingState> {
       final items = state.cartItems
           .map((item) => {
                 'name': item.product.name,
-                'qty': item.quantity,
+                'qty': item.secondaryQuantity > 0
+                    ? '${item.quantity.toStringAsFixed(2)} kg + ${item.secondaryQuantity.toStringAsFixed(0)} pc'
+                    : item.quantity,
                 'price': item.product.price,
                 'total': item.total,
               })

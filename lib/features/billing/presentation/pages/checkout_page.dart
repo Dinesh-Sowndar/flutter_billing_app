@@ -7,6 +7,7 @@ import 'package:pretty_qr_code/pretty_qr_code.dart';
 import '../../../customer/presentation/bloc/customer_bloc.dart';
 import '../../../customer/presentation/bloc/customer_event.dart';
 import '../../../product/domain/entities/product.dart';
+import '../../domain/entities/cart_item.dart';
 import '../../../settings/presentation/bloc/printer_bloc.dart';
 import '../../../settings/presentation/bloc/printer_event.dart';
 import '../../../settings/presentation/bloc/printer_state.dart';
@@ -58,6 +59,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
       text = text.substring(0, text.length - 1);
     }
     return text;
+  }
+
+  String _formatCheckoutQty(CartItem item) {
+    if (item.product.unit == QuantityUnit.pieceWithKg) {
+      final pieces = item.secondaryQuantity <= 0
+          ? '0'
+          : item.secondaryQuantity.toStringAsFixed(0);
+      return '${_formatQty(item.quantity)} kg + $pieces pc';
+    }
+    return '${_formatQty(item.quantity)} ${item.product.unit.shortLabel}';
   }
 
   void _handleCheckoutExit(BuildContext context) {
@@ -471,7 +482,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Rs ${item.product.price.toStringAsFixed(2)} x ${_formatQty(item.quantity)} ${item.product.unit.shortLabel}',
+                            'Rs ${item.product.price.toStringAsFixed(2)} x ${_formatCheckoutQty(item)}',
                             style:  TextStyle(
                               color: Color(0xFF64748B),
                               fontSize: 12.sp,

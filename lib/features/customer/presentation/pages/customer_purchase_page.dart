@@ -23,7 +23,12 @@ import 'customer_product_search_page.dart';
 class _CartItem {
   final ProductModel product;
   double quantity;
-  _CartItem({required this.product, required this.quantity});
+  double secondaryQuantity;
+  _CartItem({
+    required this.product,
+    required this.quantity,
+    this.secondaryQuantity = 0,
+  });
   double get total => product.price * quantity;
 }
 
@@ -52,6 +57,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   DateTime? _lastStartAttempt;
   Timer? _scannerIdleTimer;
   static const Duration _scannerIdleTimeout = Duration(seconds: 45);
+  int _qtyFieldVersion = 0;
 
   final Map<String, DateTime> _lastScanTimes = {};
   final List<_CartItem> _cart = [];
@@ -160,14 +166,28 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       final existing = _cart.where((c) => c.product.id == product.id);
       if (existing.isNotEmpty) {
         existing.first.quantity += _stepForUnit(product);
+        if (_isPieceWithKgUnit(product)) {
+          existing.first.secondaryQuantity += 1;
+        }
       } else {
-        _cart.add(_CartItem(product: product, quantity: 1.0));
+        _cart.add(
+          _CartItem(
+            product: product,
+            quantity: 1.0,
+            secondaryQuantity: _isPieceWithKgUnit(product) ? 1.0 : 0.0,
+          ),
+        );
       }
     });
   }
 
+  bool _isPieceWithKgUnit(ProductModel product) =>
+      product.unit == QuantityUnit.pieceWithKg;
+
   bool _isWeightedUnit(ProductModel product) =>
-      product.unit == QuantityUnit.kg || product.unit == QuantityUnit.liter;
+      product.unit == QuantityUnit.kg ||
+      product.unit == QuantityUnit.liter ||
+      product.unit == QuantityUnit.pieceWithKg;
 
   double _stepForUnit(ProductModel product) => 1.0;
 
@@ -185,6 +205,16 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     return text;
   }
 
+  String _formatSaleQty(_CartItem item) {
+    if (_isPieceWithKgUnit(item.product)) {
+      final pieces = item.secondaryQuantity <= 0
+          ? '0'
+          : item.secondaryQuantity.toStringAsFixed(0);
+      return '${_formatQty(item.quantity)} kg + $pieces pc';
+    }
+    return '${_formatQty(item.quantity)} ${item.product.unit.shortLabel}';
+  }
+
   void _applyInlineQuantityAtIndex(int cartIdx, String rawValue) {
     final qty = double.tryParse(rawValue.trim());
     if (qty == null) return;
@@ -195,6 +225,15 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       } else {
         _cart[cartIdx].quantity = qty;
       }
+    });
+  }
+
+  void _applyInlineSecondaryQtyAtIndex(int cartIdx, String rawValue) {
+    final qty = double.tryParse(rawValue.trim());
+    if (qty == null) return;
+    _markScannerActive();
+    setState(() {
+      _cart[cartIdx].secondaryQuantity = qty < 0 ? 0 : qty.roundToDouble();
     });
   }
 
@@ -242,9 +281,22 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       customerDue: freshBalance,
     ));
     for (final item in _cart) {
-      billingBloc.add(AddProductToCartEvent(item.product));
+      billingBloc.add(
+        AddProductToCartEvent(
+          item.product,
+          secondaryQuantity: item.secondaryQuantity,
+        ),
+      );
       if ((item.quantity - 1.0).abs() > 0.0001) {
         billingBloc.add(UpdateQuantityEvent(item.product.id, item.quantity));
+      }
+      if (_isPieceWithKgUnit(item.product)) {
+        billingBloc.add(
+          UpdateSecondaryQuantityEvent(
+            item.product.id,
+            item.secondaryQuantity,
+          ),
+        );
       }
     }
 
@@ -1221,7 +1273,6 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
 
   Widget _buildProductListItem(ProductModel product, int cartIdx) {
     final inCart = cartIdx >= 0;
-    final qty = inCart ? _cart[cartIdx].quantity : 0.0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1282,7 +1333,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             ),
           ),
           if (inCart)
-            _buildQtyControls(cartIdx, product, qty)
+            _buildQtyControls(cartIdx, _cart[cartIdx])
           else
             GestureDetector(
               onTap: () {
@@ -1354,7 +1405,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Rs ${item.product.price.toStringAsFixed(0)} x ${_formatQty(item.quantity)} ${item.product.unit.shortLabel}  =  Rs ${item.total.toStringAsFixed(0)}',
+                      'Rs ${item.product.price.toStringAsFixed(0)} x ${_formatSaleQty(item)}  =  Rs ${item.total.toStringAsFixed(0)}',
                       style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF10B981),
@@ -1364,7 +1415,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                 ),
               ),
               const SizedBox(width: 8),
-              _buildQtyControls(i, item.product, item.quantity),
+              _buildQtyControls(i, item),
             ],
           ),
         );
@@ -1373,10 +1424,26 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   }
 
   // â”€â”€â”€ Quantity Controls Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  Widget _buildQtyControls(int cartIdx, ProductModel product, double qty) {
+  Widget _buildQtyControls(int cartIdx, _CartItem cartItem) {
+    final product = cartItem.product;
+    final qty = cartItem.quantity;
+    final secondaryQty = cartItem.secondaryQuantity;
+    final isPieceWithKg = _isPieceWithKgUnit(product);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 4),
+          child: Text(
+            'KG',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ),
         Container(
           height: 36,
           decoration: BoxDecoration(
@@ -1398,13 +1465,15 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                       } else {
                         _cart[cartIdx].quantity = newQty;
                       }
+                      _qtyFieldVersion++;
                     });
                   }),
               SizedBox(
                 width: 56,
                 child: _isWeightedUnit(product)
                     ? TextFormField(
-                        key: ValueKey('${product.id}-$qty'),
+                      key: ValueKey(
+                        'customer-kg-${product.id}-v$_qtyFieldVersion'),
                         initialValue: _formatQty(qty),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
@@ -1420,6 +1489,9 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                           contentPadding: EdgeInsets.zero,
                         ),
                         onFieldSubmitted: (value) {
+                          _applyInlineQuantityAtIndex(cartIdx, value);
+                        },
+                        onChanged: (value) {
                           _applyInlineQuantityAtIndex(cartIdx, value);
                         },
                       )
@@ -1440,11 +1512,92 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                     _markScannerActive();
                     setState(() {
                       _cart[cartIdx].quantity += _stepForUnit(product);
+                      _qtyFieldVersion++;
                     });
                   }),
             ],
           ),
         ),
+        if (isPieceWithKg)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    'Pieces / Bunch Count',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _circularIconButton(
+                          icon: Icons.remove_rounded,
+                          color: const Color(0xFF64748B),
+                          onPressed: () {
+                            _markScannerActive();
+                            setState(() {
+                              final newQty = secondaryQty - 1;
+                              _cart[cartIdx].secondaryQuantity =
+                                  newQty < 0 ? 0 : newQty;
+                              _qtyFieldVersion++;
+                            });
+                          }),
+                      SizedBox(
+                        width: 56,
+                        child: TextFormField(
+                          key: ValueKey(
+                              'customer-sec-${product.id}-v$_qtyFieldVersion'),
+                          initialValue: secondaryQty.toStringAsFixed(0),
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: Color(0xFF0F172A),
+                          ),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onFieldSubmitted: (value) {
+                            _applyInlineSecondaryQtyAtIndex(cartIdx, value);
+                          },
+                          onChanged: (value) {
+                            _applyInlineSecondaryQtyAtIndex(cartIdx, value);
+                          },
+                        ),
+                      ),
+                      _circularIconButton(
+                          icon: Icons.add_rounded,
+                          color: AppTheme.primaryColor,
+                          onPressed: () {
+                            _markScannerActive();
+                            setState(() {
+                              _cart[cartIdx].secondaryQuantity += 1;
+                              _qtyFieldVersion++;
+                            });
+                          }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

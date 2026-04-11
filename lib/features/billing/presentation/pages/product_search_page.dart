@@ -35,12 +35,17 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
       case 1: return 'kg';
       case 2: return 'L';
       case 3: return 'box';
+      case 4: return 'kg+pc';
       default: return 'pc';
     }
   }
 
   bool _isWeightedUnit(QuantityUnit unit) =>
-      unit == QuantityUnit.kg || unit == QuantityUnit.liter;
+      unit == QuantityUnit.kg ||
+      unit == QuantityUnit.liter ||
+      unit == QuantityUnit.pieceWithKg;
+
+  bool _isPieceWithKg(QuantityUnit unit) => unit == QuantityUnit.pieceWithKg;
 
   String _formatQty(double qty) {
     if ((qty - qty.roundToDouble()).abs() < 0.0001) {
@@ -53,7 +58,12 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
   }
 
   void _addProduct(Product product) {
-    context.read<BillingBloc>().add(AddProductToCartEvent(product));
+    context.read<BillingBloc>().add(
+      AddProductToCartEvent(
+        product,
+        secondaryQuantity: _isPieceWithKg(product.unit) ? 1.0 : null,
+      ),
+    );
     Vibrate.canVibrate.then((can) {
       if (can) Vibrate.feedback(FeedbackType.light);
     });
@@ -62,6 +72,14 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
   void _increment(CartItem item) {
     context.read<BillingBloc>().add(
         UpdateQuantityEvent(item.product.id, item.quantity + 1));
+    if (_isPieceWithKg(item.product.unit)) {
+      context.read<BillingBloc>().add(
+            UpdateSecondaryQuantityEvent(
+              item.product.id,
+              item.secondaryQuantity + 1,
+            ),
+          );
+    }
     Vibrate.canVibrate.then((can) {
       if (can) Vibrate.feedback(FeedbackType.light);
     });
@@ -71,6 +89,14 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
     if (item.quantity > 1) {
       context.read<BillingBloc>().add(
           UpdateQuantityEvent(item.product.id, item.quantity - 1));
+      if (_isPieceWithKg(item.product.unit)) {
+        context.read<BillingBloc>().add(
+              UpdateSecondaryQuantityEvent(
+                item.product.id,
+                item.secondaryQuantity > 0 ? item.secondaryQuantity - 1 : 0,
+              ),
+            );
+      }
     } else {
       context.read<BillingBloc>().add(
           RemoveProductFromCartEvent(item.product.id));
@@ -88,6 +114,35 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
     } else {
       context.read<BillingBloc>().add(UpdateQuantityEvent(item.product.id, qty));
     }
+  }
+
+  void _applySecondaryQty(CartItem item, String raw) {
+    final qty = double.tryParse(raw.trim());
+    if (qty == null) return;
+    context.read<BillingBloc>().add(
+          UpdateSecondaryQuantityEvent(
+            item.product.id,
+            qty < 0 ? 0 : qty.roundToDouble(),
+          ),
+        );
+  }
+
+  void _incrementSecondary(CartItem item) {
+    context.read<BillingBloc>().add(
+          UpdateSecondaryQuantityEvent(
+            item.product.id,
+            item.secondaryQuantity + 1,
+          ),
+        );
+  }
+
+  void _decrementSecondary(CartItem item) {
+    context.read<BillingBloc>().add(
+          UpdateSecondaryQuantityEvent(
+            item.product.id,
+            item.secondaryQuantity > 0 ? item.secondaryQuantity - 1 : 0,
+          ),
+        );
   }
 
   Widget _circularIconButton({
@@ -351,6 +406,7 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
             final cartItem = cartByProductId[product.id];
             final inCart = cartItem != null;
             final weighted = _isWeightedUnit(product.unit);
+            final pieceWithKg = _isPieceWithKg(product.unit);
 
             return Container(
               padding: const EdgeInsets.all(14),
@@ -410,67 +466,155 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
 
                   // Controls
                   if (inCart)
-                    Container(
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          )
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _circularIconButton(
-                            icon: Icons.remove_rounded,
-                            color: const Color(0xFF64748B),
-                            onPressed: () => _decrement(cartItem),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            'KG',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
-                          SizedBox(
-                            width: weighted ? 56 : 42,
-                            child: weighted
-                                ? TextFormField(
-                                    key: ValueKey(
-                                        '${cartItem.product.id}-${cartItem.quantity}'),
-                                    initialValue: _formatQty(cartItem.quantity),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13,
-                                        color: Color(0xFF0F172A)),
-                                    decoration: const InputDecoration(
-                                      isDense: true,
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.zero,
+                        ),
+                        Container(
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _circularIconButton(
+                                icon: Icons.remove_rounded,
+                                color: const Color(0xFF64748B),
+                                onPressed: () => _decrement(cartItem),
+                              ),
+                              SizedBox(
+                                width: weighted ? 56 : 42,
+                                child: weighted
+                                    ? TextFormField(
+                                        key: ValueKey(
+                                          'search-kg-${cartItem.product.id}'),
+                                        initialValue:
+                                            _formatQty(cartItem.quantity),
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                                decimal: true),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 13,
+                                            color: Color(0xFF0F172A)),
+                                        decoration: const InputDecoration(
+                                          isDense: true,
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                        onFieldSubmitted: (v) =>
+                                            _applyWeightedQty(cartItem, v),
+                                        onChanged: (v) =>
+                                          _applyWeightedQty(cartItem, v),
+                                      )
+                                    : Text(
+                                        _formatQty(cartItem.quantity),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 13,
+                                            color: Color(0xFF0F172A)),
+                                      ),
+                              ),
+                              _circularIconButton(
+                                icon: Icons.add_rounded,
+                                color: AppTheme.primaryColor,
+                                onPressed: () => _increment(cartItem),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (pieceWithKg)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(bottom: 4),
+                                  child: Text(
+                                    'Pieces / Bunch Count',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF64748B),
                                     ),
-                                    onFieldSubmitted: (v) =>
-                                        _applyWeightedQty(cartItem, v),
-                                  )
-                                : Text(
-                                    _formatQty(cartItem.quantity),
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13,
-                                        color: Color(0xFF0F172A)),
                                   ),
+                                ),
+                                Container(
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _circularIconButton(
+                                        icon: Icons.remove_rounded,
+                                        color: const Color(0xFF64748B),
+                                        onPressed: () =>
+                                            _decrementSecondary(cartItem),
+                                      ),
+                                      SizedBox(
+                                        width: 56,
+                                        child: TextFormField(
+                                            key: ValueKey(
+                                              'search-sec-${cartItem.product.id}'),
+                                          initialValue: cartItem
+                                              .secondaryQuantity
+                                              .toStringAsFixed(0),
+                                          keyboardType: TextInputType.number,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 13,
+                                              color: Color(0xFF0F172A)),
+                                          decoration: const InputDecoration(
+                                            isDense: true,
+                                            border: InputBorder.none,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                          onFieldSubmitted: (v) =>
+                                              _applySecondaryQty(cartItem, v),
+                                            onChanged: (v) =>
+                                              _applySecondaryQty(cartItem, v),
+                                        ),
+                                      ),
+                                      _circularIconButton(
+                                        icon: Icons.add_rounded,
+                                        color: AppTheme.primaryColor,
+                                        onPressed: () =>
+                                            _incrementSecondary(cartItem),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          _circularIconButton(
-                            icon: Icons.add_rounded,
-                            color: AppTheme.primaryColor,
-                            onPressed: () => _increment(cartItem),
-                          ),
-                        ],
-                      ),
+                      ],
                     )
                   else
                     ElevatedButton.icon(

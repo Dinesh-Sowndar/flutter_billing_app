@@ -21,6 +21,15 @@ class SalesDashboardPage extends StatefulWidget {
 }
 
 class _SalesDashboardPageState extends State<SalesDashboardPage> {
+  String _formatTransactionQty(TransactionItemModel item) {
+    if (item.secondaryQuantity > 0) {
+      return '${item.quantity.toStringAsFixed(2)} kg + ${item.secondaryQuantity.toStringAsFixed(0)} pc';
+    }
+    return item.quantity.toStringAsFixed(
+      item.quantity == item.quantity.roundToDouble() ? 0 : 2,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -431,7 +440,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                             fontWeight: FontWeight.w600,
                                             fontSize: 14.sp)),
                                     Text(
-                                        '${item.quantity} x ₹${item.price.toStringAsFixed(2)}',
+                                      '${_formatTransactionQty(item)} x ₹${item.price.toStringAsFixed(2)}',
                                         style: const TextStyle(
                                             color: Color(0xFF94A3B8))),
                                   ],
@@ -616,7 +625,9 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
     final items = (t.items as List)
         .map((item) => {
               'name': item.productName,
-              'qty': item.quantity,
+              'qty': item.secondaryQuantity > 0
+                  ? '${item.quantity.toStringAsFixed(2)} kg + ${item.secondaryQuantity.toStringAsFixed(0)} pc'
+                  : item.quantity,
               'price': item.price,
               'total': item.total,
             })

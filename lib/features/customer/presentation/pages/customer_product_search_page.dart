@@ -52,7 +52,9 @@ class _CustomerProductSearchPageState
   }
 
   bool _isWeightedUnit(QuantityUnit unit) =>
-      unit == QuantityUnit.kg || unit == QuantityUnit.liter;
+      unit == QuantityUnit.kg ||
+      unit == QuantityUnit.liter ||
+      unit == QuantityUnit.pieceWithKg;
 
   String _formatQty(double qty) {
     if ((qty - qty.roundToDouble()).abs() < 0.0001) {
@@ -76,6 +78,8 @@ class _CustomerProductSearchPageState
         return 'L';
       case 3:
         return 'box';
+      case 4:
+        return 'kg+pc';
       default:
         return 'pc';
     }

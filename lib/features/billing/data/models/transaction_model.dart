@@ -20,12 +20,16 @@ class TransactionItemModel {
   @HiveField(4)
   final double total;
 
+  @HiveField(5, defaultValue: 0.0)
+  final double secondaryQuantity;
+
   TransactionItemModel({
     required this.productId,
     required this.productName,
     required this.price,
     required this.quantity,
     required this.total,
+    this.secondaryQuantity = 0.0,
   });
 }
 
@@ -125,6 +129,8 @@ class TransactionModel {
                 price: (i['price'] as num?)?.toDouble() ?? 0.0,
                 quantity: (i['quantity'] as num?)?.toDouble() ?? 1,
                 total: (i['total'] as num?)?.toDouble() ?? 0.0,
+                secondaryQuantity:
+                  (i['secondaryQuantity'] as num?)?.toDouble() ?? 0.0,
               ))
           .toList(),
     );
@@ -150,6 +156,7 @@ class TransactionModel {
                   'price': i.price,
                   'quantity': i.quantity,
                   'total': i.total,
+                  'secondaryQuantity': i.secondaryQuantity,
                 })
             .toList(),
       };

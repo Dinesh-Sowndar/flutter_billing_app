@@ -21,7 +21,7 @@ class ProductModel extends Product {
   @override
   @HiveField(4)
   final int stock;
-  /// Stored as int index of [QuantityUnit] enum (0=piece,1=kg,2=liter,3=box).
+  /// Stored as int index of [QuantityUnit] enum.
   @HiveField(5)
   final int unitIndex;
   @HiveField(7)
@@ -46,7 +46,8 @@ class ProductModel extends Product {
           barcode: barcode,
           price: price,
           stock: stock,
-          unit: QuantityUnit.values[unitIndex > 3 ? 0 : unitIndex],
+          unit: QuantityUnit.values[
+              unitIndex >= QuantityUnit.values.length ? 0 : unitIndex],
           categoryId: categoryId,
           pendingSync: pendingSync,
         );
@@ -96,7 +97,8 @@ class ProductModel extends Product {
       barcode: barcode,
       price: price,
       stock: stock,
-      unit: QuantityUnit.values[unitIndex > 3 ? 0 : unitIndex],
+      unit:
+          QuantityUnit.values[unitIndex >= QuantityUnit.values.length ? 0 : unitIndex],
       categoryId: categoryId,
       pendingSync: pendingSync,
     );
