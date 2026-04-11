@@ -2,6 +2,7 @@ import 'package:app_settings/app_settings.dart';
 import 'package:billing_app/core/data/hive_database.dart';
 import 'package:billing_app/core/theme/app_theme.dart';
 import 'package:billing_app/core/widgets/app_back_button.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:billing_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,6 +27,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String _appVersionLabel = 'App Version';
   bool _isManualSyncing = false;
+  static const String _scannerVisibilityKeyPrefix = 'scanner_visible';
 
   static const String _fallbackBuildName =
       String.fromEnvironment('FLUTTER_BUILD_NAME');
@@ -223,6 +225,16 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  String? _activeUserId() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return null;
+    return uid;
+  }
+
+  String _scannerVisibilityKey(String userId) {
+    return '${_scannerVisibilityKeyPrefix}_$userId';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 380;
@@ -330,18 +342,23 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             _buildReveal(
               index: 6,
+              child: _buildScannerVisibilitySection(isCompact: isCompact),
+            ),
+            SizedBox(height: isCompact ? 14 : 18),
+            _buildReveal(
+              index: 7,
               child: _buildGstSection(isCompact: isCompact),
             ),
             SizedBox(height: isCompact ? 22 : 28),
             _buildReveal(
-              index: 7,
+              index: 8,
               child: _buildSectionHeader(
                 'Account',
                 isCompact: isCompact,
               ),
             ),
             _buildReveal(
-              index: 8,
+              index: 9,
               child: _buildListGroup(
                 isCompact: isCompact,
                 children: [
@@ -386,6 +403,89 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             SizedBox(height: isCompact ? 32 : 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScannerVisibilitySection({required bool isCompact}) {
+    final settingsBox = HiveDatabase.settingsBox;
+    final userId = _activeUserId();
+    final key =
+        userId == null ? null : _scannerVisibilityKey(userId);
+    final scannerVisibleByDefault = key == null
+        ? true
+        : (settingsBox.get(key, defaultValue: true) as bool? ?? true);
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade100, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isCompact ? 14 : 16),
+        child: Row(
+          children: [
+            Container(
+              width: isCompact ? 42 : 46,
+              height: isCompact ? 42 : 46,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.qr_code_scanner_rounded,
+                color: const Color(0xFF2563EB),
+                size: isCompact ? 20 : 22,
+              ),
+            ),
+            SizedBox(width: isCompact ? 12 : 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Show Scanner by Default',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: isCompact ? 15 : 16,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    scannerVisibleByDefault
+                        ? 'Scanner panel will be visible on billing pages'
+                        : 'Scanner panel stays hidden until you enable it',
+                    style: TextStyle(
+                      fontSize: isCompact ? 12 : 13,
+                      color: const Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: scannerVisibleByDefault,
+              activeThumbColor: const Color(0xFF2563EB),
+              onChanged: key == null
+                  ? null
+                  : (value) {
+                      settingsBox.put(key, value);
+                      setState(() {});
+                    },
+            ),
           ],
         ),
       ),

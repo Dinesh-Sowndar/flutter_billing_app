@@ -24,6 +24,17 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
         .timeout(_connectionCheckTimeout);
   }
 
+  String _friendlyPrinterError(Object error, {String? fallback}) {
+    final raw = error.toString().toLowerCase();
+    if (raw.contains('timeout')) {
+      return 'Connection check timed out. Make sure the printer is powered on and nearby, then try refresh.';
+    }
+    if (raw.contains('bluetooth')) {
+      return 'Bluetooth is unavailable. Turn on Bluetooth and try again.';
+    }
+    return fallback ?? 'Unable to communicate with printer right now. Please try again.';
+  }
+
   /// On init, load saved printer info and verify live BT connection.
   Future<void> _onInit(
       InitPrinterEvent event, Emitter<PrinterState> emit) async {
@@ -94,7 +105,11 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
     } catch (e) {
       emit(state.copyWith(
         status: PrinterStatus.disconnected,
-        errorMessage: 'Connection check failed: $e',
+        errorMessage: _friendlyPrinterError(
+          e,
+          fallback:
+              'Connection check failed. Make sure the printer is powered on and nearby.',
+        ),
       ));
     }
   }
@@ -167,7 +182,10 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
     } catch (e) {
       emit(state.copyWith(
         status: PrinterStatus.scanFailure,
-        errorMessage: e.toString(),
+        errorMessage: _friendlyPrinterError(
+          e,
+          fallback: 'Unable to scan printers. Check Bluetooth and try again.',
+        ),
       ));
     }
   }
@@ -184,7 +202,10 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
     } catch (e) {
       emit(state.copyWith(
         status: PrinterStatus.scanFailure,
-        errorMessage: e.toString(),
+        errorMessage: _friendlyPrinterError(
+          e,
+          fallback: 'Unable to scan printers. Check Bluetooth and try again.',
+        ),
       ));
     }
   }
@@ -237,7 +258,10 @@ class PrinterBloc extends Bloc<PrinterEvent, PrinterState> {
     } catch (e) {
       emit(state.copyWith(
         status: PrinterStatus.connectionFailure,
-        errorMessage: 'Test print failed: $e',
+        errorMessage: _friendlyPrinterError(
+          e,
+          fallback: 'Test print failed. Please check printer connection and try again.',
+        ),
       ));
     }
   }

@@ -192,12 +192,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
       appBar: AppBar(
-        title: const Text(
+        title:  Text(
           'All Transactions',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 20,
-            color: Color(0xFF0F172A),
+            fontSize: 20.sp,
+            color: const Color(0xFF0F172A),
             letterSpacing: -0.5,
           ),
         ),
@@ -234,7 +234,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                             isSelected ? Colors.white : const Color(0xFF64748B),
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.w600,
-                        fontSize: 12.5,
+                        fontSize: 12.5.sp,
                       ),
                     ),
                     selected: isSelected,
@@ -304,7 +304,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         'Summary (${_filteredTransactions.length} records)',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.92),
-                          fontSize: 13,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -394,10 +394,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                       t.customerName.isNotEmpty
                                           ? t.customerName
                                           : 'Guest Customer',
-                                      style: const TextStyle(
+                                      style:  TextStyle(
                                         fontWeight: FontWeight.w700,
-                                        fontSize: 14,
-                                        color: Color(0xFF1E293B),
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF1E293B),
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -409,10 +409,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                           : (t.items.length == 1
                                               ? '1 Item'
                                               : '${t.items.length} Items'),
-                                      style: const TextStyle(
+                                      style:  TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: Color(0xFF94A3B8),
-                                        fontSize: 13,
+                                        fontSize: 12.sp,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -506,7 +506,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   children: [
                     Text('Transaction Details',
                         style: TextStyle(
-                            fontSize: 20.sp,
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5)),
                     IconButton(
@@ -555,20 +555,21 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.productName,
-                                        style: const TextStyle(
+                                        style:  TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            fontSize: 16)),
+                                            fontSize: 14.sp)),
                                     Text(
                                         '${item.quantity} x ₹${item.price.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                            color: Color(0xFF94A3B8))),
+                                        style:  TextStyle(
+                                          fontSize: 12.sp,
+                                            color: const Color(0xFF94A3B8))),
                                   ],
                                 ),
                               ),
                               Text('₹${item.total.toStringAsFixed(2)}',
-                                  style: const TextStyle(
+                                  style:  TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
+                                      fontSize: 14.sp)),
                             ],
                           ),
                         );
@@ -651,11 +652,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       children: [
                         Text(
                             isPaymentOnly ? 'Total Due Amount' : 'Total Amount',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                            style:  TextStyle(
+                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
                         Text('₹${totalDueAmount.toStringAsFixed(2)}',
                             style: TextStyle(
-                                fontSize: 18.sp,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w900,
                                 color: AppTheme.primaryColor)),
                       ],
@@ -835,12 +836,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: TextStyle(
+            style:  TextStyle(
                 color: textColor.withValues(alpha: 0.9),
-                fontSize: 14,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w600)),
         Text('₹${value.toStringAsFixed(2)}',
-            style: TextStyle(
+            style:  TextStyle(
                 color: textColor,
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w800,

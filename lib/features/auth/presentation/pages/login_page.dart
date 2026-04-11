@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -107,8 +108,8 @@ class _LoginPageState extends State<LoginPage> {
                         // Welcome Text
                         Text(
                           'Welcome Back',
-                          style: const TextStyle(
-                            fontSize: 32,
+                          style:  TextStyle(
+                            fontSize: 25.sp,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A), // Slate 900
                           ),
@@ -117,9 +118,9 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 8),
                         Text(
                           'Sign in to manage your billing',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF64748B), // Slate 500
+                          style:  TextStyle(
+                            fontSize: 16.sp,
+                            color: const Color(0xFF64748B), // Slate 500
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -145,9 +146,10 @@ class _LoginPageState extends State<LoginPage> {
                               TextFormField(
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
-                                decoration: const InputDecoration(
+                                decoration:  InputDecoration(
                                   labelText: 'Email Address',
-                                  prefixIcon: Icon(Icons.email_outlined),
+                                  labelStyle: TextStyle(fontSize: 12.sp),
+                                  prefixIcon: const Icon(Icons.email_outlined),
                                 ),
                                 enabled: !isLoading,
                                 validator: (value) {
@@ -166,6 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                                 obscureText: !_isPasswordVisible,
                                 decoration: InputDecoration(
                                   labelText: 'Password',
+                                  labelStyle: TextStyle(fontSize: 12.sp),
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -226,9 +229,9 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Text(
                               "Don't have an account?",
-                              style: const TextStyle(
-                                color: Color(0xFF64748B),
-                                fontSize: 15,
+                              style:  TextStyle(
+                                color: const Color(0xFF64748B),
+                                fontSize: 14.sp,
                               ),
                             ),
                             TextButton(
@@ -237,10 +240,10 @@ class _LoginPageState extends State<LoginPage> {
                               },
                               child: Text(
                                 'Sign Up',
-                                style: const TextStyle(
+                                style:  TextStyle(
                                   color: AppTheme.primaryColor,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontSize: 14.sp,
                                 ),
                               ),
                             ),

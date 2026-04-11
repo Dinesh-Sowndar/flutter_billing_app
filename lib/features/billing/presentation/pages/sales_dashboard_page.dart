@@ -168,12 +168,12 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                     Text(
                       'Recent Transactions',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                     TextButton(
@@ -185,11 +185,11 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
+                      child:  Text(
                         'View All',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                          fontSize: 12.sp,
                         ),
                       ),
                     ),
@@ -283,10 +283,10 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                           t.customerName.isNotEmpty
                                               ? t.customerName
                                               : 'Guest Customer',
-                                          style: const TextStyle(
+                                          style:  TextStyle(
                                             fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                            color: Color(0xFF1E293B),
+                                            fontSize: 14.sp,
+                                            color: const Color(0xFF1E293B),
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -298,10 +298,10 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                               : (t.items.length == 1
                                                   ? '1 Item'
                                                   : '${t.items.length} Items'),
-                                          style: const TextStyle(
+                                          style:  TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            color: Color(0xFF94A3B8),
-                                            fontSize: 13,
+                                            color: const Color(0xFF94A3B8),
+                                            fontSize: 12.sp,
                                           ),
                                         ),
                                       ],
@@ -314,7 +314,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                         : 'Rs ${t.totalAmount.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w900,
-                                      fontSize: isCompact ? 13 : 15,
+                                      fontSize: isCompact ? 12.sp : 14.sp,
                                       color: isPaymentOnly
                                           ? const Color(0xFF10B981)
                                           : const Color(0xFF0F172A),
@@ -376,9 +376,9 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Transaction Details',
+                     Text('Transaction Details',
                         style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5)),
                     IconButton(
@@ -398,22 +398,22 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                   children: [
                     Text(
                       'Date: ${t.date.day.toString().padLeft(2, '0')}/${t.date.month.toString().padLeft(2, '0')}/${t.date.year} ${t.date.hour.toString().padLeft(2, '0')}:${t.date.minute.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
-                          fontSize: 16, color: Color(0xFF64748B)),
+                      style:  TextStyle(
+                          fontSize: 14.sp, color: Color(0xFF64748B)),
                     ),
                     if (t.customerName.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
                         'Customer: ${t.customerName}',
-                        style: const TextStyle(
-                            fontSize: 16, color: Color(0xFF64748B)),
+                        style:  TextStyle(
+                            fontSize: 14.sp, color: Color(0xFF64748B)),
                       ),
                     ],
                     const SizedBox(height: 24),
                     if (!isPaymentOnly) ...[
-                      const Text('Items',
+                       Text('Items',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
+                              fontSize: 16.sp, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
                       ...List.generate(t.items.length, (index) {
                         final item = t.items[index];
@@ -427,9 +427,9 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.productName,
-                                        style: const TextStyle(
+                                        style:  TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            fontSize: 16)),
+                                            fontSize: 14.sp)),
                                     Text(
                                         '${item.quantity} x ₹${item.price.toStringAsFixed(2)}',
                                         style: const TextStyle(
@@ -438,22 +438,22 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                 ),
                               ),
                               Text('₹${item.total.toStringAsFixed(2)}',
-                                  style: const TextStyle(
+                                  style:  TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
+                                      fontSize: 14.sp)),
                             ],
                           ),
                         );
                       }),
                     ] else ...[
-                      const Text('Payment Entry',
+                       Text('Payment Entry',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
+                              fontSize: 16.sp, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      const Text(
+                       Text(
                         'This transaction records a due payment from customer.',
                         style:
-                            TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                            TextStyle(fontSize: 12.sp, color: Color(0xFF64748B)),
                       ),
                     ],
                     const Divider(height: 32),
@@ -467,15 +467,15 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Taxable Amount',
+                                 Text('Taxable Amount',
                                     style: TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0xFF64748B),
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF64748B),
                                         fontWeight: FontWeight.w600)),
                                 Text('₹${taxable.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0xFF64748B),
+                                    style:  TextStyle(
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF64748B),
                                         fontWeight: FontWeight.w600)),
                               ],
                             ),
@@ -484,14 +484,14 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('CGST @ ${halfRate.toStringAsFixed(1)}%',
-                                    style: const TextStyle(
-                                        fontSize: 15,
+                                    style:  TextStyle(
+                                        fontSize: 14.sp,
                                         color: Color(0xFF64748B),
                                         fontWeight: FontWeight.w600)),
                                 Text('₹${t.cgstAmount.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0xFF64748B),
+                                    style:  TextStyle(
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF64748B),
                                         fontWeight: FontWeight.w600)),
                               ],
                             ),
@@ -500,14 +500,14 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('SGST @ ${halfRate.toStringAsFixed(1)}%',
-                                    style: const TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0xFF64748B),
+                                    style:  TextStyle(
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF64748B),
                                         fontWeight: FontWeight.w600)),
                                 Text('₹${t.sgstAmount.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                        fontSize: 15,
-                                        color: Color(0xFF64748B),
+                                    style:  TextStyle(
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF64748B),
                                         fontWeight: FontWeight.w600)),
                               ],
                             ),
@@ -523,11 +523,11 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                       children: [
                         Text(
                             isPaymentOnly ? 'Total Due Amount' : 'Total Amount',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                            style:  TextStyle(
+                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
                         Text('₹${totalDueAmount.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                                fontSize: 22,
+                            style:  TextStyle(
+                                fontSize: 20.sp,
                                 fontWeight: FontWeight.w900,
                                 color: AppTheme.primaryColor)),
                       ],
@@ -536,26 +536,26 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Amount Paid',
+                         Text('Amount Paid',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
                         Text('₹${t.amountPaid.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                                fontSize: 18,
+                            style:  TextStyle(
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF10B981))),
+                                color: const Color(0xFF10B981))),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Balance Amount',
+                         Text('Balance Amount',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                                fontSize: 16.sp, fontWeight: FontWeight.bold)),
                         Text('₹${balanceDue.toStringAsFixed(2)}',
                             style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w800,
                                 color: balanceDue > 0
                                     ? const Color(0xFFEF4444)
@@ -577,7 +577,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                       child: ElevatedButton.icon(
                         onPressed: () => _printTransaction(context, t),
                         icon: const Icon(Icons.print_rounded, size: 20),
-                        label: const Text('Print Bill'),
+                        label:  Text('Print Bill', style: TextStyle(fontSize: 16.sp)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
@@ -674,10 +674,10 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
   Widget _buildSalesCard(
       String title, double amount, double pending, Color color, IconData icon,
       {bool compact = false}) {
-    final titleSize = compact ? 13.0 : 15.0;
-    final amountSize = compact ? 20.0 : 26.0;
-    final chipSize = compact ? 11.0 : 12.0;
-    final iconSize = compact ? 20.0 : 24.0;
+    final titleSize = compact ? 12.0.sp : 14.0.sp;
+    final amountSize = compact ? 18.0.sp : 20.0.sp;
+    final chipSize = compact ? 10.0.sp : 12.0.sp;
+    final iconSize = compact ? 18.0.sp : 20.0.sp;
 
     return Container(
       padding: EdgeInsets.all(compact ? 16 : 20),
@@ -833,7 +833,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                   ),
                 ],
               ),
-              SizedBox(height: compact ? 16 : 20),
+              SizedBox(height: compact ? 14.sp : 18.sp),
               Text(
                 '$count',
                 style: TextStyle(
@@ -846,8 +846,8 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
               const Spacer(),
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 8 : 10,
-                  vertical: compact ? 4 : 6,
+                  horizontal: compact ? 6.sp : 8.sp,
+                  vertical: compact ? 2.sp : 4.sp,
                 ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEF2F2),

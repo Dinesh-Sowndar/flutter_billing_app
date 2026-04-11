@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -36,6 +37,7 @@ class CustomerPurchasePage extends StatefulWidget {
 
 class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     with WidgetsBindingObserver, TickerProviderStateMixin {
+  static const String _scannerVisibilityKeyPrefix = 'scanner_visible';
   late final TabController _tabController;
 
   late MobileScannerController _scanner;
@@ -45,6 +47,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   String? _cameraErrorMessage;
   bool _scannerRunning = false;
   bool _scannerPausedByUser = true;
+  bool _autoHiddenByManualAdd = false;
   bool _isFlashOn = false;
   DateTime? _lastStartAttempt;
   Timer? _scannerIdleTimer;
@@ -59,6 +62,13 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
       detectionSpeed: DetectionSpeed.normal,
       returnImage: false,
     );
+  }
+
+  bool _isScannerVisibleByUserSetting() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return true;
+    final key = '${_scannerVisibilityKeyPrefix}_$uid';
+    return HiveDatabase.settingsBox.get(key, defaultValue: true) == true;
   }
 
   @override
@@ -140,7 +150,12 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     _addProductByBarcode(barcode);
   }
 
-  void _addToCart(ProductModel product) {
+  void _addToCart(ProductModel product, {bool hideScannerForManual = false}) {
+    if (hideScannerForManual) {
+      _hideScannerForManualEntry();
+    } else {
+      _markScannerActive();
+    }
     setState(() {
       final existing = _cart.where((c) => c.product.id == product.id);
       if (existing.isNotEmpty) {
@@ -173,6 +188,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
   void _applyInlineQuantityAtIndex(int cartIdx, String rawValue) {
     final qty = double.tryParse(rawValue.trim());
     if (qty == null) return;
+    _markScannerActive();
     setState(() {
       if (qty <= 0) {
         _cart.removeAt(cartIdx);
@@ -389,11 +405,45 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
     }
   }
 
+  void _hideScannerForManualEntry() {
+    if (!mounted) return;
+    if (_autoHiddenByManualAdd && _scannerPausedByUser) return;
+    setState(() {
+      _autoHiddenByManualAdd = true;
+      _scannerPausedByUser = true;
+    });
+    unawaited(_stopScannerSafe());
+  }
+
+  Future<void> _showScannerAgain() async {
+    if (!_isScannerVisibleByUserSetting()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Scanner is disabled in Settings for this account.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _autoHiddenByManualAdd = false;
+    });
+    await _resumeScannerFromPanel();
+  }
+
   // â”€â”€â”€ Build UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
     final isKeyboardOpen = keyboardInset > 0;
+    final scannerVisibleBySetting = _isScannerVisibleByUserSetting();
+    final shouldHideScannerPanel =
+        isKeyboardOpen || !scannerVisibleBySetting || _autoHiddenByManualAdd;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -468,9 +518,28 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
             children: [
               _buildCustomerBanner(),
               Offstage(
-                offstage: isKeyboardOpen,
+                offstage: shouldHideScannerPanel,
                 child: _buildCompactScannerPanel(),
               ),
+              if (_autoHiddenByManualAdd && scannerVisibleBySetting)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _showScannerAgain,
+                      icon: const Icon(Icons.videocam_rounded, size: 16),
+                      label: const Text('Show Scanner'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               SizedBox(height: isKeyboardOpen ? 4 : 0),
               _buildCustomTabBar(),
               Expanded(
@@ -1217,7 +1286,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
           else
             GestureDetector(
               onTap: () {
-                _addToCart(product);
+                _addToCart(product, hideScannerForManual: true);
               },
               child: Container(
                 padding:
@@ -1321,6 +1390,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   icon: Icons.remove_rounded,
                   color: const Color(0xFF64748B),
                   onPressed: () {
+                    _markScannerActive();
                     setState(() {
                       final newQty = qty - _stepForUnit(product);
                       if (newQty <= 0) {
@@ -1367,6 +1437,7 @@ class _CustomerPurchasePageState extends State<CustomerPurchasePage>
                   icon: Icons.add_rounded,
                   color: AppTheme.primaryColor,
                   onPressed: () {
+                    _markScannerActive();
                     setState(() {
                       _cart[cartIdx].quantity += _stepForUnit(product);
                     });

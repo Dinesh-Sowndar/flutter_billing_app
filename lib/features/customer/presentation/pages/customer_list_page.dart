@@ -83,7 +83,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
             context.read<CustomerBloc>().add(LoadCustomersEvent());
           }
         },
-        icon: const Icon(Icons.person_add_rounded),
+        icon:  Icon(Icons.person_add_rounded,size: 20.w,),
         label: Text(
           'Add Customer',
           style: TextStyle(
@@ -331,7 +331,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 22,
+                          fontSize: 20.sp,
                         ),
                       ),
                     ),
@@ -404,7 +404,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                   : 'Adv: ${currencyFormat.format(currentDue.abs())}',
                               style: TextStyle(
                                 color: hasDue ? Colors.red.shade700 : _accent,
-                                fontSize: 12,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),

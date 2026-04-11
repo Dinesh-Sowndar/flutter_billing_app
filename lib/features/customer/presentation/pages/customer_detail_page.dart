@@ -256,7 +256,7 @@ class CustomerDetailPage extends StatelessWidget {
                                 currentCustomer.name,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 20.sp,
+                                  fontSize: 18.sp,
                                   color: Colors.white,
                                 ),
                                 maxLines: 1,
@@ -285,9 +285,9 @@ class CustomerDetailPage extends StatelessWidget {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.payments_rounded,
+                                        const Icon(Icons.payments_rounded,
                                             size: 16, color: _accent),
-                                        SizedBox(width: 8),
+                                        const SizedBox(width: 8),
                                         Text(
                                           'PAY NOW',
                                           style: TextStyle(
@@ -548,7 +548,7 @@ class CustomerDetailPage extends StatelessWidget {
           Text(
             currencyFormat.format(amount),
             style: TextStyle(
-              fontSize: 18.sp,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w800,
               color: color.shade700,
             ),
@@ -620,7 +620,7 @@ class CustomerDetailPage extends StatelessWidget {
                 child: Text(
                   currencyFormat.format(due),
                   style: TextStyle(
-                    fontSize: 18.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w800,
                     color: color.shade700,
                   ),

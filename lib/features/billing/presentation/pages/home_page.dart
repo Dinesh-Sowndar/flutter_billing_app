@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -26,6 +27,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with WidgetsBindingObserver, TickerProviderStateMixin {
+  static const String _scannerVisibilityKeyPrefix = 'scanner_visible';
   late final TabController _tabController;
   final TextEditingController _productSearchController =
       TextEditingController();
@@ -38,6 +40,7 @@ class _HomePageState extends State<HomePage>
   bool _isCameraOn = false;
   bool _scannerRunning = false;
   bool _isFlashOn = false;
+  bool _autoHiddenByManualAdd = false;
   bool _resumeScheduled = false;
   DateTime? _lastResumeAttempt;
   String? _cameraErrorMessage;
@@ -60,6 +63,36 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
     _scannerController = _createScannerController();
+  }
+
+  bool _isScannerVisibleByUserSetting() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return true;
+    final key = '${_scannerVisibilityKeyPrefix}_$uid';
+    return HiveDatabase.settingsBox.get(key, defaultValue: true) == true;
+  }
+
+  Future<void> _applyScannerVisibilitySetting({bool refreshUi = false}) async {
+    if (!mounted) return;
+    final isVisible = _isScannerVisibleByUserSetting();
+
+    if (!isVisible) {
+      if (_isCameraOn || _scannerRunning || _autoHiddenByManualAdd) {
+        setState(() {
+          _isCameraOn = false;
+          _scannerRunning = false;
+          _autoHiddenByManualAdd = false;
+        });
+      } else if (refreshUi) {
+        setState(() {});
+      }
+      await _pauseScanner();
+      return;
+    }
+
+    if (refreshUi && mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -95,6 +128,16 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _resumeScanner() async {
+    if (!_isScannerVisibleByUserSetting()) {
+      if (mounted && (_isCameraOn || _scannerRunning)) {
+        setState(() {
+          _isCameraOn = false;
+          _scannerRunning = false;
+        });
+      }
+      return;
+    }
+
     if (!mounted ||
         !_isCameraOn ||
         _isDisposingScanner ||
@@ -194,6 +237,18 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _startScannerFromUserAction() async {
+    if (!_isScannerVisibleByUserSetting()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Scanner is disabled in Settings for this account.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     _cancelScannerIdleTimer();
 
     if (_scannerRunning) {
@@ -212,7 +267,9 @@ class _HomePageState extends State<HomePage>
   }
 
   void _ensureScannerActiveSoon() {
-    if (_resumeScheduled || !_isCameraOn) return;
+    if (_resumeScheduled || !_isCameraOn || !_isScannerVisibleByUserSetting()) {
+      return;
+    }
     _resumeScheduled = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -303,6 +360,7 @@ class _HomePageState extends State<HomePage>
   void _applyInlineQuantityForCartItem(CartItem item, String rawValue) {
     final qty = double.tryParse(rawValue.trim());
     if (qty == null) return;
+    _markScannerActive();
     if (qty <= 0) {
       context
           .read<BillingBloc>()
@@ -323,6 +381,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _incrementCartItem(CartItem item) {
+    _markScannerActive();
     final step = _stepForUnit(item.product.unit);
     context
         .read<BillingBloc>()
@@ -336,6 +395,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _decrementCartItem(CartItem item) {
+    _markScannerActive();
     final step = _stepForUnit(item.product.unit);
     if (item.quantity > step) {
       context
@@ -354,7 +414,15 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  void _addProductFromInventory(Product product) {
+  void _addProductFromInventory(
+    Product product, {
+    bool hideScannerForManual = false,
+  }) {
+    if (hideScannerForManual) {
+      _hideScannerForManualEntry();
+    } else {
+      _markScannerActive();
+    }
     context.read<BillingBloc>().add(AddProductToCartEvent(product));
 
     Vibrate.canVibrate.then((can) {
@@ -364,11 +432,33 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  void _hideScannerForManualEntry() {
+    if (!mounted) return;
+    if (_autoHiddenByManualAdd && !_isCameraOn) return;
+    setState(() {
+      _autoHiddenByManualAdd = true;
+      _isCameraOn = false;
+      _scannerRunning = false;
+    });
+    unawaited(_pauseScanner());
+  }
+
+  Future<void> _showScannerAgain() async {
+    if (!mounted) return;
+    setState(() {
+      _autoHiddenByManualAdd = false;
+    });
+    await _startScannerFromUserAction();
+  }
+
   @override
   Widget build(BuildContext context) {
     _ensureScannerActiveSoon();
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
     final isKeyboardOpen = keyboardInset > 0;
+    final scannerVisibleBySetting = _isScannerVisibleByUserSetting();
+    final shouldHideScannerPanel =
+        isKeyboardOpen || !scannerVisibleBySetting || _autoHiddenByManualAdd;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA), // Elegant light background
@@ -430,7 +520,11 @@ class _HomePageState extends State<HomePage>
             onPressed: () async {
               await _pauseScanner();
               await context.push('/settings');
-              if (_isCameraOn && mounted) await _resumeScanner();
+              if (!mounted) return;
+              await _applyScannerVisibilitySetting(refreshUi: true);
+              if (_isCameraOn && _isScannerVisibleByUserSetting()) {
+                await _resumeScanner();
+              }
             },
           ),
           SizedBox(width: 8.w),
@@ -456,9 +550,28 @@ class _HomePageState extends State<HomePage>
         child: Column(
           children: [
             Offstage(
-              offstage: isKeyboardOpen,
+              offstage: shouldHideScannerPanel,
               child: _buildElegantScannerCard(),
             ),
+            if (_autoHiddenByManualAdd && scannerVisibleBySetting)
+              Padding(
+                padding: EdgeInsets.fromLTRB(20.w, 6.h, 20.w, 0),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: _showScannerAgain,
+                    icon: const Icon(Icons.videocam_rounded, size: 16),
+                    label: const Text('Show Scanner'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppTheme.primaryColor,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 8.h,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             SizedBox(height: isKeyboardOpen ? 6.h : 14.h),
             Expanded(child: _buildBottomPanel()),
           ],
@@ -781,6 +894,20 @@ class _HomePageState extends State<HomePage>
                             fontWeight: FontWeight.w700,
                             fontSize: compact ? 10.5.sp : 12.sp)),
                     onPressed: () async {
+                      if (!_isScannerVisibleByUserSetting()) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Scanner is disabled in Settings for this account.',
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+                      setState(() {
+                        _autoHiddenByManualAdd = false;
+                      });
                       await _startScannerFromUserAction();
                     },
                   )
@@ -844,7 +971,7 @@ class _HomePageState extends State<HomePage>
                     children: [
                       Icon(Icons.shopping_cart_rounded, size: 18.r),
                       SizedBox(width: 8.w),
-                      const Text('Current Order'),
+                       Text('Current Order',style: TextStyle(fontSize: 12.sp),),
                     ],
                   ),
                 ),
@@ -854,7 +981,7 @@ class _HomePageState extends State<HomePage>
                     children: [
                       Icon(Icons.inventory_2_rounded, size: 18.r),
                       SizedBox(width: 8.w),
-                      const Text('Add Items'),
+                       Text('Add Items', style: TextStyle(fontSize: 12.sp)),
                     ],
                   ),
                 ),
@@ -879,6 +1006,20 @@ class _HomePageState extends State<HomePage>
   Widget _buildOrderTab() {
     return BlocBuilder<BillingBloc, BillingState>(
       builder: (context, state) {
+        if (state.cartItems.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 24.h),
+              child: _buildSaleEntryStyleSection(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 34.h),
+                  child: _buildEmptyCart(),
+                ),
+              ),
+            ),
+          );
+        }
+
         final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
         return SingleChildScrollView(
@@ -893,12 +1034,7 @@ class _HomePageState extends State<HomePage>
                     : 110.h),
           ),
           child: _buildSaleEntryStyleSection(
-            child: state.cartItems.isEmpty
-                ? Padding(
-                    padding: EdgeInsets.symmetric(vertical: 34.h),
-                    child: _buildEmptyCart(),
-                  )
-                : Column(
+            child: Column(
                     children: [
                       Padding(
                         padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 10.h),
@@ -908,8 +1044,8 @@ class _HomePageState extends State<HomePage>
                               'Current Order',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 18.sp,
-                                color: Color(0xFF1E293B),
+                                fontSize: 16.sp,
+                                color: const Color(0xFF1E293B),
                               ),
                             ),
                             const Spacer(),
@@ -917,7 +1053,7 @@ class _HomePageState extends State<HomePage>
                               '${state.cartItems.length} item(s)',
                               style: TextStyle(
                                 color: Color(0xFF64748B),
-                                fontSize: 13.sp,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -934,7 +1070,7 @@ class _HomePageState extends State<HomePage>
                                 child: Text(
                                   'Clear',
                                   style: TextStyle(
-                                    color: Color(0xFFEF4444),
+                                    color: const Color(0xFFEF4444),
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -977,7 +1113,7 @@ class _HomePageState extends State<HomePage>
                                         item.product.name,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 16.sp,
+                                          fontSize: 14.sp,
                                           color: Color(0xFF1E293B),
                                         ),
                                         maxLines: 1,
@@ -987,7 +1123,7 @@ class _HomePageState extends State<HomePage>
                                       Text(
                                         'Rs ${item.product.price.toStringAsFixed(0)} x ${_formatQty(item.quantity)} ${item.product.unit.shortLabel}  =  Rs ${item.total.toStringAsFixed(0)}',
                                         style: TextStyle(
-                                          fontSize: 13.sp,
+                                          fontSize: 10.sp,
                                           color: Color(0xFF10B981),
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -1032,7 +1168,7 @@ class _HomePageState extends State<HomePage>
                                                     style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.w800,
-                                                      fontSize: 13.sp,
+                                                      fontSize: 12.sp,
                                                       color: Color(0xFF0F172A),
                                                     ),
                                                     decoration:
@@ -1313,7 +1449,9 @@ class _HomePageState extends State<HomePage>
                             else
                               ElevatedButton(
                                 onPressed: () => _addProductFromInventory(
-                                    product.toEntity()),
+                                  product.toEntity(),
+                                  hideScannerForManual: true,
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryColor,
                                   foregroundColor: Colors.white,
