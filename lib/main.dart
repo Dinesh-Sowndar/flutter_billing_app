@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'config/routes/app_routes.dart';
 import 'core/data/hive_database.dart';
 import 'core/service_locator.dart' as di;
@@ -19,25 +18,126 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 
-void main() async {
-  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+bool didCompleteBootstrapInit = false;
 
-  // Preserve the native splash until we finish initializing.
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const _AppBootstrap());
+}
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await HiveDatabase.init();
-  await di.init();
+class _AppBootstrap extends StatefulWidget {
+  const _AppBootstrap();
 
-  // Start SyncService so offline->online transitions trigger Firestore sync.
-  await di.sl<SyncService>().initialize();
+  @override
+  State<_AppBootstrap> createState() => _AppBootstrapState();
+}
 
-  // Initialization done - remove the splash.
-  FlutterNativeSplash.remove();
+class _AppBootstrapState extends State<_AppBootstrap> {
+  late Future<void> _startupFuture;
 
-  runApp(const MyApp());
+  @override
+  void initState() {
+    super.initState();
+    _startupFuture = _initializeApp();
+  }
+
+  static Future<void> _initializeApp() async {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await HiveDatabase.init();
+    await di.init();
+    await di.sl<SyncService>().initialize();
+    didCompleteBootstrapInit = true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _startupFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasError) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              home: _StartupErrorScreen(
+                onRetry: () {
+                  setState(() {
+                    _startupFuture = _initializeApp();
+                  });
+                },
+              ),
+            );
+          }
+          return const MyApp();
+        }
+
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            backgroundColor: const Color(0xFF1A1A2E),
+            body: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF1A1A2E),
+                    Color(0xFF16213E),
+                    Color(0xFF0F3460),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StartupErrorScreen extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _StartupErrorScreen({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  color: Colors.white, size: 42),
+              const SizedBox(height: 12),
+              const Text(
+                'Startup failed',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Please check internet and try again.',
+                style: TextStyle(color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -122,3 +222,4 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+

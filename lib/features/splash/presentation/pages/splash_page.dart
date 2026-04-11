@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/data/hive_database.dart';
+import '../../../../main.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class SplashPage extends StatefulWidget {
@@ -71,8 +72,11 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       _textController.forward();
     });
 
-    // Navigate after 3 seconds, but check auth state first
-    Timer(const Duration(seconds: 3), () {
+    // Navigate after splash time, but if startup already happened in bootstrap,
+    // keep this short to avoid a perceived pre-splash screen.
+    final splashDelay =
+        didCompleteBootstrapInit ? const Duration(milliseconds: 1500) : const Duration(seconds: 3);
+    Timer(splashDelay, () {
       if (!mounted) return;
       _isMinimiumSplashTimePassed = true;
       _navigateBasedOnAuth();

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/data/hive_database.dart';
+import '../widgets/onboarding_illustrations.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -17,31 +19,34 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<_OnboardingStep> _steps = const [
     _OnboardingStep(
-      title: 'Bill Faster, Stress Less',
+      title: 'Billing That Flows Like Magic',
       description:
-          'Create invoices in seconds, scan products quickly, and keep your counter moving during rush hours.',
-      highlights: ['Fast invoice flow', 'Quick barcode scan'],
-      icon: Icons.bolt_rounded,
+          'Create polished bills in seconds and keep your counter moving with lightning-fast checkout.',
+      highlights: ['Instant invoices', 'Smooth checkout', 'Fewer queue delays'],
+      illustration: BillingIllustration(),
       startColor: Color(0xFF0EA5E9),
       endColor: Color(0xFF1D4ED8),
+      chipColor: Color(0xFFBFDBFE),
     ),
     _OnboardingStep(
-      title: 'Track Stock Automatically',
+      title: 'Inventory That Updates Itself',
       description:
-          'Inventory updates itself after every sale so you always know what is available and what needs restocking.',
-      highlights: ['Auto stock updates', 'Low-stock visibility'],
-      icon: Icons.inventory_2_rounded,
+          'Every sale updates stock instantly so you always know what is available and what needs a refill.',
+      highlights: ['Live stock sync', 'Low stock alerts', 'Less manual tracking'],
+      illustration: InventoryIllustration(),
       startColor: Color(0xFF14B8A6),
       endColor: Color(0xFF0F766E),
+      chipColor: Color(0xFF99F6E4),
     ),
     _OnboardingStep(
-      title: 'See Clear Business Insights',
+      title: 'Customer Dues, Crystal Clear',
       description:
-          'Monitor customer dues and transaction history in one place to make better daily decisions.',
-      highlights: ['Due tracking', 'Actionable reports'],
-      icon: Icons.analytics_rounded,
+          'Track due payments and customer history in one place, and make smarter day-to-day decisions.',
+      highlights: ['Due reminders', 'Complete history', 'Better cash control'],
+      illustration: DuesIllustration(),
       startColor: Color(0xFFF97316),
       endColor: Color(0xFFEA580C),
+      chipColor: Color(0xFFFED7AA),
     ),
   ];
 
@@ -76,281 +81,389 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget build(BuildContext context) {
     final step = _steps[_currentIndex];
     final size = MediaQuery.of(context).size;
-    final isSmallHeight = size.height < 720;
+    final isSmallHeight = size.height < 730;
 
     return Scaffold(
-      body: Container(
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 420),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              step.startColor.withValues(alpha: 0.18),
+              step.startColor.withValues(alpha: 0.16),
               const Color(0xFFF8FAFC),
-              step.endColor.withValues(alpha: 0.16),
+              step.endColor.withValues(alpha: 0.18),
             ],
           ),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            child: Column(
-              children: [
-                Row(
+        child: Stack(
+          children: [
+            Positioned(
+              top: -60,
+              right: -40,
+              child: _backgroundOrb(
+                size: 220,
+                color: step.startColor.withValues(alpha: 0.22),
+              ),
+            ),
+            Positioned(
+              bottom: -70,
+              left: -50,
+              child: _backgroundOrb(
+                size: 250,
+                color: step.endColor.withValues(alpha: 0.20),
+              ),
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                child: Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 14,
-                            offset: const Offset(0, 6),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 9,
                           ),
-                        ],
-                      ),
-                      child:  Text(
-                        'QuickReceipt',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: _completeOnboarding,
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF334155),
-                        padding:  EdgeInsets.symmetric(
-                          horizontal: 12.sp,
-                          vertical: 10,
-                        ),
-                      ),
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _steps.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentIndex = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      final current = _steps[index];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Spacer(),
-                          Container(
-                            height: isSmallHeight ? 220 : 260,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(32),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [current.startColor, current.endColor],
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.80),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.95),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 14,
+                                offset: const Offset(0, 6),
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      current.endColor.withValues(alpha: 0.30),
-                                  blurRadius: 30,
-                                  offset: const Offset(0, 16),
-                                ),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  top: -30,
-                                  right: -26,
-                                  child: Container(
-                                    width: 130,
-                                    height: 130,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.14),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: -34,
-                                  left: -18,
-                                  child: Container(
-                                    width: 110,
-                                    height: 110,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.16),
-                                    ),
-                                  ),
-                                ),
-                                Center(
-                                  child: Container(
-                                    width: 112,
-                                    height: 112,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.16),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      current.icon,
-                                      size: 58,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            ],
                           ),
-                          SizedBox(height: isSmallHeight ? 24 : 34),
-                          Text(
-                            current.title,
-                            textAlign: TextAlign.center,
-                            style:  TextStyle(
-                              fontSize: 22.sp,
-                              height: 1.12,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF0F172A),
-                              letterSpacing: -0.8,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            current.description,
-                            textAlign: TextAlign.center,
-                            style:  TextStyle(
-                              fontSize: 14.sp,
-                              color: Color(0xFF334155),
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            alignment: WrapAlignment.center,
-                            children: current.highlights
-                                .map(
-                                  (highlight) => Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.84),
-                                      borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                        color: current.endColor
-                                            .withValues(alpha: 0.24),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      highlight,
-                                      style:  TextStyle(
-                                        color: const Color(0xFF0F172A),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12.sp,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                          const Spacer(),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      '${_currentIndex + 1}/${_steps.length}',
-                      style:  TextStyle(
-                        fontSize: 12.sp,
-                        color: const Color(0xFF64748B),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Row(
-                        children: List.generate(
-                          _steps.length,
-                          (index) {
-                            final isActive = index == _currentIndex;
-                            return Expanded(
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 260),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 8,
                                 height: 8,
-                                margin: EdgeInsets.only(
-                                  right: index == _steps.length - 1 ? 0 : 6,
-                                ),
                                 decoration: BoxDecoration(
-                                  color: isActive
-                                      ? step.endColor
-                                      : const Color(0xFFCBD5E1),
-                                  borderRadius: BorderRadius.circular(999),
+                                  color: step.endColor,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
-                            );
-                          },
+                              const SizedBox(width: 8),
+                              Text(
+                                'QuickReceipt',
+                                style: GoogleFonts.sora(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.2,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: _completeOnboarding,
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF334155),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                          ),
+                          child: Text(
+                            'Skip',
+                            style: GoogleFonts.outfit(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: _steps.length,
+                        physics: const BouncingScrollPhysics(),
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final current = _steps[index];
+                          return Column(
+                            children: [
+                              const Spacer(),
+                              _heroCard(current, isSmallHeight),
+                              SizedBox(height: isSmallHeight ? 18 : 24),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 350),
+                                switchInCurve: Curves.easeOutCubic,
+                                transitionBuilder: (child, animation) {
+                                  final slide = Tween<Offset>(
+                                    begin: const Offset(0.04, 0),
+                                    end: Offset.zero,
+                                  ).animate(animation);
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                      position: slide,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  key: ValueKey(current.title),
+                                  children: [
+                                    Text(
+                                      current.title,
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.sora(
+                                        fontSize: 26.sp,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.14,
+                                        letterSpacing: -0.7,
+                                        color: const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      current.description,
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 14.sp,
+                                        color: const Color(0xFF334155),
+                                        height: 1.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Wrap(
+                                      spacing: 10,
+                                      runSpacing: 10,
+                                      alignment: WrapAlignment.center,
+                                      children: current.highlights
+                                          .map(
+                                            (highlight) => Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 7,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: current.chipColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                                border: Border.all(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.85),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                highlight,
+                                                style: GoogleFonts.outfit(
+                                                  color:
+                                                      const Color(0xFF0F172A),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12.sp,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Spacer(),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          '${_currentIndex + 1}/${_steps.length}',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12.sp,
+                            color: const Color(0xFF475569),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Row(
+                            children: List.generate(_steps.length, (index) {
+                              final isActive = index == _currentIndex;
+                              return Expanded(
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 280),
+                                  curve: Curves.easeOutCubic,
+                                  height: 9,
+                                  margin: EdgeInsets.only(
+                                    right: index == _steps.length - 1 ? 0 : 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(999),
+                                    gradient: isActive
+                                        ? LinearGradient(
+                                            colors: [
+                                              step.startColor,
+                                              step.endColor,
+                                            ],
+                                          )
+                                        : null,
+                                    color: isActive
+                                        ? null
+                                        : const Color(0xFFCBD5E1),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [step.startColor, step.endColor],
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: step.endColor.withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _goToNextPage,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _isLastPage ? 'Get Started' : 'Continue',
+                                style: GoogleFonts.sora(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward_rounded, size: 18),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _goToNextPage,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: step.endColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      _isLastPage ? 'Get Started' : 'Next',
-                      style:  TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _backgroundOrb({required double size, required Color color}) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.93, end: 1.07),
+      duration: const Duration(milliseconds: 1800),
+      curve: Curves.easeInOut,
+      builder: (context, scale, child) {
+        return Transform.scale(scale: scale, child: child);
+      },
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _heroCard(_OnboardingStep step, bool isSmallHeight) {
+    return Container(
+      height: isSmallHeight ? 260 : 300,
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(34),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            step.startColor,
+            step.endColor,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: step.endColor.withValues(alpha: 0.34),
+            blurRadius: 26,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -24,
+            right: -14,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.16),
+              ),
             ),
           ),
-        ),
+          Positioned(
+            bottom: -30,
+            left: -8,
+            child: Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.14),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: isSmallHeight ? 210 : 240,
+              height: isSmallHeight ? 210 : 240,
+              child: step.illustration,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -360,16 +473,18 @@ class _OnboardingStep {
   final String title;
   final String description;
   final List<String> highlights;
-  final IconData icon;
+  final Widget illustration;
   final Color startColor;
   final Color endColor;
+  final Color chipColor;
 
   const _OnboardingStep({
     required this.title,
     required this.description,
     required this.highlights,
-    required this.icon,
+    required this.illustration,
     required this.startColor,
     required this.endColor,
+    required this.chipColor,
   });
 }
