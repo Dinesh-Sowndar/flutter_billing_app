@@ -28,7 +28,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('Checkout',
+            title: const Text('Page de paiement',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             centerTitle: true,
             backgroundColor: Colors.transparent,
@@ -104,11 +104,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       ),
                                       children: [
                                         _buildHeaderCell(
-                                            'Product Name', TextAlign.left),
+                                            'Nom produit', TextAlign.left),
                                         _buildHeaderCell(
-                                            'Price', TextAlign.right),
+                                            'Prix unitaire', TextAlign.right),
                                         _buildHeaderCell(
-                                            'Total', TextAlign.right),
+                                            'Prix total', TextAlign.right),
                                       ],
                                     ),
                                     // Items rows
@@ -120,11 +120,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                             TextAlign.left,
                                           ),
                                           _buildDataCell(
-                                              '₹${item.product.price.toStringAsFixed(2)}',
+                                              '${item.product.price.toStringAsFixed(2)} €',
                                               TextAlign.right,
                                               isSubtitle: true),
                                           _buildDataCell(
-                                              '₹${item.total.toStringAsFixed(2)}',
+                                              '${item.total.toStringAsFixed(2)} €',
                                               TextAlign.right,
                                               isBold: true),
                                         ],
@@ -174,7 +174,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                     ? Column(
                                         children: [
                                           const Text(
-                                            'Scan to Pay',
+                                            'Scannez ce QR Code pour payer',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -200,7 +200,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'GRAND TOTAL',
+                                      'TOTAL',
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -209,7 +209,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       ),
                                     ),
                                     Text(
-                                      '₹${billingState.totalAmount.toStringAsFixed(2)}',
+                                      '€${billingState.totalAmount.toStringAsFixed(2)}',
                                       style: const TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
@@ -240,7 +240,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                         backgroundColor: Colors.red));
                               }
                             },
-                            label: 'Print Receipt',
+                            label: 'Imprimer',
                             icon: Icons.print,
                             isLoading: billingState.isPrinting,
                           ),

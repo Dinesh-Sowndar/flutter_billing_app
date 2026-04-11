@@ -116,7 +116,7 @@ class _HomePageState extends State<HomePage> {
                   if (_isCameraOn && mounted) _scannerController.start();
                 },
           icon: Icons.payment,
-          label: 'Review Order',
+          label: 'Passer au paiement',
         );
       }),
     );
@@ -172,6 +172,7 @@ class _HomePageState extends State<HomePage> {
                       _scannerController.stop();
                     }
                   },
+                  color: Colors.green,
                 ),
               ],
             ),
@@ -342,10 +343,10 @@ class _HomePageState extends State<HomePage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Scanned Items',
+                        const Text('Produits scannés',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.w600)),
-                        Text('$totalItems items total',
+                        Text('$totalItems produits scannés au total',
                             style: const TextStyle(
                                 fontSize: 12, color: Colors.grey)),
                       ],
@@ -353,14 +354,14 @@ class _HomePageState extends State<HomePage> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('TOTAL PRICE',
+                        const Text('PRIX TOTAL',
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey,
                                 letterSpacing: 1.2)),
                         Text(
-                          '₹${state.totalAmount.toStringAsFixed(2)}',
+                          '€${state.totalAmount.toStringAsFixed(2)}',
                           style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
@@ -383,7 +384,6 @@ class _HomePageState extends State<HomePage> {
                   if (state.cartItems.isEmpty) {
                     return _buildEmptyCart();
                   }
-
                   return ListView.separated(
                     padding: const EdgeInsets.only(
                         left: 15, right: 15, top: 16, bottom: 100),
@@ -421,13 +421,13 @@ class _HomePageState extends State<HomePage> {
                 Icon(Icons.shopping_basket, size: 40, color: Colors.grey[300]),
           ),
           const SizedBox(height: 16),
-          const Text('List is empty',
+          const Text('Panier vide',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 8),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'Scanned items will appear here as you scan them with the camera above.',
+              'Tous les produits scannés vont apparaître ici au fur à mesure que vous les scannez.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
@@ -468,7 +468,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '₹${item.product.price.toStringAsFixed(2)}',
+                  '€${item.product.price.toStringAsFixed(2)}',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
