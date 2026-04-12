@@ -80,13 +80,14 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       cgstAmount: fields[11] == null ? 0.0 : fields[11] as double,
       sgstAmount: fields[12] == null ? 0.0 : fields[12] as double,
       gstNumber: fields[13] == null ? '' : fields[13] as String,
+      isEdited: fields[14] == null ? false : fields[14] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, TransactionModel obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -114,7 +115,9 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       ..writeByte(12)
       ..write(obj.sgstAmount)
       ..writeByte(13)
-      ..write(obj.gstNumber);
+        ..write(obj.gstNumber)
+        ..writeByte(14)
+        ..write(obj.isEdited);
   }
 
   @override

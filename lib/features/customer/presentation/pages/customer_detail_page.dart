@@ -785,6 +785,10 @@ class CustomerDetailPage extends StatelessWidget {
                                     ? const Color(0xFFC2410C)
                                     : const Color(0xFF15803D),
                           ),
+                          if (tx.isEdited) ...[
+                            const SizedBox(width: 6),
+                            _editedPill(),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -976,6 +980,10 @@ class CustomerDetailPage extends StatelessWidget {
                             const Color(0xFFFFF7ED),
                             const Color(0xFFC2410C),
                           ),
+                          if (tx.isEdited) ...[
+                            const SizedBox(width: 6),
+                            _editedPill(),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -1151,6 +1159,10 @@ class CustomerDetailPage extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
+                            if (tx.isEdited) ...[
+                              const SizedBox(height: 5),
+                              _editedPill(),
+                            ],
                           ],
                         ),
                       ),
@@ -1213,6 +1225,7 @@ class CustomerDetailPage extends StatelessWidget {
     final isPayment = _isPaymentOnlyTransaction(tx);
     final isDueAdded = _isDueAdditionTransaction(tx);
     final billDue = (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount));
+    final totalCustomerDue = _customerDueAfterTransaction(tx);
     final isSettled = billDue <= 0;
     final isPartial = billDue > 0 && tx.amountPaid > 0;
 
@@ -1319,6 +1332,10 @@ class CustomerDetailPage extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        if (tx.isEdited) ...[
+                          const SizedBox(height: 6),
+                          _editedPill(onDark: true),
+                        ],
                       ],
                     ),
                   ),
@@ -1398,6 +1415,18 @@ class CustomerDetailPage extends StatelessWidget {
                         value:
                             DateFormat('dd MMM yyyy, hh:mm a').format(tx.date),
                       ),
+                      _cardRow(
+                        icon: Icons.account_balance_wallet_rounded,
+                        iconColor: totalCustomerDue > 0
+                            ? Colors.red.shade400
+                            : const Color(0xFF10B981),
+                        label: 'Total Customer Due',
+                        value: cf2.format(totalCustomerDue),
+                        valueColor: totalCustomerDue > 0
+                            ? Colors.red.shade600
+                            : const Color(0xFF10B981),
+                        bold: true,
+                      ),
                     ]),
                   ] else if (isDueAdded) ...[
                     _detailCard([
@@ -1423,6 +1452,18 @@ class CustomerDetailPage extends StatelessWidget {
                         label: 'Date & Time',
                         value:
                             DateFormat('dd MMM yyyy, hh:mm a').format(tx.date),
+                      ),
+                      _cardRow(
+                        icon: Icons.account_balance_wallet_rounded,
+                        iconColor: totalCustomerDue > 0
+                            ? Colors.red.shade400
+                            : const Color(0xFF10B981),
+                        label: 'Total Customer Due',
+                        value: cf2.format(totalCustomerDue),
+                        valueColor: totalCustomerDue > 0
+                            ? Colors.red.shade600
+                            : const Color(0xFF10B981),
+                        bold: true,
                       ),
                     ]),
                   ] else ...[
@@ -1623,11 +1664,24 @@ class CustomerDetailPage extends StatelessWidget {
                         _cardRow(
                           icon: Icons.warning_amber_rounded,
                           iconColor: Colors.red.shade400,
-                          label: 'Due Amount',
+                          label: 'Bill Due',
                           value: cf.format(billDue),
                           valueColor: Colors.red.shade600,
                           bold: true,
                         ),
+                      _cardDivider(),
+                      _cardRow(
+                        icon: Icons.account_balance_wallet_rounded,
+                        iconColor: totalCustomerDue > 0
+                            ? Colors.red.shade400
+                            : const Color(0xFF10B981),
+                        label: 'Total Customer Due',
+                        value: cf.format(totalCustomerDue),
+                        valueColor: totalCustomerDue > 0
+                            ? Colors.red.shade600
+                            : const Color(0xFF10B981),
+                        bold: true,
+                      ),
                       _cardDivider(),
                       _cardRow(
                         icon: _paymentIcon(tx.paymentMethod),
@@ -1642,56 +1696,100 @@ class CustomerDetailPage extends StatelessWidget {
               ),
             ),
 
-            // ── Print button ──────────────────────────────────────────────
-            if (!isPayment && !isDueAdded) ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [_accent, _accentDark],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _accent.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () => _printTransaction(context, tx),
-                      icon: const Icon(Icons.print_rounded, size: 20),
-                      label: const Text('Print Bill',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 15)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
+            // ── Actions ───────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Future.microtask(
+                          () => _showEditTransactionSheet(context, tx),
+                        );
+                      },
+                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      label: const Text('Edit'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _accent,
+                        side: BorderSide(color: _accent.withValues(alpha: 0.25)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Future.microtask(
+                          () => _confirmDeleteTransaction(context, tx),
+                        );
+                      },
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      label: const Text('Delete'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFDC2626),
+                        side: const BorderSide(color: Color(0xFFFECACA)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!isPayment && !isDueAdded) ...[
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      height: 46,
+                      width: 46,
+                      child: OutlinedButton(
+                        onPressed: () => _printTransaction(context, tx),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _accent,
+                          side:
+                              BorderSide(color: _accent.withValues(alpha: 0.25)),
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Icon(Icons.print_rounded, size: 19),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              SafeArea(
-                top: false,
-                child: const SizedBox(height: 8),
-              ),
-            ],
-            if (isPayment)
-              const SafeArea(top: false, child: SizedBox(height: 16)),
-            if (isDueAdded)
-              const SafeArea(top: false, child: SizedBox(height: 16)),
+            ),
+            const SafeArea(top: false, child: SizedBox(height: 10)),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _editedPill({bool onDark = false}) {
+    final bg = onDark
+        ? Colors.white.withValues(alpha: 0.2)
+        : const Color(0xFFEEF2FF);
+    final fg = onDark ? Colors.white : const Color(0xFF3730A3);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        'Edited',
+        style: TextStyle(
+          color: fg,
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
         ),
       ),
     );
@@ -1806,6 +1904,365 @@ class CustomerDetailPage extends StatelessWidget {
         tx.paymentMethod.toLowerCase() == 'due_addition';
   }
 
+  Future<void> _showEditTransactionSheet(
+      BuildContext context, TransactionModel tx) async {
+    final isPayment = _isPaymentOnlyTransaction(tx);
+    final isDueAdded = _isDueAdditionTransaction(tx);
+    final amountController = TextEditingController(
+      text: (isPayment ? tx.amountPaid : isDueAdded ? tx.totalAmount : tx.amountPaid)
+          .toStringAsFixed(2),
+    );
+    final formKey = GlobalKey<FormState>();
+    var method = tx.paymentMethod.toLowerCase();
+    bool isSaving = false;
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          final amountLabel = isPayment
+              ? 'Payment Amount'
+              : isDueAdded
+                  ? 'Due Amount'
+                  : 'Amount Paid';
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 42,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Edit Transaction',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18.sp,
+                          color: _ink,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Form(
+                        key: formKey,
+                        child: TextFormField(
+                          controller: amountController,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            labelText: amountLabel,
+                            prefixText: 'Rs ',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          validator: (v) {
+                            final value = double.tryParse((v ?? '').trim());
+                            if (value == null || value <= 0) {
+                              return 'Enter a valid amount';
+                            }
+                            if (!isPayment && !isDueAdded && value > tx.totalAmount) {
+                              return 'Amount paid cannot exceed bill total';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (!isDueAdded)
+                        DropdownButtonFormField<String>(
+                          initialValue: method,
+                          decoration: InputDecoration(
+                            labelText: 'Payment Method',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'cash', child: Text('Cash')),
+                            DropdownMenuItem(value: 'upi', child: Text('UPI')),
+                            DropdownMenuItem(value: 'card', child: Text('Card')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => method = value);
+                            }
+                          },
+                        ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      if (!formKey.currentState!.validate()) {
+                                        return;
+                                      }
+                                      setState(() => isSaving = true);
+
+                                      final amount =
+                                          double.parse(amountController.text.trim());
+                                      final updated = tx.copyWith(
+                                        amountPaid: isDueAdded
+                                          ? 0.0
+                                          : isPayment
+                                            ? amount
+                                            : amount
+                                              .clamp(0.0, tx.totalAmount)
+                                              .toDouble(),
+                                        totalAmount: isPayment
+                                          ? 0.0
+                                          : (isDueAdded ? amount : tx.totalAmount),
+                                        paymentMethod:
+                                            isDueAdded ? 'due_addition' : method,
+                                        isEdited: true,
+                                        pendingSync: true,
+                                      );
+
+                                      await HiveDatabase.transactionBox
+                                          .put(updated.id, updated);
+                                      unawaited(sl<SyncService>()
+                                          .pushTransaction(updated));
+                                      await _recalculateAndPersistCustomerBalance(
+                                          updated.customerId);
+
+                                      if (ctx.mounted) {
+                                        Navigator.pop(ctx, true);
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _accent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: isSaving
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Text('Save'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (result == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaction updated')),
+      );
+    }
+  }
+
+  Future<void> _confirmDeleteTransaction(
+      BuildContext context, TransactionModel tx) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 22),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.16),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Delete Transaction?',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w800,
+                  color: _ink,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This action cannot be undone. The transaction will be removed permanently.',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  height: 1.35,
+                  color: const Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF475569),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (shouldDelete != true) return;
+
+    await HiveDatabase.transactionBox.delete(tx.id);
+    unawaited(sl<SyncService>().deleteTransaction(tx.id));
+    await _recalculateAndPersistCustomerBalance(tx.customerId);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaction deleted')),
+      );
+    }
+  }
+
+  Future<void> _recalculateAndPersistCustomerBalance(String customerId) async {
+    if (customerId.isEmpty) return;
+    final customerModel = HiveDatabase.customerBox.get(customerId);
+    if (customerModel == null) return;
+
+    final customerTransactions = HiveDatabase.transactionBox.values
+        .where((t) => t.customerId == customerId)
+        .toList()
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        if (byDate != 0) return byDate;
+        return a.id.compareTo(b.id);
+      });
+
+    var balance = 0.0;
+    for (final tx in customerTransactions) {
+      if (_isPaymentOnlyTransaction(tx)) {
+        balance -= tx.amountPaid;
+      } else {
+        final paidAtSale = tx.amountPaid.clamp(0.0, tx.totalAmount).toDouble();
+        balance += (tx.totalAmount - paidAtSale);
+      }
+    }
+
+    final updated = customerModel.copyWith(
+      balance: balance < 0 ? 0.0 : balance,
+      pendingSync: true,
+    );
+    await HiveDatabase.customerBox.put(customerId, updated);
+    unawaited(sl<SyncService>().pushCustomer(updated));
+  }
+
   String _paymentMethodLabel(String method) {
     if (method.toLowerCase() == 'due_addition') {
       return 'DUE ADD';
@@ -1816,6 +2273,13 @@ class CustomerDetailPage extends StatelessWidget {
   Future<void> _printTransaction(
       BuildContext context, TransactionModel tx) async {
     final printerHelper = PrinterHelper();
+    final billDue =
+      (tx.totalAmount - tx.amountPaid.clamp(0.0, tx.totalAmount))
+        .clamp(0.0, double.infinity)
+        .toDouble();
+    final totalCustomerDue = _customerDueAfterTransaction(tx);
+    final prevDueForPrint =
+      (totalCustomerDue - billDue).clamp(0.0, double.infinity).toDouble();
 
     // Get shop info from Hive
     final shopBox = HiveDatabase.shopBox;
@@ -1845,7 +2309,7 @@ class CustomerDetailPage extends StatelessWidget {
         phone: phone,
         items: items,
         total: tx.totalAmount,
-        prevDue: 0.0,
+        prevDue: prevDueForPrint,
         amountPaid: tx.amountPaid,
         customerName: tx.customerName,
         paymentMethod: tx.paymentMethod,

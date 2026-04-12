@@ -450,6 +450,15 @@ class _ItemRowState extends State<_ItemRow> {
                     color: const Color(0xFF1E293B)),
                 decoration: _fieldDecor('Select Item').copyWith(
                   hintText: 'Search inventory...',
+                  labelStyle: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
+                  ),
+                  hintStyle: TextStyle(
+                    fontSize: 11.sp,
+                    color: const Color(0xFF94A3B8),
+                  ),
                   prefixIcon:  Icon(Icons.search_rounded,
                       color: const Color(0xFF0F766E), size: 16.sp),
                   suffixIcon: _hasSelection
@@ -552,7 +561,18 @@ class _ItemRowState extends State<_ItemRow> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF1E293B)),
-                  decoration: _fieldDecor('Quantity').copyWith(hintText: '1'),
+                  decoration: _fieldDecor('Quantity').copyWith(
+                    hintText: '1',
+                    labelStyle: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF64748B),
+                    ),
+                    hintStyle: TextStyle(
+                      fontSize: 11.sp,
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
                   onChanged: (v) {
                     widget.item.quantity = double.tryParse(v) ?? 1;
                     widget.onChanged();
@@ -573,11 +593,22 @@ class _ItemRowState extends State<_ItemRow> {
                       widget.onChanged();
                     }
                   },
-                  decoration: _fieldDecor('Unit'),
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B)),
+                  decoration: _fieldDecor('Unit').copyWith(
+                    labelStyle: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF64748B),
+                    ),
+                    hintStyle: TextStyle(
+                      fontSize: 11.sp,
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1E293B),
+                  ),
                 ),
               ),
             ],
@@ -604,7 +635,18 @@ class _ItemRowState extends State<_ItemRow> {
                       color: const Color(0xFF1E293B)),
                   decoration:
                       _fieldDecor('Purchase Price / Unit', prefixText: '₹ ')
-                          .copyWith(hintText: '0.00'),
+                          .copyWith(
+                        hintText: '0.00',
+                        labelStyle: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF64748B),
+                        ),
+                        hintStyle: TextStyle(
+                          fontSize: 11.sp,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
                   onChanged: (v) {
                     widget.item.price = double.tryParse(v) ?? 0;
                     widget.onChanged();

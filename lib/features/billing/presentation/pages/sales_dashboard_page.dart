@@ -288,17 +288,46 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          t.customerName.isNotEmpty
-                                              ? t.customerName
-                                              : 'Guest Customer',
-                                          style:  TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14.sp,
-                                            color: const Color(0xFF1E293B),
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                t.customerName.isNotEmpty
+                                                    ? t.customerName
+                                                    : 'Guest Customer',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14.sp,
+                                                  color: const Color(0xFF1E293B),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            if (t.isEdited) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 7,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFEEF2FF),
+                                                  borderRadius:
+                                                      BorderRadius.circular(999),
+                                                ),
+                                                child: Text(
+                                                  'Edited',
+                                                  style: TextStyle(
+                                                    color:
+                                                        const Color(0xFF3730A3),
+                                                    fontSize: 10.sp,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
@@ -346,10 +375,11 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
     );
   }
 
-  void _showTransactionDetails(BuildContext context, dynamic t) {
+  void _showTransactionDetails(BuildContext context, TransactionModel t) {
     final due = (t.totalAmount - t.amountPaid).clamp(0.0, double.infinity);
     final isPaymentOnly = t.items.isEmpty && t.amountPaid > 0;
-    final balanceDue = due.toDouble();
+    final totalCustomerDue = _customerDueAfterTransaction(t);
+    final balanceDue = totalCustomerDue;
     final totalDueAmount = isPaymentOnly ? t.amountPaid : t.totalAmount;
 
     showModalBottomSheet(
@@ -410,6 +440,25 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                       style:  TextStyle(
                           fontSize: 14.sp, color: Color(0xFF64748B)),
                     ),
+                    if (t.isEdited) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEF2FF),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Edited',
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: const Color(0xFF3730A3),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                     if (t.customerName.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
@@ -571,6 +620,24 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
                                     : const Color(0xFF10B981))),
                       ],
                     ),
+                    if (!isPaymentOnly && due > 0) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Bill Due',
+                              style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF64748B))),
+                          Text('₹${due.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF64748B))),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -609,8 +676,15 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
     );
   }
 
-  Future<void> _printTransaction(BuildContext context, dynamic t) async {
+  Future<void> _printTransaction(BuildContext context, TransactionModel t) async {
     final printerHelper = PrinterHelper();
+    final billDue =
+        (t.totalAmount - t.amountPaid.clamp(0.0, t.totalAmount))
+            .clamp(0.0, double.infinity)
+            .toDouble();
+    final totalCustomerDue = _customerDueAfterTransaction(t);
+    final prevDueForPrint =
+        (totalCustomerDue - billDue).clamp(0.0, double.infinity).toDouble();
     final shopBox = HiveDatabase.shopBox;
     final ShopModel? shop =
         shopBox.values.isNotEmpty ? shopBox.values.first : null;
@@ -641,7 +715,7 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
         phone: phone,
         items: items,
         total: t.totalAmount,
-        prevDue: 0.0,
+        prevDue: prevDueForPrint,
         amountPaid: t.amountPaid,
         customerName: t.customerName ?? '',
         paymentMethod: t.paymentMethod ?? 'cash',
@@ -680,6 +754,40 @@ class _SalesDashboardPageState extends State<SalesDashboardPage> {
         ));
       }
     }
+  }
+
+  double _customerDueAfterTransaction(TransactionModel selectedTx) {
+    if (selectedTx.customerId.isEmpty) {
+      return (selectedTx.totalAmount -
+              selectedTx.amountPaid.clamp(0.0, selectedTx.totalAmount))
+          .clamp(0.0, double.infinity)
+          .toDouble();
+    }
+
+    final customerTransactions = HiveDatabase.transactionBox.values
+        .where((t) => t.customerId == selectedTx.customerId)
+        .toList()
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        if (byDate != 0) return byDate;
+        return a.id.compareTo(b.id);
+      });
+
+    var runningDue = 0.0;
+    for (final tx in customerTransactions) {
+      final isPaymentOnly = tx.items.isEmpty && tx.amountPaid > 0 && tx.totalAmount <= 0;
+
+      if (isPaymentOnly) {
+        runningDue -= tx.amountPaid;
+      } else {
+        final paidAtSale = tx.amountPaid.clamp(0.0, tx.totalAmount).toDouble();
+        runningDue += (tx.totalAmount - paidAtSale);
+      }
+
+      if (tx.id == selectedTx.id) break;
+    }
+
+    return runningDue < 0 ? 0.0 : runningDue;
   }
 
   Widget _buildSalesCard(

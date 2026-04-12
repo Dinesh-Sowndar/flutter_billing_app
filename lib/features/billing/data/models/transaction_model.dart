@@ -87,6 +87,10 @@ class TransactionModel {
   @HiveField(13, defaultValue: '')
   final String gstNumber;
 
+  /// True when this transaction has been edited after creation.
+  @HiveField(14, defaultValue: false)
+  final bool isEdited;
+
   TransactionModel({
     required this.id,
     required this.date,
@@ -102,6 +106,7 @@ class TransactionModel {
     this.cgstAmount = 0.0,
     this.sgstAmount = 0.0,
     this.gstNumber = '',
+    this.isEdited = false,
   });
 
   factory TransactionModel.fromFirestore(Map<String, dynamic> map) {
@@ -122,6 +127,7 @@ class TransactionModel {
       cgstAmount: (map['cgstAmount'] as num?)?.toDouble() ?? 0.0,
       sgstAmount: (map['sgstAmount'] as num?)?.toDouble() ?? 0.0,
       gstNumber: map['gstNumber'] as String? ?? '',
+      isEdited: map['isEdited'] as bool? ?? false,
       items: rawItems
           .map((i) => TransactionItemModel(
                 productId: i['productId'] as String? ?? '',
@@ -149,6 +155,7 @@ class TransactionModel {
         'cgstAmount': cgstAmount,
         'sgstAmount': sgstAmount,
         'gstNumber': gstNumber,
+        'isEdited': isEdited,
         'items': items
             .map((i) => {
                   'productId': i.productId,
@@ -176,6 +183,7 @@ class TransactionModel {
     double? cgstAmount,
     double? sgstAmount,
     String? gstNumber,
+    bool? isEdited,
   }) {
     return TransactionModel(
       id: id ?? this.id,
@@ -192,6 +200,7 @@ class TransactionModel {
       cgstAmount: cgstAmount ?? this.cgstAmount,
       sgstAmount: sgstAmount ?? this.sgstAmount,
       gstNumber: gstNumber ?? this.gstNumber,
+      isEdited: isEdited ?? this.isEdited,
     );
   }
 }
