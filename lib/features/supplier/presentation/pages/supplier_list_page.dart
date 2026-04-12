@@ -123,22 +123,45 @@ class _SupplierListViewState extends State<_SupplierListView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3.5,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFF0F766E)),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: _primary.withValues(alpha: 0.12),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3.5,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(_primary),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Text(
-                    'Loading suppliers…',
+                    'Loading suppliers...',
                     style: TextStyle(
-                      color: Colors.grey.shade500,
+                      fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      color: const Color(0xFF334155),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Please wait a moment',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF94A3B8),
                     ),
                   ),
                 ],

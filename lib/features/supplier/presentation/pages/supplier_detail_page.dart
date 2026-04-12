@@ -146,8 +146,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
 
                   // ── Due badge ────────────────────────────────────────
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
                       color: _primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(999),
@@ -229,13 +229,11 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                               horizontal: 20, vertical: 18),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide:
-                                BorderSide(color: Colors.grey.shade200),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide:
-                                BorderSide(color: Colors.grey.shade200),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -266,7 +264,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: SizedBox(
                       width: double.infinity,
-                      height: 54,
+                      height: 55.h,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: isSaving
@@ -292,8 +290,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                           onPressed: isSaving
                               ? null
                               : () async {
-                                  if (!formKey.currentState!.validate())
-                                    return;
+                                  if (!formKey.currentState!.validate()) return;
                                   setSheetState(() => isSaving = true);
 
                                   final amount =
@@ -320,9 +317,9 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                       .add(LoadSupplierPurchasesEvent(
                                           _supplier.id));
 
-                                  final refreshed = await di
-                                      .sl<GetSupplierByIdUseCase>()(
-                                      _supplier.id);
+                                  final refreshed =
+                                      await di.sl<GetSupplierByIdUseCase>()(
+                                          _supplier.id);
                                   if (refreshed != null && mounted) {
                                     setState(() => _supplier = refreshed);
                                   }
@@ -332,14 +329,12 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                     ScaffoldMessenger.of(parentContext)
                                         .showSnackBar(
                                       SnackBar(
-                                        content: Row(
+                                        content: const Row(
                                           children: [
-                                            const Icon(
-                                                Icons.check_circle_rounded,
-                                                color: Colors.white,
-                                                size: 18),
-                                            const SizedBox(width: 8),
-                                            const Text('Payment recorded!'),
+                                            Icon(Icons.check_circle_rounded,
+                                                color: Colors.white, size: 18),
+                                            SizedBox(width: 8),
+                                            Text('Payment recorded!'),
                                           ],
                                         ),
                                         backgroundColor:
@@ -361,20 +356,20 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                 borderRadius: BorderRadius.circular(16)),
                           ),
                           child: isSaving
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
+                              ? SizedBox(
+                                  width: 22.w,
+                                  height: 25.h,
+                                  child: const CircularProgressIndicator(
                                       color: Colors.white, strokeWidth: 2.5))
-                              : const Row(
+                              : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.check_rounded, size: 20),
-                                    SizedBox(width: 8),
+                                    const Icon(Icons.check_rounded, size: 20),
+                                    const SizedBox(width: 8),
                                     Text(
                                       'Confirm Payment',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 14.sp,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.3,
                                       ),
@@ -511,7 +506,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                       children: [
                         Text(
                           isPayment ? 'Payment Details' : 'Purchase Details',
-                          style:  TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
                             fontSize: 16.sp,
@@ -583,7 +578,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Row(
                         children: [
-                           Text(
+                          Text(
                             'Items',
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
@@ -622,8 +617,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border:
-                                Border.all(color: Colors.grey.shade100, width: 1.5),
+                            border: Border.all(
+                                color: Colors.grey.shade100, width: 1.5),
                           ),
                           child: Row(
                             children: [
@@ -651,7 +646,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                   children: [
                                     Text(
                                       item.productName,
-                                      style:  TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12.sp,
                                         color: Color(0xFF1E293B),
@@ -660,7 +655,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                     const SizedBox(height: 3),
                                     Text(
                                       '${item.quantity} ${item.unit} × ${_money.format(item.price)}',
-                                      style:  TextStyle(
+                                      style: TextStyle(
                                         fontSize: 10.sp,
                                         color: const Color(0xFF64748B),
                                         fontWeight: FontWeight.w500,
@@ -671,7 +666,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                               ),
                               Text(
                                 _money.format(item.total),
-                                style:  TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 12.sp,
                                   color: const Color(0xFF1E293B),
@@ -691,7 +686,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.grey.shade100, width: 1.5),
+                      border:
+                          Border.all(color: Colors.grey.shade100, width: 1.5),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.03),
@@ -1301,7 +1297,6 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final hasDue = _supplier.balance > 0;
@@ -1317,7 +1312,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
         leading: AppBackButton(onPressed: () => context.pop(), leftPadding: 0),
         title: Text(
           _supplier.name,
-          style:  TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 20.sp,
             color: const Color(0xFF0F172A),
@@ -1340,7 +1335,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
               }
             },
             itemBuilder: (context) => [
-               PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit',
                 height: 34,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1435,7 +1430,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(_supplier.name,
-                                style:  TextStyle(
+                                style: TextStyle(
                                     fontSize: 18.sp,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white)),
@@ -1479,7 +1474,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                               const SizedBox(height: 4),
                               Text(
                                 _money.format(_supplier.balance),
-                                style:  TextStyle(
+                                style: TextStyle(
                                   fontSize: 20.sp,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
@@ -1491,10 +1486,11 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                         if (hasDue)
                           FilledButton.icon(
                             onPressed: _showPaymentSheet,
-                            icon:  Icon(Icons.payments_rounded, size: 16.sp),
-                            label:  Text(
+                            icon: Icon(Icons.payments_rounded, size: 16.sp),
+                            label: Text(
                               'Pay Due',
-                              style: TextStyle(fontWeight: FontWeight.w700,fontSize: 12.sp),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 12.sp),
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor:
@@ -1516,7 +1512,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
           ),
           const SizedBox(height: 16),
           Padding(
-            padding:  EdgeInsets.symmetric(horizontal: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 10.h),
             child: SizedBox(
               width: double.infinity,
               height: 50.h,
@@ -1537,9 +1533,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                   }
                 },
                 icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                label:  Text(
+                label: Text(
                   'Record Purchase',
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
+                  style:
+                      TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
@@ -1552,14 +1549,14 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
               ),
             ),
           ),
-           SizedBox(height: 16.sp),
+          SizedBox(height: 16.sp),
 
           // ── Activity Header ──
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: Row(
               children: [
-                 Text(
+                Text(
                   'Purchase History',
                   style: TextStyle(
                     fontSize: 16.sp,
@@ -1740,7 +1737,9 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                       ),
                                     ),
                                     Text(
-                                      DateFormat('MMM').format(date).toUpperCase(),
+                                      DateFormat('MMM')
+                                          .format(date)
+                                          .toUpperCase(),
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
@@ -1753,7 +1752,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                       DateFormat('yy').format(date),
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: borderColor.withValues(alpha: 0.65),
+                                        color:
+                                            borderColor.withValues(alpha: 0.65),
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -1790,8 +1790,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 3),
                                             decoration: BoxDecoration(
-                                              color: borderColor.withValues(alpha: 0.08),
-                                              borderRadius: BorderRadius.circular(999),
+                                              color: borderColor.withValues(
+                                                  alpha: 0.08),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
                                             ),
                                             child: Text(
                                               statusLabel,
@@ -1815,7 +1817,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                             child: Text(
                                               isPayment
                                                   ? _money.format(p.amountPaid)
-                                                  : _money.format(p.totalAmount),
+                                                  : _money
+                                                      .format(p.totalAmount),
                                               style: TextStyle(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.w900,
@@ -1835,7 +1838,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                               children: [
                                                 Text(
                                                   'Paid ${_money.format(p.amountPaid)}',
-                                                  style:  TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 10.sp,
                                                     fontWeight: FontWeight.w700,
                                                     color: Color(0xFF10B981),
@@ -1851,12 +1854,10 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                       fontSize: 10.sp,
                                                       fontWeight:
                                                           FontWeight.w700,
-                                                      color:
-                                                          p.amountPaid > 0
-                                                              ? const Color(
-                                                                  0xFFF59E0B)
-                                                              : Colors.red
-                                                                  .shade600,
+                                                      color: p.amountPaid > 0
+                                                          ? const Color(
+                                                              0xFFF59E0B)
+                                                          : Colors.red.shade600,
                                                     ),
                                                     maxLines: 1,
                                                     overflow:
@@ -1884,15 +1885,11 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                     BorderRadius.circular(6),
                                               ),
                                               child: const Row(
-                                                mainAxisSize:
-                                                    MainAxisSize.min,
+                                                mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(
-                                                      Icons
-                                                          .south_west_rounded,
+                                                  Icon(Icons.south_west_rounded,
                                                       size: 11,
-                                                      color:
-                                                          Color(0xFF059669)),
+                                                      color: Color(0xFF059669)),
                                                   SizedBox(width: 4),
                                                   Text(
                                                     'DUE PAYMENT',
@@ -1900,8 +1897,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                       fontSize: 11,
                                                       fontWeight:
                                                           FontWeight.w700,
-                                                      color:
-                                                          Color(0xFF059669),
+                                                      color: Color(0xFF059669),
                                                     ),
                                                   ),
                                                 ],
@@ -1914,17 +1910,17 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                       horizontal: 8,
                                                       vertical: 3),
                                               decoration: BoxDecoration(
-                                                color: const Color(
-                                                    0xFFF1F5F9),
+                                                color: const Color(0xFFF1F5F9),
                                                 borderRadius:
                                                     BorderRadius.circular(6),
                                               ),
                                               child: Text(
                                                 '${p.items.length} item${p.items.length == 1 ? '' : 's'}',
-                                                style:  TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 10.sp,
                                                   fontWeight: FontWeight.w600,
-                                                  color: const Color(0xFF64748B),
+                                                  color:
+                                                      const Color(0xFF64748B),
                                                 ),
                                               ),
                                             ),
@@ -1944,20 +1940,17 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                       horizontal: 8,
                                                       vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: const Color(
-                                                    0xFFF0FDFA),
+                                                color: const Color(0xFFF0FDFA),
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                               ),
-                                              child:  Row(
-                                                mainAxisSize:
-                                                    MainAxisSize.min,
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   const Icon(
                                                     Icons.print_rounded,
                                                     size: 14,
-                                                    color:
-                                                        Color(0xFF0F766E),
+                                                    color: Color(0xFF0F766E),
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
@@ -1966,8 +1959,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                       fontSize: 10.sp,
                                                       fontWeight:
                                                           FontWeight.w700,
-                                                      color:
-                                                          Color(0xFF0F766E),
+                                                      color: Color(0xFF0F766E),
                                                     ),
                                                   ),
                                                 ],

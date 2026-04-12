@@ -101,8 +101,54 @@ class _CustomerListPageState extends State<CustomerListPage> {
             child: BlocBuilder<CustomerBloc, CustomerState>(
               builder: (context, state) {
                 if (state.status == CustomerStatus.loading) {
-                  return const Center(
-                      child: CircularProgressIndicator(color: _accent));
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: _accent.withValues(alpha: 0.12),
+                                blurRadius: 24,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: const SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3.5,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(_accent),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Loading customers...',
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF334155),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Please wait a moment',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 if (state.status == CustomerStatus.error) {
