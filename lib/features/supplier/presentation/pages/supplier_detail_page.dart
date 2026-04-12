@@ -429,7 +429,11 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
     );
   }
 
-  void _showPurchaseDetail(BuildContext context, SupplierPurchaseEntity p) {
+  void _showPurchaseDetail(
+    BuildContext context,
+    SupplierPurchaseEntity p,
+    double totalDueAfter,
+  ) {
     final isPayment = p.isPaymentTransaction;
     final headerColor =
         isPayment ? const Color(0xFF059669) : const Color(0xFF0369A1);
@@ -710,10 +714,20 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                           const Color(0xFF16A34A),
                         ),
                         Divider(height: 18, color: Colors.grey.shade100),
+                        if (!isPayment) ...[
+                          _summaryRow(
+                            'Bill Due',
+                            _money.format(p.dueAmount),
+                            p.dueAmount > 0
+                                ? const Color(0xFFEF4444)
+                                : const Color(0xFF16A34A),
+                          ),
+                          Divider(height: 18, color: Colors.grey.shade100),
+                        ],
                         _summaryRow(
-                          isPayment ? 'Remaining' : 'Due Balance',
-                          _money.format(p.dueAmount),
-                          p.dueAmount > 0
+                          'Total Due',
+                          _money.format(totalDueAfter),
+                          totalDueAfter > 0
                               ? const Color(0xFFEF4444)
                               : const Color(0xFF16A34A),
                           isBold: true,
@@ -1213,7 +1227,12 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
     SupplierPurchaseEntity selected,
     List<SupplierPurchaseEntity> all,
   ) {
-    final asc = [...all]..sort((a, b) => a.date.compareTo(b.date));
+    final asc = [...all]
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        if (byDate != 0) return byDate;
+        return a.id.compareTo(b.id);
+      });
     var runningDue = 0.0;
 
     for (final tx in asc) {
@@ -1228,12 +1247,22 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
     return 0.0;
   }
 
+  double _totalDueAfter(
+    SupplierPurchaseEntity selected,
+    List<SupplierPurchaseEntity> all,
+  ) {
+    final previousDue = _previousDueBefore(selected, all);
+    final delta = selected.totalAmount - selected.amountPaid;
+    return (previousDue + delta).clamp(0.0, double.infinity).toDouble();
+  }
+
   Future<void> _printSupplierTransaction(
     BuildContext context,
     SupplierPurchaseEntity tx,
-    double previousDue,
   ) async {
     final printerHelper = PrinterHelper();
+    final purchases = context.read<SupplierPurchaseBloc>().state.purchases;
+    final previousDue = _previousDueBefore(tx, purchases);
 
     final shop = HiveDatabase.shopBox.values.isNotEmpty
         ? HiveDatabase.shopBox.values.first
@@ -1670,7 +1699,7 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                   itemBuilder: (context, i) {
                     final p = state.purchases[i];
                     final isPayment = p.isPaymentTransaction;
-                    final previousDue = _previousDueBefore(p, state.purchases);
+                    final totalDueAfter = _totalDueAfter(p, state.purchases);
                     final date = p.date;
 
                     // Color coding based on status
@@ -1691,7 +1720,8 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                     }
 
                     return GestureDetector(
-                      onTap: () => _showPurchaseDetail(context, p),
+                      onTap: () =>
+                          _showPurchaseDetail(context, p, totalDueAfter),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         decoration: BoxDecoration(
@@ -1849,15 +1879,16 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                 ),
                                                 if (p.dueAmount > 0)
                                                   Text(
-                                                    'Due ${_money.format(p.dueAmount)}',
+                                                    'Total Due ${_money.format(totalDueAfter)}',
                                                     style: TextStyle(
                                                       fontSize: 10.sp,
                                                       fontWeight:
                                                           FontWeight.w700,
-                                                      color: p.amountPaid > 0
+                                                      color: totalDueAfter > 0
                                                           ? const Color(
                                                               0xFFF59E0B)
-                                                          : Colors.red.shade600,
+                                                          : const Color(
+                                                              0xFF10B981),
                                                     ),
                                                     maxLines: 1,
                                                     overflow:
@@ -1930,7 +1961,6 @@ class _SupplierDetailViewState extends State<_SupplierDetailView> {
                                                 _printSupplierTransaction(
                                               context,
                                               p,
-                                              previousDue,
                                             ),
                                             borderRadius:
                                                 BorderRadius.circular(8),
