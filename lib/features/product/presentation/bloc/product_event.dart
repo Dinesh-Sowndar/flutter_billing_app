@@ -1,3 +1,7 @@
+/// Ce fichier fait partie de la bibliothèque `product_bloc.dart`.
+/// En Dart, `part of` indique que ce fichier est une partie d’une bibliothèque
+/// plus grande et qu’il partage son contexte avec le fichier principal
+/// (imports, types et membres privés).
 part of 'product_bloc.dart';
 
 abstract class ProductEvent extends Equatable {

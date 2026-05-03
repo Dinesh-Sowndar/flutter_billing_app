@@ -24,4 +24,6 @@ class ShopError extends ShopState {
   List<Object> get props => [message];
 }
 
-class ShopOperationSuccess extends ShopState {}
+class ShopOperationSuccess extends ShopState {
+  
+}

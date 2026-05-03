@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'services/image_service.dart';
 import '../../features/product/data/repositories/product_repository_impl.dart';
 import '../../features/product/domain/repositories/product_repository.dart';
 import '../../features/product/domain/usecases/product_usecases.dart';
@@ -64,4 +65,7 @@ Future<void> init() async {
   sl.registerLazySingleton<PrinterRepository>(
     () => PrinterRepositoryImpl(),
   );
+
+  // Image service (local saving)
+  sl.registerLazySingleton(() => ImageServiceImpl());
 }

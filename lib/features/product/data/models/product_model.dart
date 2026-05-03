@@ -3,7 +3,7 @@ import '../../domain/entities/product.dart';
 
 part 'product_model.g.dart'; // Hive generator
 
-@HiveType(typeId: 0)
+@HiveType(typeId: 0, adapterName: 'ProductModelAdapter')
 class ProductModel extends Product {
   @override
   @HiveField(0)
@@ -20,6 +20,18 @@ class ProductModel extends Product {
   @override
   @HiveField(4)
   final int stock;
+  @override
+  @HiveField(5)
+  final String? description;
+  @override
+  @HiveField(6)
+  final String? imageUrl;
+  @override
+  @HiveField(7)
+  final String? category;
+  @override
+  @HiveField(8)
+  final double? taxPercent;
 
   const ProductModel({
     required this.id,
@@ -27,12 +39,20 @@ class ProductModel extends Product {
     required this.barcode,
     required this.price,
     required this.stock,
+    this.description,
+    this.imageUrl,
+    this.taxPercent,
+    this.category,
   }) : super(
           id: id,
           name: name,
           barcode: barcode,
           price: price,
+          description: description,
+          imageUrl: imageUrl,
           stock: stock,
+          category: category,
+          taxPercent: taxPercent,
         );
 
   factory ProductModel.fromEntity(Product product) {
@@ -42,6 +62,10 @@ class ProductModel extends Product {
       barcode: product.barcode,
       price: product.price,
       stock: product.stock,
+      description: product.description,
+      imageUrl: product.imageUrl,
+      category: product.category,
+      taxPercent: product.taxPercent,
     );
   }
 
@@ -51,7 +75,11 @@ class ProductModel extends Product {
       name: name,
       barcode: barcode,
       price: price,
+      description: description,
+      imageUrl: imageUrl,
       stock: stock,
+      category: category,
+      taxPercent: taxPercent,
     );
   }
 }

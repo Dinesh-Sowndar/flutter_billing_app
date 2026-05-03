@@ -114,6 +114,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: 'Edit business info & address',
                   onTap: () => context.push('/shop'),
                 ),
+                _buildDivider(),
+                _buildListItem(
+                  icon: Icons.image,
+                  title: 'Gestion images',
+                  subtitle: 'Voir / supprimer images enregistrées localement',
+                  onTap: () => context.push('/settings/images'),
+                ),
               ],
             ),
 

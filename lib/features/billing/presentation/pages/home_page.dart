@@ -22,11 +22,21 @@ class _HomePageState extends State<HomePage> {
     returnImage: false,
   );
 
-  bool _isCameraOn = true;
+  bool _isCameraOn = false; // start with camera off, show prompt
   bool _isFlashOn = false;
+  bool _startPromptShown = false;
 
   // Cooldown mapping to prevent rapid firing of the same barcode
   final Map<String, DateTime> _lastScanTimes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Show prompt after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showStartSnackBar();
+    });
+  }
 
   @override
   void dispose() {
@@ -128,11 +138,13 @@ class _HomePageState extends State<HomePage> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          MobileScanner(
-            controller: _scannerController,
-            onDetect: _onDetect,
-          ),
-          if (!_isCameraOn) _buildCameraOffState(),
+          if (_isCameraOn)
+            MobileScanner(
+              controller: _scannerController,
+              onDetect: _onDetect,
+            )
+          else
+            _buildCameraOffState(),
 
           // Overlay Actions (Top Right)
           Positioned(
@@ -143,7 +155,7 @@ class _HomePageState extends State<HomePage> {
                 _buildOverlayButton(
                   icon: Icons.settings,
                   onPressed: () async {
-                    _scannerController.stop();
+                    if (_isCameraOn) _scannerController.stop();
                     await context.push('/settings');
                     if (_isCameraOn && mounted) _scannerController.start();
                   },
@@ -231,7 +243,7 @@ class _HomePageState extends State<HomePage> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              'Turn on your camera to start scanning barcodes and items automatically.',
+              'Allumez l\'appareil photo pour commencer à scanner les codes-barres et les articles automatiquement.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
@@ -304,6 +316,50 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  void _showStartSnackBar() {
+    if (_startPromptShown) return;
+    _startPromptShown = true;
+
+    final bar = SnackBar(
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 12),
+      content: Row(
+        children: [
+          const Expanded(child: Text('Que souhaitez-vous faire ?')),
+          TextButton(
+            onPressed: () {
+              // Start scanning
+              setState(() => _isCameraOn = true);
+              _scannerController.start();
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+            child: const Text('Scanner', style: TextStyle(color: Colors.white)),
+          ),
+          const SizedBox(width: 6),
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              context.push('/products');
+            },
+            child:
+                const Text('Produits', style: TextStyle(color: Colors.white)),
+          ),
+          const SizedBox(width: 6),
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              context.push('/settings');
+            },
+            child:
+                const Text('Paramètres', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(bar);
   }
 
   Widget _buildBottomPanel() {
