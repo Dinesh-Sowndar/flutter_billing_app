@@ -21,10 +21,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     return PopScope(
         canPop: false,
-        onPopInvokedWithResult: (bool didPop, dynamic result) {
+        onPopInvokedWithResult: (bool didPop, dynamic result) async {
           if (didPop) return;
           context.read<BillingBloc>().add(ClearCartEvent());
-          context.go('/');
+          await context.push('/');
         },
         child: Scaffold(
           appBar: AppBar(
