@@ -114,6 +114,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: 'Edit business info & address',
                   onTap: () => context.push('/shop'),
                 ),
+                _buildDivider(),
+                _buildListItem(
+                  icon: Icons.history,
+                  title: 'Order History',
+                  subtitle: 'View and download past receipts',
+                  onTap: () => context.push('/orders'),
+                ),
               ],
             ),
 

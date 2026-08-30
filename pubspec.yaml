@@ -42,6 +42,8 @@ dependencies:
   bloc: ^8.1.4
   uuid: ^4.5.2
   app_settings: ^7.0.0
+  pdf: ^3.12.0
+  printing: ^5.14.3
 
 dev_dependencies:
   flutter_test:
