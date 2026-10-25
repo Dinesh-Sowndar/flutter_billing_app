@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import '../../features/birthday/presentation/pages/birthday_greeting_page.dart';
 import '../../features/billing/presentation/pages/home_page.dart';
 import '../../features/product/presentation/pages/product_list_page.dart';
 import '../../features/product/presentation/pages/add_product_page.dart';
@@ -10,8 +11,12 @@ import '../../features/billing/presentation/pages/checkout_page.dart';
 import '../../features/product/domain/entities/product.dart';
 
 final router = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/birthday',
   routes: [
+    GoRoute(
+      path: '/birthday',
+      builder: (context, state) => const BirthdayGreetingPage(),
+    ),
     GoRoute(
       path: '/',
       builder: (context, state) => const HomePage(),
