@@ -20,13 +20,19 @@ class EditProductPage extends StatefulWidget {
 class _EditProductPageState extends State<EditProductPage> {
   final _formKey = GlobalKey<FormState>();
   late String _name;
+  late String _description;
+  late String _category;
   late double _price;
+  late bool _isAvailable;
 
   @override
   void initState() {
     super.initState();
     _name = widget.product.name;
     _price = widget.product.price;
+    _description = widget.product.description;
+    _category = widget.product.category;
+    _isAvailable = widget.product.isAvailable;
   }
 
   void _submit() {
@@ -38,6 +44,10 @@ class _EditProductPageState extends State<EditProductPage> {
         name: _name,
         barcode: widget.product.barcode,
         price: _price,
+        stock: widget.product.stock,
+        description: _description,
+        category: _category,
+        isAvailable: _isAvailable,
       );
 
       context.read<ProductBloc>().add(UpdateProduct(updatedProduct));
@@ -113,6 +123,29 @@ class _EditProductPageState extends State<EditProductPage> {
                   ),
                   const SizedBox(height: 24),
 
+                  const InputLabel(text: 'Menu section'),
+                  TextFormField(
+                    initialValue: _category,
+                    textCapitalization: TextCapitalization.words,
+                    decoration:
+                        const InputDecoration(hintText: 'e.g. Mains, Drinks'),
+                    validator:
+                        AppValidators.required('Please enter a menu section'),
+                    onSaved: (value) => _category = value!.trim(),
+                  ),
+                  const SizedBox(height: 24),
+                  const InputLabel(text: 'Description'),
+                  TextFormField(
+                    initialValue: _description,
+                    maxLines: 3,
+                    maxLength: 240,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      hintText: 'Ingredients and useful details for customers',
+                    ),
+                    onSaved: (value) => _description = value?.trim() ?? '',
+                  ),
+                  const SizedBox(height: 24),
                   const InputLabel(text: 'Price'),
 
                   TextFormField(
@@ -128,6 +161,15 @@ class _EditProductPageState extends State<EditProductPage> {
                     ),
                     validator: AppValidators.price,
                     onSaved: (value) => _price = double.parse(value!),
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _isAvailable,
+                    activeColor: AppTheme.primaryColor,
+                    title: const Text('Available to order'),
+                    subtitle: const Text('Toggle this item on or off.'),
+                    onChanged: (value) => setState(() => _isAvailable = value),
                   ),
                 ],
               ),

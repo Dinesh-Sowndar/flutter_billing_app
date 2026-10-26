@@ -20,6 +20,15 @@ class ProductModel extends Product {
   @override
   @HiveField(4)
   final int stock;
+  @override
+  @HiveField(5)
+  final String description;
+  @override
+  @HiveField(6)
+  final String category;
+  @override
+  @HiveField(7)
+  final bool isAvailable;
 
   const ProductModel({
     required this.id,
@@ -27,12 +36,18 @@ class ProductModel extends Product {
     required this.barcode,
     required this.price,
     required this.stock,
+    this.description = '',
+    this.category = 'Other',
+    this.isAvailable = true,
   }) : super(
           id: id,
           name: name,
           barcode: barcode,
           price: price,
           stock: stock,
+          description: description,
+          category: category,
+          isAvailable: isAvailable,
         );
 
   factory ProductModel.fromEntity(Product product) {
@@ -42,6 +57,9 @@ class ProductModel extends Product {
       barcode: product.barcode,
       price: product.price,
       stock: product.stock,
+      description: product.description,
+      category: product.category,
+      isAvailable: product.isAvailable,
     );
   }
 
@@ -52,6 +70,9 @@ class ProductModel extends Product {
       barcode: barcode,
       price: price,
       stock: stock,
+      description: description,
+      category: category,
+      isAvailable: isAvailable,
     );
   }
 }

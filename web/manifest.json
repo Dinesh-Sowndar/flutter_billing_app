@@ -1,12 +1,11 @@
 {
-    "name": "billing_app",
-    "short_name": "billing_app",
+    "name": "Good Plate · Local ordering demo",
+    "short_name": "Good Plate",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#f3f2eb",
+    "theme_color": "#1f4d3a",
+    "description": "A local restaurant ordering demo. Menu and orders stay in this browser.",
     "prefer_related_applications": false,
     "icons": [
         {

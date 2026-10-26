@@ -21,7 +21,10 @@ class _AddProductPageState extends State<AddProductPage> {
   final _formKey = GlobalKey<FormState>();
   String _name = '';
   String _barcode = '';
+  String _description = '';
+  String _category = 'Mains';
   double _price = 0.0;
+  bool _isAvailable = true;
 
   void _scanBarcode() async {
     final result = await context.push<String>('/scanner');
@@ -40,7 +43,7 @@ class _AddProductPageState extends State<AddProductPage> {
       final existingProduct =
           productState.products.where((p) => p.barcode == _barcode).firstOrNull;
 
-      if (existingProduct != null) {
+      if (_barcode.isNotEmpty && existingProduct != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Product with barcode "$_barcode" already exists!'),
@@ -55,6 +58,9 @@ class _AddProductPageState extends State<AddProductPage> {
         name: _name,
         barcode: _barcode,
         price: _price,
+        description: _description,
+        category: _category,
+        isAvailable: _isAvailable,
       );
 
       context.read<ProductBloc>().add(AddProduct(product));
@@ -95,9 +101,8 @@ class _AddProductPageState extends State<AddProductPage> {
                           decoration: const InputDecoration(
                             hintText: 'Scan or enter barcode',
                           ),
-                          validator:
-                              AppValidators.required('Please enter a barcode'),
-                          onSaved: (value) => _barcode = value!,
+                          validator: null,
+                          onSaved: (value) => _barcode = value?.trim() ?? '',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -116,19 +121,42 @@ class _AddProductPageState extends State<AddProductPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text('Tap the icon to open camera scanner',
+                  const Text('Barcode is optional for menu ordering',
                       style: TextStyle(fontSize: 12, color: Color(0xFF4C669A))),
                   const SizedBox(height: 24),
                   const InputLabel(text: 'Product Name'),
                   TextFormField(
                     decoration: const InputDecoration(
-                      hintText: 'e.g. Basmati Rice',
+                      hintText: 'e.g. Roasted tomato toast',
                     ),
                     textCapitalization: TextCapitalization.words,
                     validator: AppValidators.required('Please enter a name'),
                     onSaved: (value) => _name = value!,
                   ),
                   const SizedBox(height: 24),
+                  const InputLabel(text: 'Menu section'),
+                  TextFormField(
+                    initialValue: _category,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      hintText: 'e.g. Mains, Sides, Drinks',
+                    ),
+                    validator:
+                        AppValidators.required('Please enter a menu section'),
+                    onSaved: (value) => _category = value!.trim(),
+                  ),
+                  const SizedBox(height: 24),
+                  const InputLabel(text: 'Description'),
+                  TextFormField(
+                    maxLines: 3,
+                    maxLength: 240,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      hintText: 'Ingredients and useful details for customers',
+                    ),
+                    onSaved: (value) => _description = value?.trim() ?? '',
+                  ),
+                  const SizedBox(height: 12),
                   const InputLabel(text: 'Price'),
                   TextFormField(
                     keyboardType:
@@ -143,6 +171,17 @@ class _AddProductPageState extends State<AddProductPage> {
                     ),
                     validator: AppValidators.price,
                     onSaved: (value) => _price = double.parse(value!),
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _isAvailable,
+                    activeColor: AppTheme.primaryColor,
+                    title: const Text('Available to order'),
+                    subtitle:
+                        const Text('Unavailable items stay in menu management.'),
+                    onChanged: (value) =>
+                        setState(() => _isAvailable = value),
                   ),
                 ],
               ),

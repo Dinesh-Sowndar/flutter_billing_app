@@ -1,6 +1,12 @@
-# 🛒 Mobile POS & Billing App 
+# Good Plate · Restaurant ordering demo
 
-A feature-rich, high-performance offline-first billing and Point of Sale (POS) application built with Flutter. Designed for seamless retail checkout operations featuring barcode scanning, thermal Bluetooth printing, and robust local data persistence.
+A responsive restaurant-ordering demo. The Android and iOS experience uses Flutter. The web view is a standalone HTML, CSS and JavaScript app. Customers can browse a sample menu, adjust quantities, and submit an order with a kitchen note; staff can manage menu items and review/update the saved order queue.
+
+This project has no restaurant backend, customer accounts, or payment processing. The clearly labeled sample menu, menu changes, and demo orders are stored locally on the device with Hive in Flutter and browser local storage on the web. They are not sent to a live restaurant or synchronized between devices.
+
+### Web view
+
+Open `web/index.html` through a static web server (for example `flutter run -d chrome` or `python -m http.server --directory web 8000` from the repository root). The web implementation is dependency-free and uses browser local storage for its demo menu and orders.
 
 ## Screenshot
 
@@ -9,16 +15,19 @@ https://github.com/user-attachments/assets/f2d16454-5408-43b3-b207-cd843bbc2c9e
 
 
 
-## 🎯 Project Scope
+## Project scope
 
-This application serves as a complete offline POS system for small to medium-sized retail shops. It streamlines the checkout process, catalog management, and receipt generation securely entirely on-device.
+The app demonstrates a complete local ordering loop for phone and desktop widths.
 
-### Core Features:
-- **Product Management System**: Complete CRUD operations for inventory items with barcode/QR code support.
-- **Smart Checkout System**: Rapid cart building via camera-based barcode scanning or manual entry, and robust order calculation functionality.
+### Core features:
+- **Customer menu**: Browse and search dishes by section, inspect descriptions and prices, and add any quantity to an order.
+- **Order details**: Record a customer name and optional kitchen requirements; review an itemized total before saving.
+- **Kitchen queue**: Review incoming orders, item quantities, customer notes and status; update order status.
+- **Menu management**: Create, edit, delete, price and availability updates for menu items.
+- **Local demo flow**: Seed clearly identified sample dishes on first launch; menu changes and orders persist on the device.
+- **Existing POS utilities**: Barcode scanning, shop settings and Bluetooth thermal printing remain available.
 - **Bluetooth Thermal Printing**: Direct integration with thermal printers (`print_bluetooth_thermal`) to instantly output physical receipts.
 - **Shop Settings & Customization**: Centrally managed shop details printed dynamically on receipts.
-- **Offline-First Architecture**: Powered by `Hive` for lightning-fast localized NoSQL data storage. No active internet connectivity required.
 
 ## 🛠 Tech Stack & Architecture
 
@@ -51,6 +60,7 @@ lib/
 └── features/                   # Independent feature modules
     ├── billing/                # Core POS operations: Cart, Checkout, Invoice Generation
     ├── product/                # Inventory management: Adding, Listing, Scanning products
+    ├── orders/                 # Restaurant menu ordering and local kitchen queue
     ├── settings/               # App configuration: Printer connections, App settings
     └── shop/                   # Shop details configuration
 ```
@@ -58,6 +68,9 @@ lib/
 *Note: Each feature is further subdivided internally into Clean Architecture layers: `data`, `domain`, and `presentation`.*
 
 ## 💡 Use Cases
+
+- **Customer order**: A customer selects menu items and quantities, adds a name and optional kitchen note, and saves a demo order locally.
+- **Kitchen review**: Staff opens Kitchen from the order board to review tickets and change their status. This demo does not synchronize with another device.
 
 - **Rapid Billing Entry**: A cashier launches the app, navigates to the checkout page, and uses the device camera to instantly scan product barcodes. The products are added to the cart, the total is calculated including taxes, and a receipt is finalized.
 - **Physical Receipt Generation**: After checkout confirmation, the app triggers a connected external Bluetooth thermal POS printer to instantly print an itemized paper receipt with the shop’s header.

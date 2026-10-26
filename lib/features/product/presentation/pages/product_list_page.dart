@@ -113,6 +113,19 @@ class _ProductListPageState extends State<ProductListPage> {
               );
             }),
           ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(18, 2, 18, 10),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'LOCAL DEMO · Menu changes are saved on this device only.',
+                style: TextStyle(
+                    color: Color(0xFF526158),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
 
           Expanded(
             child: BlocConsumer<ProductBloc, ProductState>(
@@ -150,7 +163,8 @@ class _ProductListPageState extends State<ProductListPage> {
                 final filteredProducts = state.products
                     .where((product) =>
                         product.name.toLowerCase().contains(_searchQuery) ||
-                        product.barcode.toLowerCase().contains(_searchQuery))
+                        product.barcode.toLowerCase().contains(_searchQuery) ||
+                        product.category.toLowerCase().contains(_searchQuery))
                     .toList();
 
                 if (filteredProducts.isEmpty) {
@@ -199,12 +213,65 @@ class _ProductListPageState extends State<ProductListPage> {
                                       fontWeight: FontWeight.w500,
                                       color: Colors.grey[600]),
                                 ),
+                                const SizedBox(height: 5),
+                                Wrap(
+                                  spacing: 8,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Text(
+                                      product.category,
+                                      style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12),
+                                    ),
+                                    Text(
+                                      product.isAvailable
+                                          ? 'Available'
+                                          : 'Unavailable',
+                                      style: TextStyle(
+                                        color: product.isAvailable
+                                            ? Colors.green[700]
+                                            : Colors.red[700],
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              IconButton(
+                                tooltip: product.isAvailable
+                                    ? 'Mark unavailable'
+                                    : 'Mark available',
+                                icon: Icon(
+                                  product.isAvailable
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: Colors.blueGrey,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  context.read<ProductBloc>().add(
+                                        UpdateProduct(
+                                          Product(
+                                            id: product.id,
+                                            name: product.name,
+                                            barcode: product.barcode,
+                                            price: product.price,
+                                            stock: product.stock,
+                                            description: product.description,
+                                            category: product.category,
+                                            isAvailable: !product.isAvailable,
+                                          ),
+                                        ),
+                                      );
+                                },
+                              ),
                               Container(
                                 decoration: BoxDecoration(
                                   color: AppTheme.primaryColor
@@ -212,6 +279,7 @@ class _ProductListPageState extends State<ProductListPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
+                                  tooltip: 'Edit ${product.name}',
                                   icon: const Icon(Icons.edit_rounded,
                                       color: AppTheme.primaryColor, size: 20),
                                   constraints: const BoxConstraints(),
@@ -229,6 +297,7 @@ class _ProductListPageState extends State<ProductListPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
+                                  tooltip: 'Delete ${product.name}',
                                   icon: const Icon(Icons.delete_outline_rounded,
                                       color: Colors.red, size: 20),
                                   constraints: const BoxConstraints(),

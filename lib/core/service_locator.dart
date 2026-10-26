@@ -10,10 +10,13 @@ import '../../features/shop/presentation/bloc/shop_bloc.dart';
 import '../../features/settings/data/repositories/printer_repository_impl.dart';
 import '../../features/settings/domain/repositories/printer_repository.dart';
 import '../../features/settings/presentation/bloc/printer_bloc.dart';
+import '../../features/orders/data/repositories/local_order_repository.dart';
+import '../../features/orders/domain/repositories/order_repository.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  sl.registerLazySingleton<OrderRepository>(() => LocalOrderRepository());
   // Features - Product
   // Bloc
   sl.registerFactory(

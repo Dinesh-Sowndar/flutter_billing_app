@@ -1,38 +1,48 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f2eb">
+    <meta name="description" content="A local restaurant-ordering demo. Browse a sample menu and place a demo order.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Good Plate">
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <title>Good Plate · Local demo</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to menu</a>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Good Plate home" data-action="home">
+          <span class="brand-mark" aria-hidden="true">g<span>.</span></span>
+          <span class="brand-copy"><strong>GOOD PLATE</strong><small>ORDER BOARD</small></span>
+        </a>
+        <div class="topbar-right">
+          <span class="local-indicator"><span></span> Saved on this device</span>
+          <button class="staff-toggle" type="button" data-action="toggle-mode">
+            <span aria-hidden="true">▤</span><span data-mode-label>Staff view</span>
+          </button>
+        </div>
+      </header>
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+      <div class="demo-banner">
+        <span class="demo-icon" aria-hidden="true">✳</span>
+        <p><strong>LOCAL DEMO</strong><span>Sample menu and demo orders stay in this browser. No live restaurant service or payment processing.</span></p>
+      </div>
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="$FLUTTER_BASE_HREF">
-
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="billing_app">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>billing_app</title>
-  <link rel="manifest" href="manifest.json">
-</head>
-<body>
-  <script src="flutter_bootstrap.js" async></script>
-</body>
+      <main id="main" tabindex="-1"></main>
+      <noscript><p class="no-script">Good Plate needs JavaScript to run this local ordering demo. Enable JavaScript and reload to browse the menu and manage orders.</p></noscript>
+      <div class="toast-region" role="status" aria-live="polite"></div>
+      <dialog class="dish-dialog" aria-labelledby="dish-dialog-title"></dialog>
+      <dialog class="checkout-dialog" aria-labelledby="checkout-title"></dialog>
+      <dialog class="product-dialog" aria-labelledby="product-dialog-title"></dialog>
+      <dialog class="confirm-dialog" aria-labelledby="confirm-title"></dialog>
+    </div>
+    <script src="app.js" defer></script>
+  </body>
 </html>
