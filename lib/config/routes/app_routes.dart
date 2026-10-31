@@ -8,6 +8,9 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/billing/presentation/pages/scanner_page.dart';
 import '../../features/billing/presentation/pages/checkout_page.dart';
 import '../../features/product/domain/entities/product.dart';
+import '../../features/erp/presentation/pages/erp_dashboard_page.dart';
+import '../../features/erp/presentation/pages/invoice_page.dart';
+import '../../features/erp/presentation/pages/invoice_print_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -54,6 +57,20 @@ final router = GoRouter(
     GoRoute(
       path: '/shop',
       builder: (context, state) => const ShopDetailsPage(),
+    ),
+    GoRoute(
+      path: '/erp',
+      builder: (context, state) => const ErpDashboardPage(),
+      routes: [
+        GoRoute(
+          path: 'invoice',
+          builder: (context, state) => const InvoicePage(),
+        ),
+        GoRoute(
+          path: 'print-preview',
+          builder: (context, state) => const InvoicePrintPage(),
+        ),
+      ],
     ),
   ],
 );

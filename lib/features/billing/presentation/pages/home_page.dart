@@ -143,6 +143,15 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               children: [
                 _buildOverlayButton(
+                  icon: Icons.dashboard,
+                  onPressed: () async {
+                    _scannerController.stop();
+                    await context.push('/erp');
+                    if (_isCameraOn && mounted) _scannerController.start();
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildOverlayButton(
                   icon: Icons.settings,
                   onPressed: () async {
                     _scannerController.stop();

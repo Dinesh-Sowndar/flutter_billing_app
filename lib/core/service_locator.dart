@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'data/hive_database.dart';
+import '../features/erp/data/erp_repository.dart';
 import '../../features/product/data/repositories/product_repository_impl.dart';
 import '../../features/product/domain/repositories/product_repository.dart';
 import '../../features/product/domain/usecases/product_usecases.dart';
@@ -14,6 +16,10 @@ import '../../features/settings/presentation/bloc/printer_bloc.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  sl.registerLazySingleton<ErpRepository>(
+    () => ErpRepository(HiveDatabase.erpBox),
+  );
+
   // Features - Product
   // Bloc
   sl.registerFactory(

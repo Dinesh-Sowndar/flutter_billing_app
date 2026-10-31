@@ -66,6 +66,24 @@ lib/
 
 ## 🚀 Getting Started
 
+## Al-Noor ERP/POS MVP
+
+The app now includes an offline-first ERP workspace at `/erp`, backed by the
+existing Hive persistence layer. The workspace is additive to the original
+scanner POS flow and provides ERP record models for users/RBAC, customers,
+inventory, invoices, purchases, job orders, wastage, expenses, and cash
+registers.
+
+BDT-safe billing primitives live in `lib/core/billing/billing_core.dart`.
+They use integer poisha for deterministic SQFT/PCS calculations, lamination,
+board pasting, lightbox add-ons, split payments, change, and yearly
+`INV`/`CH`/`QT` numbering. The invoice preview supports `WITH_PAD` and
+`WITHOUT_PAD` modes with configurable millimetre margins.
+
+The existing Hive database is the persistence choice for this offline MVP.
+Flutter has no Tailwind surface, so frontend Tailwind setup is not applicable;
+print styling is implemented in the Flutter invoice preview widget instead.
+
 ### Prerequisites
 - Flutter SDK `^3.1.0` or higher
 - Android Studio / Xcode for emulators and building.
