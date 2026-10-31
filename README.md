@@ -1,3 +1,27 @@
+# Al-Noor Digital Print House
+
+An offline-first business management foundation for a digital print house. The
+existing barcode POS and Bluetooth receipt printing workflow remains available
+at **Point of sale** (`/pos`), while the home screen now provides a responsive
+operations dashboard for print-house work.
+
+## Print-house foundation
+
+- Typed domain models for customers, suppliers, rate cards, area/piece billing,
+  ledger entries, stock movements, and role-aware workflows.
+- `BusinessCalculator` covers area and piece quantities, add-ons, fixed or
+  percentage discounts, payments, and due validation without UI dependencies.
+- `BusinessStore` persists business records in a dedicated Hive box, keeping
+  the app local-first and ready for a cloud repository implementation.
+- Dashboard cards cover sales, receivables, production jobs, low stock, daily
+  cash, recent activity, customers, rate cards, inventory, and documents.
+- Existing products, scanner, checkout, shop settings, and printer flows are
+  preserved and remain reachable from the dashboard.
+
+The next production slices are document persistence (quotation/invoice/job
+slip revisions), role-based authentication, material recipes and automatic
+consumption, wastage approval, and cloud sync.
+
 # 🛒 Mobile POS & Billing App 
 
 A feature-rich, high-performance offline-first billing and Point of Sale (POS) application built with Flutter. Designed for seamless retail checkout operations featuring barcode scanning, thermal Bluetooth printing, and robust local data persistence.

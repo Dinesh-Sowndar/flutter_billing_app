@@ -8,18 +8,29 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/billing/presentation/pages/scanner_page.dart';
 import '../../features/billing/presentation/pages/checkout_page.dart';
 import '../../features/product/domain/entities/product.dart';
+import '../../features/operations/presentation/pages/operations_dashboard_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) => const OperationsDashboardPage(),
       routes: [
         GoRoute(
           path: 'scanner',
           builder: (context, state) => const ScannerPage(),
         ),
+        GoRoute(
+          path: 'checkout',
+          builder: (context, state) => const CheckoutPage(),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/pos',
+      builder: (context, state) => const HomePage(),
+      routes: [
         GoRoute(
           path: 'checkout',
           builder: (context, state) => const CheckoutPage(),

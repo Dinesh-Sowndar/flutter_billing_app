@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
             create: (context) => di.sl<PrinterBloc>()..add(InitPrinterEvent())),
       ],
       child: MaterialApp.router(
-        title: 'Billing App',
+        title: 'Al-Noor Digital Print House',
         theme: AppTheme.lightTheme,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
