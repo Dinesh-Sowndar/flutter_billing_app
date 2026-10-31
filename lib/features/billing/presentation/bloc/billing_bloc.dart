@@ -1,10 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+
 import '../../domain/entities/cart_item.dart';
 import 'package:billing_app/features/product/domain/entities/product.dart';
 import 'package:billing_app/features/product/domain/usecases/product_usecases.dart';
-import '../../../../core/utils/printer_helper.dart';
-import '../../../../core/data/hive_database.dart';
 
 part 'billing_event.dart';
 part 'billing_state.dart';
@@ -12,127 +11,262 @@ part 'billing_state.dart';
 class BillingBloc extends Bloc<BillingEvent, BillingState> {
   final GetProductByBarcodeUseCase getProductByBarcodeUseCase;
 
-  BillingBloc({required this.getProductByBarcodeUseCase})
-      : super(const BillingState()) {
+  BillingBloc({
+    required this.getProductByBarcodeUseCase,
+  }) : super(const BillingState()) {
+    // مسح الباركود
     on<ScanBarcodeEvent>(_onScanBarcode);
+
+    // إضافة منتج إلى السلة
     on<AddProductToCartEvent>(_onAddProductToCart);
+
+    // حذف منتج من السلة
     on<RemoveProductFromCartEvent>(_onRemoveProductFromCart);
+
+    // تعديل كمية المنتج
     on<UpdateQuantityEvent>(_onUpdateQuantity);
+
+    // تفريغ السلة
     on<ClearCartEvent>(_onClearCart);
-    on<PrintReceiptEvent>(_onPrintReceipt);
+
+    // إنهاء وحفظ الفاتورة
+    on<CompleteSaleEvent>(_onCompleteSale);
   }
+
+  // ============================================================
+  // SCAN BARCODE
+  // ============================================================
 
   Future<void> _onScanBarcode(
-      ScanBarcodeEvent event, Emitter<BillingState> emit) async {
-    final result = await getProductByBarcodeUseCase(event.barcode);
-    result.fold(
-      (failure) =>
-          emit(state.copyWith(error: 'Product not found: ${event.barcode}')),
-      (product) {
-        add(AddProductToCartEvent(product));
-      },
-    );
-  }
+    ScanBarcodeEvent event,
+    Emitter<BillingState> emit,
+  ) async {
+    final barcode = event.barcode.trim();
 
-  void _onAddProductToCart(
-      AddProductToCartEvent event, Emitter<BillingState> emit) {
-    // Clear error when adding
-    final cleanState = state.copyWith(error: null);
-
-    final existingIndex = cleanState.cartItems
-        .indexWhere((item) => item.product.id == event.product.id);
-    if (existingIndex >= 0) {
-      final existingItem = cleanState.cartItems[existingIndex];
-      final backendItems = List<CartItem>.from(cleanState.cartItems);
-      backendItems[existingIndex] =
-          existingItem.copyWith(quantity: existingItem.quantity + 1);
-      emit(cleanState.copyWith(cartItems: backendItems, error: null));
-    } else {
-      final newItem = CartItem(product: event.product);
-      emit(cleanState.copyWith(
-          cartItems: [...cleanState.cartItems, newItem], error: null));
-    }
-  }
-
-  void _onRemoveProductFromCart(
-      RemoveProductFromCartEvent event, Emitter<BillingState> emit) {
-    final updatedList = state.cartItems
-        .where((item) => item.product.id != event.productId)
-        .toList();
-    emit(state.copyWith(cartItems: updatedList));
-  }
-
-  void _onUpdateQuantity(
-      UpdateQuantityEvent event, Emitter<BillingState> emit) {
-    if (event.quantity <= 0) {
-      add(RemoveProductFromCartEvent(event.productId));
+    if (barcode.isEmpty) {
+      emit(
+        state.copyWith(
+          error: 'الباركود فارغ',
+          clearSaleSuccess: true,
+        ),
+      );
       return;
     }
 
-    final index = state.cartItems
-        .indexWhere((item) => item.product.id == event.productId);
-    if (index >= 0) {
-      final items = List<CartItem>.from(state.cartItems);
-      items[index] = items[index].copyWith(quantity: event.quantity);
-      emit(state.copyWith(cartItems: items));
+    try {
+      final result = await getProductByBarcodeUseCase(barcode);
+
+      result.fold(
+        (failure) {
+          emit(
+            state.copyWith(
+              error: 'المنتج غير موجود: $barcode',
+              clearSaleSuccess: true,
+            ),
+          );
+        },
+        (product) {
+          // عند العثور على المنتج يتم إضافته مباشرة إلى السلة.
+          add(
+            AddProductToCartEvent(product),
+          );
+        },
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          error: 'حدث خطأ أثناء البحث عن المنتج',
+          clearSaleSuccess: true,
+        ),
+      );
     }
   }
 
-  void _onClearCart(ClearCartEvent event, Emitter<BillingState> emit) {
-    emit(const BillingState());
-  }
+  // ============================================================
+  // ADD PRODUCT TO CART
+  // ============================================================
 
-  Future<void> _onPrintReceipt(
-      PrintReceiptEvent event, Emitter<BillingState> emit) async {
-    final printerHelper = PrinterHelper();
+  void _onAddProductToCart(
+    AddProductToCartEvent event,
+    Emitter<BillingState> emit,
+  ) {
+    final product = event.product;
 
-    if (!printerHelper.isConnected) {
-      final savedMac = HiveDatabase.settingsBox.get('printer_mac');
-      if (savedMac != null) {
-        final connected = await printerHelper.connect(savedMac);
-        if (!connected) {
-          emit(state.copyWith(
-              error: 'Failed to auto-connect to printer!', clearError: false));
-          emit(state.copyWith(clearError: true));
-          return;
-        }
-      } else {
-        emit(state.copyWith(
-            error: 'Printer not connected & no saved printer found!',
-            clearError: false));
-        emit(state.copyWith(clearError: true));
-        return;
-      }
+    // تنظيف رسالة الخطأ القديمة
+    final cleanState = state.copyWith(
+      clearError: true,
+      clearSaleSuccess: true,
+    );
+
+    final existingIndex = cleanState.cartItems.indexWhere(
+      (item) => item.product.id == product.id,
+    );
+
+    // المنتج موجود مسبقاً في السلة
+    if (existingIndex >= 0) {
+      final existingItem = cleanState.cartItems[existingIndex];
+
+      final updatedItems = List<CartItem>.from(
+        cleanState.cartItems,
+      );
+
+      updatedItems[existingIndex] = existingItem.copyWith(
+        quantity: existingItem.quantity + 1,
+      );
+
+      emit(
+        cleanState.copyWith(
+          cartItems: updatedItems,
+          clearError: true,
+          clearSaleSuccess: true,
+        ),
+      );
+
+      return;
     }
 
-    emit(state.copyWith(
-        isPrinting: true, printSuccess: false, clearError: true));
+    // المنتج غير موجود في السلة
+    final newItem = CartItem(
+      product: product,
+    );
+
+    emit(
+      cleanState.copyWith(
+        cartItems: [
+          ...cleanState.cartItems,
+          newItem,
+        ],
+        clearError: true,
+        clearSaleSuccess: true,
+      ),
+    );
+  }
+
+  // ============================================================
+  // REMOVE PRODUCT FROM CART
+  // ============================================================
+
+  void _onRemoveProductFromCart(
+    RemoveProductFromCartEvent event,
+    Emitter<BillingState> emit,
+  ) {
+    final updatedList = state.cartItems
+        .where(
+          (item) => item.product.id != event.productId,
+        )
+        .toList();
+
+    emit(
+      state.copyWith(
+        cartItems: updatedList,
+        clearError: true,
+        clearSaleSuccess: true,
+      ),
+    );
+  }
+
+  // ============================================================
+  // UPDATE QUANTITY
+  // ============================================================
+
+  void _onUpdateQuantity(
+    UpdateQuantityEvent event,
+    Emitter<BillingState> emit,
+  ) {
+    // إذا أصبحت الكمية صفر أو أقل، نحذف المنتج من السلة.
+    if (event.quantity <= 0) {
+      add(
+        RemoveProductFromCartEvent(
+          event.productId,
+        ),
+      );
+      return;
+    }
+
+    final index = state.cartItems.indexWhere(
+      (item) => item.product.id == event.productId,
+    );
+
+    if (index < 0) {
+      return;
+    }
+
+    final items = List<CartItem>.from(
+      state.cartItems,
+    );
+
+    items[index] = items[index].copyWith(
+      quantity: event.quantity,
+    );
+
+    emit(
+      state.copyWith(
+        cartItems: items,
+        clearError: true,
+        clearSaleSuccess: true,
+      ),
+    );
+  }
+
+  // ============================================================
+  // CLEAR CART
+  // ============================================================
+
+  void _onClearCart(
+    ClearCartEvent event,
+    Emitter<BillingState> emit,
+  ) {
+    emit(
+      const BillingState(),
+    );
+  }
+
+  // ============================================================
+  // COMPLETE SALE
+  // ============================================================
+
+  Future<void> _onCompleteSale(
+    CompleteSaleEvent event,
+    Emitter<BillingState> emit,
+  ) async {
+    // لا يمكن إنهاء فاتورة فارغة.
+    if (state.cartItems.isEmpty) {
+      emit(
+        state.copyWith(
+          error: 'السلة فارغة، أضف منتجاً أولاً',
+          clearSaleSuccess: true,
+        ),
+      );
+      return;
+    }
 
     try {
-      final items = state.cartItems
-          .map((item) => {
-                'name': item.product.name,
-                'qty': item.quantity,
-                'price': item.product.price,
-                'total': item.total,
-              })
-          .toList();
+      /*
+       * ==========================================================
+       * إنهاء الفاتورة
+       * ==========================================================
+       *
+       * في هذه المرحلة نعتبر الفاتورة جاهزة للحفظ.
+       *
+       * إذا كان لديك مستقبلاً SaleRepository أو Hive Box
+       * خاص بالفواتير، يمكن تنفيذ عملية الحفظ هنا.
+       *
+       * لا توجد أي عملية طباعة في هذا الملف.
+       */
 
-      await printerHelper.printReceipt(
-          shopName: event.shopName,
-          address1: event.address1,
-          address2: event.address2,
-          phone: event.phone,
-          items: items,
-          total: state.totalAmount,
-          footer: event.footer);
-
-      emit(state.copyWith(isPrinting: false, printSuccess: true));
+      emit(
+        state.copyWith(
+          saleSuccess: true,
+          clearError: true,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-          isPrinting: false, error: 'Print failed: $e', clearError: false));
-      // Reset error instantly avoids sticky error
-      emit(state.copyWith(clearError: true));
+      emit(
+        state.copyWith(
+          error: 'تعذر حفظ الفاتورة',
+          clearSaleSuccess: true,
+        ),
+      );
     }
   }
 }
